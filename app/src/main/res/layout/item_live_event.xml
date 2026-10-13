@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingVertical="4dp">
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardContainer"
@@ -33,7 +34,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:fontFamily="sans-serif-bold"
-                    android:text="[JARVIS] 🤖"
+                    android:text="[JARVIS]"
                     android:textColor="@color/jarvis_cyan"
                     android:textSize="12sp" />
 
@@ -52,7 +53,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:lineSpacingExtra="2dp"
-                android:text="Qo‘shiq qo‘yilmoqda, ser."
+                android:text="Qoshiq qoyilmoqda"
                 android:textColor="@color/jarvis_text"
                 android:textSize="13sp" />
         </LinearLayout>

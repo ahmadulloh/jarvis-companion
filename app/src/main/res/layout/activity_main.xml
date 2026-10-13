@@ -12,13 +12,15 @@
         android:layout_height="wrap_content"
         android:background="@color/jarvis_card"
         android:gravity="center_vertical"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="10dp">
+        android:paddingLeft="16dp"
+        android:paddingTop="10dp"
+        android:paddingRight="16dp"
+        android:paddingBottom="10dp">
 
         <ImageView
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:src="@drawable/ic_jarvis"
+            app:srcCompat="@drawable/ic_jarvis"
             app:tint="@color/jarvis_cyan" />
 
         <LinearLayout
@@ -41,7 +43,7 @@
                 android:id="@+id/tvHeaderSub"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ovozli Ko‘prik &amp; Displey"
+                android:text="Ovozli Koprik va Displey"
                 android:textColor="@color/jarvis_text_dim"
                 android:textSize="11sp" />
         </LinearLayout>
@@ -53,8 +55,10 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_badge"
             android:fontFamily="sans-serif-bold"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
+            android:paddingLeft="10dp"
+            android:paddingTop="4dp"
+            android:paddingRight="10dp"
+            android:paddingBottom="4dp"
             android:text="OFFLINE"
             android:textColor="@color/jarvis_red"
             android:textSize="11sp" />
@@ -75,17 +79,17 @@
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📟 DISPLEY" />
+            android:text="DISPLEY" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🌐 WEB HUD" />
+            android:text="WEB HUD" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚙️ SOZLAMALAR" />
+            android:text="SOZLAMALAR" />
     </com.google.android.material.tabs.TabLayout>
 
     <!-- Main Container Switching Between Tabs -->
@@ -149,7 +153,7 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
-                        android:text="🎤 Gapirish"
+                        android:text="Gapirish"
                         android:textColor="@color/jarvis_cyan"
                         android:textSize="12sp"
                         app:cornerRadius="8dp"
@@ -164,8 +168,10 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:clipToPadding="false"
-                android:paddingHorizontal="10dp"
-                android:paddingVertical="4dp" />
+                android:paddingLeft="10dp"
+                android:paddingTop="4dp"
+                android:paddingRight="10dp"
+                android:paddingBottom="4dp" />
 
             <!-- Empty Feed Placeholder -->
             <TextView
@@ -175,7 +181,7 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:lineSpacingExtra="4dp"
-                android:text="Hozircha amallar yo‘q.\nGapiring: «Jarvis, qo‘shiq qo‘y» yoki «Jarvis, xarajat qo‘sh»\nNatijalar shu yerda ko‘rinadi!"
+                android:text="Hozircha amallar yoq.\nGapiring: Jarvis, qoshiq qoy\nNatijalar shu yerda chiqadi!"
                 android:textColor="@color/jarvis_text_dim"
                 android:textSize="13sp"
                 android:visibility="gone" />
@@ -196,7 +202,8 @@
                     android:layout_weight="1"
                     android:background="@drawable/bg_input"
                     android:hint="Jarvisga buyruq yozing..."
-                    android:paddingHorizontal="14dp"
+                    android:paddingLeft="14dp"
+                    android:paddingRight="14dp"
                     android:textColor="@color/jarvis_text"
                     android:textColorHint="@color/jarvis_text_dim"
                     android:textSize="13sp" />
@@ -244,7 +251,7 @@
                     style="@style/Widget.MaterialComponents.Button.TextButton"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
-                    android:text="🔄 Qayta yuklash"
+                    android:text="Qayta yuklash"
                     android:textColor="@color/jarvis_cyan"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -348,7 +355,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="20dp"
                     android:lineSpacingExtra="3dp"
-                    android:text="ℹ️ Eslatma:\n• Bu ilovani ochib turish SHART EMAS — xizmat yoqilgach ekran o‘chsa ham ishlayveradi.\n• Bildirishnoma yoki Bluetooth quloqchin tugmasini bosib gapirish mumkin.\n• Jonli displey tabida JARVISning barcha harakatlari va javoblarini kuzatishingiz mumkin."
+                    android:text="Eslatma:\n• Bu ilovani ochib turish shart emas — xizmat fonda ishlayveradi.\n• Bildirishnoma yoki Bluetooth quloqchin tugmasini bosib gapirish mumkin.\n• Displey tabida barcha amallar va javoblarni jonli korishingiz mumkin."
                     android:textColor="@color/jarvis_text_dim"
                     android:textSize="11sp" />
             </LinearLayout>
