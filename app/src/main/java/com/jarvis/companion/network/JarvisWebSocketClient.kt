@@ -7,6 +7,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -110,7 +111,7 @@ class JarvisWebSocketClient(
     }
 
     fun sendAudio(pcmChunk: ByteArray) {
-        webSocket?.send(ByteString.of(pcmChunk, 0, pcmChunk.size))
+        webSocket?.send(pcmChunk.toByteString())
     }
 
     fun sendControl(json: JSONObject) {
