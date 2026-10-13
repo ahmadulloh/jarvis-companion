@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout repository
@@ -35,6 +37,15 @@ jobs:
       with:
         name: build-log
         path: build_log.txt
+
+    - name: Commit build log on failure
+      if: failure()
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+        git add build_log.txt
+        git commit -m "Auto-commit build log on failure" || true
+        git push || true
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
