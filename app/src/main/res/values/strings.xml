@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">JARVIS Companion</string>
+    <string name="service_running_title">JARVIS Aloqada</string>
+    <string name="service_running_desc">Uydagi kompyuter bilan ovozli ko‘prik faol</string>
+    <string name="status_connected">Ulangan (Aloqa o‘rnatildi)</string>
+    <string name="status_disconnected">Ulanmagan</string>
+    <string name="status_listening">Sizni eshitmoqda...</string>
+    <string name="status_speaking">JARVIS gapirmoqda...</string>
+    <string name="action_start">Xizmatni yoqish</string>
+    <string name="action_stop">To‘xtatish</string>
+    <string name="action_talk">🎤 Gapirish</string>
+    <string name="action_mute">🔇 Jim turish</string>
+    <string name="action_wake">⚡ JARVIS ni uyg‘otish</string>
+</resources>

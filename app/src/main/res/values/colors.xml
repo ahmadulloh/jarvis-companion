@@ -1,0 +1,10 @@
+<resources>
+    <color name="jarvis_cyan">#00E5FF</color>
+    <color name="jarvis_dark_cyan">#00838F</color>
+    <color name="jarvis_bg">#0A0E17</color>
+    <color name="jarvis_card">#131B2A</color>
+    <color name="jarvis_text">#E0F7FA</color>
+    <color name="jarvis_text_dim">#80DEEA</color>
+    <color name="jarvis_accent">#00E676</color>
+    <color name="jarvis_red">#FF5252</color>
+</resources>

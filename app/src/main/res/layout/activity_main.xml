@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/jarvis_bg"
+    android:fillViewport="true"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <!-- Logo / Icon -->
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:src="@drawable/ic_jarvis"
+            app:tint="@color/jarvis_cyan" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.1"
+            android:text="JARVIS COMPANION"
+            android:textColor="@color/jarvis_cyan"
+            android:textSize="22sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Uydagi kompyuter bilan ovozli ko‘prik"
+            android:textColor="@color/jarvis_text_dim"
+            android:textSize="13sp" />
+
+        <!-- Status Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:cardBackgroundColor="@color/jarvis_card"
+            app:cardCornerRadius="14dp"
+            app:strokeColor="@color/jarvis_dark_cyan"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvStatusTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="XIZMAT HOLATI"
+                    android:textColor="@color/jarvis_text_dim"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="To‘xtatilgan (Ulanmagan)"
+                    android:textColor="@color/jarvis_text"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSubStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Xizmat ishga tushirilmagan"
+                    android:textColor="@color/jarvis_text_dim"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Server Settings -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:hint="Kompyuter manzili (IP yoki Tailscale IP)"
+            android:textColorHint="@color/jarvis_text_dim"
+            app:boxBackgroundColor="@color/jarvis_card"
+            app:boxStrokeColor="@color/jarvis_cyan">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etServerAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textUri"
+                android:text="100.100.100.100:8000"
+                android:textColor="@color/jarvis_text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Xavfsizlik kaliti (Auth Token)"
+            android:textColorHint="@color/jarvis_text_dim"
+            app:boxBackgroundColor="@color/jarvis_card"
+            app:boxStrokeColor="@color/jarvis_cyan">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAuthToken"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:text="jarvis-phone-companion-token"
+                android:textColor="@color/jarvis_text" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Options Checkboxes -->
+        <CheckBox
+            android:id="@+id/cbAutoStart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:checked="true"
+            android:text="Telefon yoqilganda avtomatik ishga tushsin (Boot)"
+            android:textColor="@color/jarvis_text" />
+
+        <CheckBox
+            android:id="@+id/cbContinuous"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="false"
+            android:text="Doimiy eshitish (Continuous VAD)"
+            android:textColor="@color/jarvis_text" />
+
+        <!-- Start / Stop Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnToggleService"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/jarvis_cyan"
+            android:fontFamily="sans-serif-medium"
+            android:text="XIZMATNI ISHGA TUSHIRISH"
+            android:textColor="#000000"
+            android:textSize="15sp"
+            app:cornerRadius="12dp" />
+
+        <!-- Info Note -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:lineSpacingExtra="3dp"
+            android:text="ℹ️ Eslatma:\n• Bu ilovani ochib turish SHART EMAS — xizmat yoqilgach, ilovani yopib yuborsangiz ham u fonda xalaqit bermasdan ishlayveradi.\n• Bildirishnoma (Notification) orqali yoki Bluetooth quloqchin tugmasini bosib gapirish mumkin.\n• Cho‘ntakda, ekran o‘chiq bo‘lsa ham aloqa uzilmaydi."
+            android:textColor="@color/jarvis_text_dim"
+            android:textSize="12sp" />
+
+    </LinearLayout>
+</ScrollView>
