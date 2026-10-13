@@ -20,7 +20,7 @@ class PreferencesHelper(context: Context) {
         set(value) = prefs.edit().putBoolean("auto_start_boot", value).apply()
 
     var continuousMode: Boolean
-        get() = prefs.getBoolean("continuous_mode", false)
+        get() = prefs.getBoolean("continuous_mode", true)
         set(value) = prefs.edit().putBoolean("continuous_mode", value).apply()
 
     var isServiceRunning: Boolean

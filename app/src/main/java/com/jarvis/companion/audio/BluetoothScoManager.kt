@@ -4,7 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.AudioAttributes
+import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
 import android.util.Log
@@ -16,6 +19,20 @@ class BluetoothScoManager(
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var isScoStarted = false
     private var isReceiverRegistered = false
+    private var isDeviceCallbackRegistered = false
+    private var audioFocusRequest: AudioFocusRequest? = null
+
+    private val deviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
+            Log.d("BluetoothScoManager", "Audio devices added, re-checking headset")
+            routeBluetoothAudio()
+        }
+
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
+            Log.d("BluetoothScoManager", "Audio devices removed, re-checking headset")
+            routeBluetoothAudio()
+        }
+    }
 
     private val scoReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -40,51 +57,96 @@ class BluetoothScoManager(
     fun start() {
         if (isScoStarted) return
         try {
+            requestAudioFocus()
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
 
-            // Modern Android 12+ (API 31+) route for Bluetooth headset
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val devices = audioManager.availableCommunicationDevices
-                val btDevice = devices.find {
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
-                }
-                if (btDevice != null) {
-                    val success = audioManager.setCommunicationDevice(btDevice)
-                    Log.d("BluetoothScoManager", "setCommunicationDevice: $success (${btDevice.productName})")
-                    onScoStateChanged(true)
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                audioManager.registerAudioDeviceCallback(deviceCallback, null)
+                isDeviceCallbackRegistered = true
             }
 
-            // Legacy fallback for Android 11 and lower
             val filter = IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
             context.registerReceiver(scoReceiver, filter)
             isReceiverRegistered = true
 
-            audioManager.startBluetoothSco()
-            audioManager.isBluetoothScoOn = true
+            routeBluetoothAudio()
             isScoStarted = true
-            Log.d("BluetoothScoManager", "Starting Bluetooth SCO...")
+            Log.d("BluetoothScoManager", "Bluetooth SCO manager started")
         } catch (e: Exception) {
             Log.e("BluetoothScoManager", "Failed to start SCO: ${e.message}")
+        }
+    }
+
+    private fun routeBluetoothAudio() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val devices = audioManager.availableCommunicationDevices
+                val btDevice = devices.find {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                }
+                if (btDevice != null) {
+                    val success = audioManager.setCommunicationDevice(btDevice)
+                    Log.d("BluetoothScoManager", "setCommunicationDevice: $success (${btDevice.productName})")
+                    onScoStateChanged(success)
+                    return
+                }
+            }
+
+            // Fallback for Android 11 or if communication device not yet available
+            audioManager.startBluetoothSco()
+            audioManager.isBluetoothScoOn = true
+        } catch (e: Exception) {
+            Log.w("BluetoothScoManager", "routeBluetoothAudio error: ${e.message}")
+        }
+    }
+
+    private fun requestAudioFocus() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                    .setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build()
+                    )
+                    .setAcceptsDelayedFocusGain(true)
+                    .build()
+                audioManager.requestAudioFocus(audioFocusRequest!!)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN)
+            }
+        } catch (e: Exception) {
+            Log.w("BluetoothScoManager", "requestAudioFocus error: ${e.message}")
         }
     }
 
     fun stop() {
         if (!isScoStarted) return
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isDeviceCallbackRegistered) {
+                audioManager.unregisterAudioDeviceCallback(deviceCallback)
+                isDeviceCallbackRegistered = false
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 audioManager.clearCommunicationDevice()
             }
             audioManager.stopBluetoothSco()
             audioManager.isBluetoothScoOn = false
             audioManager.mode = AudioManager.MODE_NORMAL
-            isScoStarted = false
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
+                audioManager.abandonAudioFocusRequest(audioFocusRequest!!)
+                audioFocusRequest = null
+            }
+
             if (isReceiverRegistered) {
                 context.unregisterReceiver(scoReceiver)
                 isReceiverRegistered = false
             }
+            isScoStarted = false
             onScoStateChanged(false)
             Log.d("BluetoothScoManager", "Bluetooth SCO Stopped")
         } catch (e: Exception) {

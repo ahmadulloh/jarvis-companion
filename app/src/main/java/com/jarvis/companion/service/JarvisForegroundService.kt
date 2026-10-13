@@ -7,7 +7,9 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.media.ToneGenerator
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -65,6 +67,9 @@ class JarvisForegroundService : Service() {
     private var isConnected = false
     private var isSpeaking = false
 
+    private var mediaPlayer: MediaPlayer? = null
+    private var currentMediaTitle: String = ""
+
     override fun onCreate() {
         super.onCreate()
         prefs = PreferencesHelper(this)
@@ -80,7 +85,7 @@ class JarvisForegroundService : Service() {
                 wsClient.sendAudio(pcmChunk)
             }
         }
-        audioRecorder.vadEnabled = prefs.continuousMode
+        audioRecorder.vadEnabled = false
 
         scoManager = BluetoothScoManager(this) { scoConnected ->
             Log.d("JarvisService", "Bluetooth SCO state: $scoConnected")
@@ -108,6 +113,11 @@ class JarvisForegroundService : Service() {
                 when (type) {
                     "speaking" -> {
                         isSpeaking = json.optBoolean("state", false)
+                        val vol = if (isSpeaking) 0.15f else 1.0f
+                        try {
+                            mediaPlayer?.setVolume(vol, vol)
+                        } catch (_: Exception) {}
+
                         if (isSpeaking) {
                             broadcastState("SPEAKING")
                         } else {
@@ -117,6 +127,52 @@ class JarvisForegroundService : Service() {
                     }
                     "interrupt" -> {
                         audioPlayer.flush()
+                    }
+                    "media_play" -> {
+                        val streamUrlRaw = json.optString("stream_url", "")
+                        val directUrlRaw = json.optString("direct_url", "")
+                        val title = json.optString("title", "Musiqa")
+                        currentMediaTitle = title
+
+                        val host = prefs.serverAddress.trim()
+                            .removePrefix("http://")
+                            .removePrefix("https://")
+                            .removePrefix("ws://")
+                            .removePrefix("wss://")
+
+                        val finalUrl = when {
+                            streamUrlRaw.startsWith("http://") || streamUrlRaw.startsWith("https://") -> streamUrlRaw
+                            streamUrlRaw.isNotEmpty() -> "http://$host$streamUrlRaw"
+                            directUrlRaw.isNotEmpty() -> directUrlRaw
+                            else -> ""
+                        }
+
+                        if (finalUrl.isNotEmpty()) {
+                            playMediaStream(finalUrl, directUrlRaw, title)
+                        }
+                    }
+                    "media_pause" -> {
+                        val paused = json.optBoolean("paused", true)
+                        if (paused) {
+                            mediaPlayer?.pause()
+                            broadcastActionLog("musiqa", "Pauza qilindi")
+                        } else {
+                            mediaPlayer?.start()
+                            broadcastActionLog("musiqa", "Ijro davom etmoqda")
+                        }
+                    }
+                    "media_stop" -> {
+                        stopMediaStream()
+                        broadcastActionLog("musiqa", "To'xtatildi")
+                    }
+                    "media_seek" -> {
+                        val sec = json.optDouble("seconds", 0.0)
+                        val rel = json.optBoolean("relative", true)
+                        mediaPlayer?.let { mp ->
+                            val cur = mp.currentPosition
+                            val target = if (rel) (cur + (sec * 1000).toInt()) else (sec * 1000).toInt()
+                            mp.seekTo(target.coerceAtLeast(0))
+                        }
                     }
                     "log" -> {
                         val speaker = json.optString("speaker", "")
@@ -154,10 +210,10 @@ class JarvisForegroundService : Service() {
                 audioPlayer.start()
                 wsClient.connect(prefs.serverAddress, prefs.authToken)
 
-                if (prefs.continuousMode) {
-                    isMicStreaming = true
-                    audioRecorder.start()
-                }
+                // Always start continuous microphone recording
+                isMicStreaming = true
+                audioRecorder.start()
+                broadcastState("MIC_ON")
             }
             ACTION_TOGGLE_MIC -> {
                 toggleMicStreaming()
@@ -286,6 +342,7 @@ class JarvisForegroundService : Service() {
         val statusText = when {
             !isConnected -> "Kompyuterga ulanmoqda..."
             isSpeaking -> "🔊 JARVIS gapirmoqda"
+            currentMediaTitle.isNotEmpty() -> "🎵 $currentMediaTitle"
             isMicStreaming -> "🎤 Sizni eshitmoqda (Mikrofon ochiq)"
             else -> "🟢 Aloqada (Kutish rejimida)"
         }
@@ -303,6 +360,54 @@ class JarvisForegroundService : Service() {
             .addAction(R.drawable.ic_jarvis, "⚡ Uyg‘otish", wakeIntent)
             .addAction(R.drawable.ic_stop, "⏹️ To‘xtatish", stopIntent)
             .build()
+    }
+
+    private fun playMediaStream(url: String, fallbackUrl: String, title: String) {
+        try {
+            stopMediaStream()
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+                )
+                setDataSource(url)
+                setOnPreparedListener { mp ->
+                    mp.start()
+                    val vol = if (isSpeaking) 0.15f else 1.0f
+                    mp.setVolume(vol, vol)
+                    broadcastActionLog("musiqa", "Quloqchinda ijro etilmoqda: $title")
+                    updateNotification()
+                }
+                setOnCompletionListener {
+                    currentMediaTitle = ""
+                    broadcastActionLog("musiqa", "Ijro yakunlandi: $title")
+                    updateNotification()
+                }
+                setOnErrorListener { _, what, extra ->
+                    Log.e("JarvisService", "Media error: $what, extra: $extra")
+                    if (fallbackUrl.isNotEmpty() && url != fallbackUrl) {
+                        Log.d("JarvisService", "Retrying with fallback direct URL: $fallbackUrl")
+                        playMediaStream(fallbackUrl, "", title)
+                    }
+                    true
+                }
+                prepareAsync()
+            }
+        } catch (e: Exception) {
+            Log.e("JarvisService", "Failed to start media stream: ${e.message}")
+        }
+    }
+
+    private fun stopMediaStream() {
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+            currentMediaTitle = ""
+            updateNotification()
+        } catch (_: Exception) {}
     }
 
     private fun updateNotification() {
@@ -335,6 +440,7 @@ class JarvisForegroundService : Service() {
 
     override fun onDestroy() {
         prefs.isServiceRunning = false
+        stopMediaStream()
         audioRecorder.stop()
         audioPlayer.stop()
         scoManager.stop()

@@ -110,7 +110,7 @@ class JarvisWebSocketClient(
     }
 
     fun sendAudio(pcmChunk: ByteArray) {
-        webSocket?.send(ByteString.of(*pcmChunk))
+        webSocket?.send(ByteString.of(pcmChunk, 0, pcmChunk.size))
     }
 
     fun sendControl(json: JSONObject) {

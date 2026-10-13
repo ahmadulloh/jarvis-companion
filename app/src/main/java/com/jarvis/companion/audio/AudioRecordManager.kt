@@ -34,26 +34,40 @@ class AudioRecordManager(
         val bufferSize = minBufferSize.coerceAtLeast(sampleRate / 10 * 2) // ~100ms slices
 
         try {
-            audioRecord = AudioRecord(
+            val sources = listOf(
+                MediaRecorder.AudioSource.VOICE_RECOGNITION,
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                sampleRate,
-                channelConfig,
-                audioFormat,
-                bufferSize
+                MediaRecorder.AudioSource.MIC
             )
 
-            if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-                Log.e("AudioRecordManager", "AudioRecord initialization failed")
-                return
+            var record: AudioRecord? = null
+            for (src in sources) {
+                try {
+                    val candidate = AudioRecord(src, sampleRate, channelConfig, audioFormat, bufferSize)
+                    if (candidate.state == AudioRecord.STATE_INITIALIZED) {
+                        record = candidate
+                        Log.d("AudioRecordManager", "AudioRecord initialized with source $src")
+                        break
+                    } else {
+                        candidate.release()
+                    }
+                } catch (e: Exception) {
+                    Log.w("AudioRecordManager", "Source $src init failed: ${e.message}")
+                }
             }
 
-            // Route to Bluetooth headset microphone if available
+            if (record == null) {
+                Log.e("AudioRecordManager", "Failed to initialize AudioRecord with any source")
+                return
+            }
+            audioRecord = record
+
+            // Route to Bluetooth headset microphone if available (SCO or BLE Headset only, never A2DP)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
                 val btDevice = am.availableCommunicationDevices.find {
                     it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }
                 if (btDevice != null) {
                     val prefSet = audioRecord?.setPreferredDevice(btDevice)
@@ -70,17 +84,11 @@ class AudioRecordManager(
                     val readBytes = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                     if (readBytes > 0) {
                         val chunk = buffer.copyOf(readBytes)
-                        if (vadEnabled) {
-                            val rms = calculateRms(chunk)
-                            if (rms >= vadThreshold) {
-                                onAudioChunk(chunk)
-                            }
-                        } else {
-                            onAudioChunk(chunk)
-                        }
+                        onAudioChunk(chunk)
                     }
                 }
             }.apply {
+                name = "JarvisAudioRecordThread"
                 priority = Thread.MAX_PRIORITY
                 start()
             }
