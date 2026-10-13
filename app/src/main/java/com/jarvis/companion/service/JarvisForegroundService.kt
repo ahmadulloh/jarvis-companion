@@ -35,6 +35,7 @@ class JarvisForegroundService : Service() {
         const val ACTION_START = "com.jarvis.companion.ACTION_START"
         const val ACTION_STOP = "com.jarvis.companion.ACTION_STOP"
         const val ACTION_TOGGLE_MIC = "com.jarvis.companion.ACTION_TOGGLE_MIC"
+        const val ACTION_WAKE = "com.jarvis.companion.ACTION_WAKE"
         const val BROADCAST_STATE_CHANGE = "com.jarvis.companion.STATE_CHANGE"
         const val EXTRA_STATE = "extra_state"
 
