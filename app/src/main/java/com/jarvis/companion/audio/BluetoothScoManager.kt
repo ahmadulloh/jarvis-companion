@@ -77,8 +77,28 @@ class BluetoothScoManager(
         }
     }
 
+    fun isBluetoothHeadsetConnected(): Boolean {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val devices = audioManager.availableCommunicationDevices
+                if (devices.any {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                }) return true
+            }
+            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+            return inputDevices.any {
+                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+            }
+        } catch (_: Exception) {
+            return false
+        }
+    }
+
     private fun routeBluetoothAudio() {
         try {
+            var commDeviceSet = false
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val devices = audioManager.availableCommunicationDevices
                 val btDevice = devices.find {
@@ -86,16 +106,24 @@ class BluetoothScoManager(
                     it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }
                 if (btDevice != null) {
-                    val success = audioManager.setCommunicationDevice(btDevice)
-                    Log.d("BluetoothScoManager", "setCommunicationDevice: $success (${btDevice.productName})")
-                    onScoStateChanged(success)
-                    return
+                    commDeviceSet = audioManager.setCommunicationDevice(btDevice)
+                    Log.d("BluetoothScoManager", "setCommunicationDevice: $commDeviceSet (${btDevice.productName})")
                 }
             }
 
-            // Fallback for Android 11 or if communication device not yet available
-            audioManager.startBluetoothSco()
-            audioManager.isBluetoothScoOn = true
+            // CRITICAL: On Xiaomi MIUI/HyperOS (Redmi Note 11) and many Android devices,
+            // startBluetoothSco() MUST also be called to open the physical SCO RF voice link.
+            try {
+                audioManager.startBluetoothSco()
+                audioManager.isBluetoothScoOn = true
+                Log.d("BluetoothScoManager", "startBluetoothSco requested")
+            } catch (e: Exception) {
+                Log.w("BluetoothScoManager", "startBluetoothSco: ${e.message}")
+            }
+
+            if (commDeviceSet) {
+                onScoStateChanged(true)
+            }
         } catch (e: Exception) {
             Log.w("BluetoothScoManager", "routeBluetoothAudio error: ${e.message}")
         }

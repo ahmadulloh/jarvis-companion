@@ -90,6 +90,11 @@ class JarvisForegroundService : Service() {
         scoManager = BluetoothScoManager(this) { scoConnected ->
             Log.d("JarvisService", "Bluetooth SCO state: $scoConnected")
             updateNotification()
+            val status = if (scoConnected) "🎧 Quloqchin ulandi" else "📱 Telefon mikrofoni"
+            broadcastActionLog("audio_route", status)
+            if (isMicStreaming) {
+                audioRecorder.updateRouting()
+            }
         }
 
         wsClient = JarvisWebSocketClient(
