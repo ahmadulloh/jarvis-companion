@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.media.AudioDeviceInfo
 import android.media.AudioManager
+import android.os.Build
 import android.util.Log
 
 class BluetoothScoManager(
@@ -38,12 +40,30 @@ class BluetoothScoManager(
     fun start() {
         if (isScoStarted) return
         try {
+            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+
+            // Modern Android 12+ (API 31+) route for Bluetooth headset
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val devices = audioManager.availableCommunicationDevices
+                val btDevice = devices.find {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                }
+                if (btDevice != null) {
+                    val success = audioManager.setCommunicationDevice(btDevice)
+                    Log.d("BluetoothScoManager", "setCommunicationDevice: $success (${btDevice.productName})")
+                    onScoStateChanged(true)
+                }
+            }
+
+            // Legacy fallback for Android 11 and lower
             val filter = IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
             context.registerReceiver(scoReceiver, filter)
             isReceiverRegistered = true
 
-            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
             audioManager.startBluetoothSco()
+            audioManager.isBluetoothScoOn = true
             isScoStarted = true
             Log.d("BluetoothScoManager", "Starting Bluetooth SCO...")
         } catch (e: Exception) {
@@ -54,6 +74,9 @@ class BluetoothScoManager(
     fun stop() {
         if (!isScoStarted) return
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                audioManager.clearCommunicationDevice()
+            }
             audioManager.stopBluetoothSco()
             audioManager.isBluetoothScoOn = false
             audioManager.mode = AudioManager.MODE_NORMAL

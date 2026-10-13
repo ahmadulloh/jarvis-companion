@@ -65,7 +65,7 @@ class JarvisForegroundService : Service() {
 
         audioPlayer = AudioTrackPlayer(sampleRate = 24000)
 
-        audioRecorder = AudioRecordManager(sampleRate = 16000) { pcmChunk ->
+        audioRecorder = AudioRecordManager(this, sampleRate = 16000) { pcmChunk ->
             if (isMicStreaming && isConnected) {
                 wsClient.sendAudio(pcmChunk)
             }

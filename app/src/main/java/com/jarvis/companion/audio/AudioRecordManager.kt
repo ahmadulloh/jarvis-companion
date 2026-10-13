@@ -1,13 +1,18 @@
 package com.jarvis.companion.audio
 
 import android.annotation.SuppressLint
+import android.content.Context
+import android.media.AudioDeviceInfo
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Build
 import android.util.Log
 import kotlin.math.sqrt
 
 class AudioRecordManager(
+    private val context: Context,
     private val sampleRate: Int = 16000,
     private val onAudioChunk: (ByteArray) -> Unit
 ) {
@@ -15,9 +20,9 @@ class AudioRecordManager(
     private var isRecording = false
     private var recordingThread: Thread? = null
 
-    // VAD (Voice Activity Detection) threshold: silence RMS is usually < 400
+    // VAD threshold: Bluetooth earphone mic gain is low, so threshold is sensitive
     var vadEnabled: Boolean = false
-    var vadThreshold: Double = 450.0
+    var vadThreshold: Double = 90.0
 
     @SuppressLint("MissingPermission")
     fun start() {
@@ -40,6 +45,20 @@ class AudioRecordManager(
             if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
                 Log.e("AudioRecordManager", "AudioRecord initialization failed")
                 return
+            }
+
+            // Route to Bluetooth headset microphone if available
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val btDevice = am.availableCommunicationDevices.find {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+                }
+                if (btDevice != null) {
+                    val prefSet = audioRecord?.setPreferredDevice(btDevice)
+                    Log.d("AudioRecordManager", "setPreferredDevice: $prefSet (${btDevice.productName})")
+                }
             }
 
             audioRecord?.startRecording()
