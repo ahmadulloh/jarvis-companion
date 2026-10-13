@@ -35,10 +35,19 @@ class JarvisForegroundService : Service() {
         const val ACTION_START = "com.jarvis.companion.ACTION_START"
         const val ACTION_STOP = "com.jarvis.companion.ACTION_STOP"
         const val ACTION_TOGGLE_MIC = "com.jarvis.companion.ACTION_TOGGLE_MIC"
-        const val ACTION_WAKE = "com.jarvis.companion.ACTION_WAKE"
-
         const val BROADCAST_STATE_CHANGE = "com.jarvis.companion.STATE_CHANGE"
         const val EXTRA_STATE = "extra_state"
+
+        const val BROADCAST_CHAT_LOG = "com.jarvis.companion.CHAT_LOG"
+        const val EXTRA_SPEAKER = "extra_speaker"
+        const val EXTRA_TEXT = "extra_text"
+
+        const val BROADCAST_ACTION_LOG = "com.jarvis.companion.ACTION_LOG"
+        const val EXTRA_ACTION_NAME = "extra_action_name"
+        const val EXTRA_ACTION_RESULT = "extra_action_result"
+
+        const val ACTION_SEND_TEXT = "com.jarvis.companion.ACTION_SEND_TEXT"
+        const val EXTRA_COMMAND_TEXT = "extra_command_text"
     }
 
     private lateinit var prefs: PreferencesHelper
@@ -108,6 +117,26 @@ class JarvisForegroundService : Service() {
                     "interrupt" -> {
                         audioPlayer.flush()
                     }
+                    "log" -> {
+                        val speaker = json.optString("speaker", "")
+                        val text = json.optString("text", "")
+                        if (text.isNotEmpty()) {
+                            broadcastChatLog(speaker, text)
+                        }
+                    }
+                    "action" -> {
+                        val name = json.optString("name", "")
+                        val result = json.optString("result", "")
+                        if (name.isNotEmpty()) {
+                            broadcastActionLog(name, result)
+                        }
+                    }
+                    "status" -> {
+                        val state = json.optString("state", "")
+                        if (state.isNotEmpty()) {
+                            broadcastState(state)
+                        }
+                    }
                 }
             }
         )
@@ -137,6 +166,13 @@ class JarvisForegroundService : Service() {
                 playBeep()
                 if (!isMicStreaming) {
                     toggleMicStreaming()
+                }
+            }
+            ACTION_SEND_TEXT -> {
+                val cmd = intent?.getStringExtra(EXTRA_COMMAND_TEXT) ?: ""
+                if (cmd.isNotBlank()) {
+                    wsClient.sendText(cmd)
+                    broadcastChatLog("user", cmd)
                 }
             }
             ACTION_STOP -> {
@@ -276,6 +312,22 @@ class JarvisForegroundService : Service() {
     private fun broadcastState(state: String) {
         val intent = Intent(BROADCAST_STATE_CHANGE).apply {
             putExtra(EXTRA_STATE, state)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastChatLog(speaker: String, text: String) {
+        val intent = Intent(BROADCAST_CHAT_LOG).apply {
+            putExtra(EXTRA_SPEAKER, speaker)
+            putExtra(EXTRA_TEXT, text)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastActionLog(name: String, result: String) {
+        val intent = Intent(BROADCAST_ACTION_LOG).apply {
+            putExtra(EXTRA_ACTION_NAME, name)
+            putExtra(EXTRA_ACTION_RESULT, result)
         }
         sendBroadcast(intent)
     }

@@ -8,7 +8,7 @@ class PreferencesHelper(context: Context) {
         context.getSharedPreferences("jarvis_companion_prefs", Context.MODE_PRIVATE)
 
     var serverAddress: String
-        get() = prefs.getString("server_address", "100.100.100.100:8000") ?: "100.100.100.100:8000"
+        get() = prefs.getString("server_address", "100.112.86.116:8000") ?: "100.112.86.116:8000"
         set(value) = prefs.edit().putString("server_address", value.trim()).apply()
 
     var authToken: String

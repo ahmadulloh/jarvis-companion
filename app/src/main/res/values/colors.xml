@@ -7,4 +7,7 @@
     <color name="jarvis_text_dim">#80DEEA</color>
     <color name="jarvis_accent">#00E676</color>
     <color name="jarvis_red">#FF5252</color>
+    <color name="jarvis_amber">#FFB300</color>
+    <color name="jarvis_user_bubble">#102A43</color>
+    <color name="jarvis_action_card">#2A2410</color>
 </resources>

@@ -124,6 +124,14 @@ class JarvisWebSocketClient(
         sendControl(json)
     }
 
+    fun sendText(text: String) {
+        val json = JSONObject().apply {
+            put("type", "text")
+            put("text", text)
+        }
+        sendControl(json)
+    }
+
     fun disconnect() {
         isManuallyStopped = true
         webSocket?.close(1000, "User disconnected")
