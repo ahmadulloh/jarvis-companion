@@ -35,25 +35,25 @@ class LiveEventAdapter(
             EventType.USER -> {
                 holder.tvTitle.text = "[Siz] 👤"
                 holder.tvTitle.setTextColor(Color.parseColor("#00E5FF"))
-                holder.card.strokeColor = Color.parseColor("#00838F")
+                holder.card.setStrokeColor(Color.parseColor("#00838F"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#102A43"))
             }
             EventType.JARVIS -> {
                 holder.tvTitle.text = "[JARVIS] 🤖"
                 holder.tvTitle.setTextColor(Color.parseColor("#00E676"))
-                holder.card.strokeColor = Color.parseColor("#00E5FF")
+                holder.card.setStrokeColor(Color.parseColor("#00E5FF"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#131B2A"))
             }
             EventType.ACTION -> {
                 holder.tvTitle.text = "⚡ [AMAL / PLAGIN] " + item.title
                 holder.tvTitle.setTextColor(Color.parseColor("#FFB300"))
-                holder.card.strokeColor = Color.parseColor("#FFB300")
+                holder.card.setStrokeColor(Color.parseColor("#FFB300"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#2A2410"))
             }
             EventType.SYSTEM -> {
                 holder.tvTitle.text = "ℹ️ [TIZIM]"
                 holder.tvTitle.setTextColor(Color.parseColor("#80DEEA"))
-                holder.card.strokeColor = Color.parseColor("#00838F")
+                holder.card.setStrokeColor(Color.parseColor("#00838F"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#131B2A"))
             }
         }
