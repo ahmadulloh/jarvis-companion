@@ -28,8 +28,8 @@ class AudioRecordManager(
     var vadEnabled: Boolean = false
     var vadThreshold: Double = 90.0
 
-    // Software digital gain boost (1.5x) to compensate for low Bluetooth earbud mic gain
-    var gainBoost: Float = 1.5f
+    // Software digital gain boost (2.5x = ~8dB) to compensate for low Bluetooth earbud mic gain
+    var gainBoost: Float = 2.5f
 
     private fun getBluetoothInputDevice(): AudioDeviceInfo? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -112,11 +112,6 @@ class AudioRecordManager(
                     val readBytes = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                     if (readBytes > 0) {
                         applyGain(buffer, readBytes)
-                        val rms = calculateRms(buffer, readBytes)
-                        if (rms < 32.0) {
-                            // Squelch static floor hiss from cheap Bluetooth mic
-                            buffer.fill(0, 0, readBytes)
-                        }
                         val chunk = buffer.copyOf(readBytes)
                         onAudioChunk(chunk)
                     }
