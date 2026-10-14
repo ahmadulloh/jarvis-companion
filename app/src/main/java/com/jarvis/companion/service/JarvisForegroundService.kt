@@ -91,7 +91,10 @@ class JarvisForegroundService : Service() {
         }
         audioRecorder.vadEnabled = false
 
+        var lastScoState: Boolean? = null
         scoManager = BluetoothScoManager(this) { scoConnected ->
+            if (lastScoState == scoConnected) return@BluetoothScoManager
+            lastScoState = scoConnected
             Log.d("JarvisService", "Bluetooth SCO state: $scoConnected")
             updateNotification()
             val status = if (scoConnected) "🎧 Quloqchin ulandi" else "📱 Telefon mikrofoni"

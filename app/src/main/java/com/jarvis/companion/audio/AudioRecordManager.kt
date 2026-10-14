@@ -148,21 +148,8 @@ class AudioRecordManager(
         if (!isRecording) return
         Log.d("AudioRecordManager", "updateRouting called on SCO state change")
         audioRecord?.let { record ->
-            if (bindBluetoothInputDevice(record)) {
-                return
-            }
+            bindBluetoothInputDevice(record)
         }
-        // If setPreferredDevice did not bind directly, perform a smooth non-blocking restart
-        Thread {
-            try {
-                Log.d("AudioRecordManager", "Restarting AudioRecord to catch new SCO route")
-                stop()
-                Thread.sleep(200)
-                start()
-            } catch (e: Exception) {
-                Log.e("AudioRecordManager", "Restart error: ${e.message}")
-            }
-        }.start()
     }
 
     private fun applyGain(buffer: ByteArray, bytesRead: Int) {

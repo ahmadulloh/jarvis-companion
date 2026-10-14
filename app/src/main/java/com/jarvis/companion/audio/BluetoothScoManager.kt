@@ -39,6 +39,23 @@ class BluetoothScoManager(
         }
     }
 
+    private var lastReportedState: Boolean? = null
+    private fun notifyStateChanged(state: Boolean) {
+        if (lastReportedState == state) return
+        lastReportedState = state
+        onScoStateChanged(state)
+    }
+
+    fun isBluetoothAudioRouted(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val comm = audioManager.communicationDevice
+            if (comm != null && (comm.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || comm.type == AudioDeviceInfo.TYPE_BLE_HEADSET)) {
+                return true
+            }
+        }
+        return audioManager.isBluetoothScoOn
+    }
+
     private val scoReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED) {
@@ -48,13 +65,15 @@ class BluetoothScoManager(
                         Log.d("BluetoothScoManager", "Bluetooth SCO Connected")
                         audioManager.isBluetoothScoOn = true
                         isReconnecting = false
-                        onScoStateChanged(true)
+                        notifyStateChanged(true)
                     }
                     AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
                         Log.d("BluetoothScoManager", "Bluetooth SCO Disconnected")
                         audioManager.isBluetoothScoOn = false
-                        onScoStateChanged(false)
-                        scheduleScoReconnect(1000L)
+                        if (!isBluetoothAudioRouted()) {
+                            notifyStateChanged(false)
+                            scheduleScoReconnect(1500L)
+                        }
                     }
                 }
             }
@@ -65,12 +84,12 @@ class BluetoothScoManager(
         override fun run() {
             if (isScoStarted) {
                 if (isBluetoothHeadsetConnected()) {
-                    if (!audioManager.isBluetoothScoOn && !isReconnecting) {
-                        Log.d("BluetoothScoManager", "Watchdog: SCO off but headset connected, reconnecting...")
+                    if (!isBluetoothAudioRouted() && !isReconnecting) {
+                        Log.d("BluetoothScoManager", "Watchdog: Audio route lost but headset connected, reconnecting...")
                         routeBluetoothAudio()
                     }
                 }
-                handler.postDelayed(this, 3000L)
+                handler.postDelayed(this, 5000L)
             }
         }
     }
@@ -78,8 +97,8 @@ class BluetoothScoManager(
     private fun scheduleScoReconnect(delayMs: Long) {
         if (!isScoStarted) return
         handler.postDelayed({
-            if (isScoStarted && isBluetoothHeadsetConnected() && !audioManager.isBluetoothScoOn) {
-                Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth SCO...")
+            if (isScoStarted && isBluetoothHeadsetConnected() && !isBluetoothAudioRouted()) {
+                Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth audio...")
                 routeBluetoothAudio()
             }
         }, delayMs)
@@ -129,9 +148,12 @@ class BluetoothScoManager(
     }
 
     private fun routeBluetoothAudio() {
+        if (isBluetoothAudioRouted()) {
+            Log.d("BluetoothScoManager", "Already routed to Bluetooth, skipping")
+            return
+        }
         try {
             isReconnecting = true
-            var commDeviceSet = false
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val devices = audioManager.availableCommunicationDevices
                 val btDevice = devices.find {
@@ -139,21 +161,22 @@ class BluetoothScoManager(
                     it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }
                 if (btDevice != null) {
-                    commDeviceSet = audioManager.setCommunicationDevice(btDevice)
+                    val commDeviceSet = audioManager.setCommunicationDevice(btDevice)
                     Log.d("BluetoothScoManager", "setCommunicationDevice: $commDeviceSet (${btDevice.productName})")
+                    if (commDeviceSet) {
+                        isReconnecting = false
+                        notifyStateChanged(true)
+                        return
+                    }
                 }
             }
 
             try {
                 audioManager.startBluetoothSco()
                 audioManager.isBluetoothScoOn = true
-                Log.d("BluetoothScoManager", "startBluetoothSco requested")
+                Log.d("BluetoothScoManager", "startBluetoothSco requested (legacy)")
             } catch (e: Exception) {
                 Log.w("BluetoothScoManager", "startBluetoothSco: ${e.message}")
-            }
-
-            if (commDeviceSet) {
-                onScoStateChanged(true)
             }
         } catch (e: Exception) {
             Log.w("BluetoothScoManager", "routeBluetoothAudio error: ${e.message}")
