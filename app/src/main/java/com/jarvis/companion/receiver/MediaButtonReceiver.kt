@@ -14,10 +14,12 @@ class MediaButtonReceiver : BroadcastReceiver() {
                 when (keyEvent.keyCode) {
                     KeyEvent.KEYCODE_HEADSETHOOK,
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
-                    KeyEvent.KEYCODE_MEDIA_PLAY -> {
-                        // Toggle mic / wake via Service
+                    KeyEvent.KEYCODE_MEDIA_PLAY,
+                    KeyEvent.KEYCODE_MEDIA_PAUSE,
+                    KeyEvent.KEYCODE_MEDIA_NEXT,
+                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
                         val serviceIntent = Intent(context, JarvisForegroundService::class.java).apply {
-                            action = JarvisForegroundService.ACTION_TOGGLE_MIC
+                            action = JarvisForegroundService.ACTION_EARBUD_TAP
                         }
                         context.startService(serviceIntent)
                     }

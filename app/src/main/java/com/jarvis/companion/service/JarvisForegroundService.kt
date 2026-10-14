@@ -13,8 +13,11 @@ import android.media.MediaPlayer
 import android.media.ToneGenerator
 import android.net.wifi.WifiManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
@@ -38,6 +41,7 @@ class JarvisForegroundService : Service() {
         const val ACTION_STOP = "com.jarvis.companion.ACTION_STOP"
         const val ACTION_TOGGLE_MIC = "com.jarvis.companion.ACTION_TOGGLE_MIC"
         const val ACTION_WAKE = "com.jarvis.companion.ACTION_WAKE"
+        const val ACTION_EARBUD_TAP = "com.jarvis.companion.ACTION_EARBUD_TAP"
         const val BROADCAST_STATE_CHANGE = "com.jarvis.companion.STATE_CHANGE"
         const val EXTRA_STATE = "extra_state"
 
@@ -230,6 +234,9 @@ class JarvisForegroundService : Service() {
                     toggleMicStreaming()
                 }
             }
+            ACTION_EARBUD_TAP -> {
+                handleEarbudTap()
+            }
             ACTION_SEND_TEXT -> {
                 val cmd = intent?.getStringExtra(EXTRA_COMMAND_TEXT) ?: ""
                 if (cmd.isNotBlank()) {
@@ -243,6 +250,70 @@ class JarvisForegroundService : Service() {
         }
 
         return START_STICKY
+    }
+
+    private var lastTapTime = 0L
+    private val tapHandler = Handler(Looper.getMainLooper())
+    private var pendingTapRunnable: Runnable? = null
+
+    private fun handleEarbudTap() {
+        val now = SystemClock.elapsedRealtime()
+        val diff = now - lastTapTime
+
+        if (diff in 50..450) {
+            // DOUBLE TAP! (2 marta urildi)
+            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+            pendingTapRunnable = null
+            lastTapTime = 0L
+            onEarbudDoubleTap()
+        } else {
+            // SINGLE TAP (1 marta bosildi) — 400ms kutib, 2-marta bosilmasa bajariladi
+            lastTapTime = now
+            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+            val r = Runnable {
+                pendingTapRunnable = null
+                onEarbudSingleTap()
+            }
+            pendingTapRunnable = r
+            tapHandler.postDelayed(r, 400)
+        }
+    }
+
+    private fun onEarbudSingleTap() {
+        Log.d("JarvisService", "Earbud Single Tap: Labbay, eshitaman")
+        playBeep(highPitch = true)
+
+        broadcastChatLog("jarvis", "Labbay, Axmadulloh sir, eshitaman!")
+        broadcastState("LISTENING")
+
+        wsClient.sendWake()
+        wsClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
+
+        if (!isMicStreaming) {
+            isMicStreaming = true
+            audioRecorder.start()
+        }
+    }
+
+    private fun onEarbudDoubleTap() {
+        Log.d("JarvisService", "Earbud Double Tap: Interrupted — listening...")
+        playDoubleBeep()
+
+        // Flush and stop audio output immediately
+        audioPlayer.flush()
+        try {
+            mediaPlayer?.pause()
+        } catch (_: Exception) {}
+
+        wsClient.sendInterrupt()
+
+        broadcastChatLog("jarvis", "⚡ Interrupted — listening...")
+        broadcastState("LISTENING")
+
+        if (!isMicStreaming) {
+            isMicStreaming = true
+            audioRecorder.start()
+        }
     }
 
     private fun toggleMicStreaming() {
@@ -261,10 +332,18 @@ class JarvisForegroundService : Service() {
         updateNotification()
     }
 
-    private fun playBeep() {
+    private fun playBeep(highPitch: Boolean = false) {
         try {
-            val tone = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 60)
-            tone.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+            val tone = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 75)
+            val toneType = if (highPitch) ToneGenerator.TONE_PROP_PROMPT else ToneGenerator.TONE_PROP_BEEP
+            tone.startTone(toneType, 120)
+        } catch (_: Exception) {}
+    }
+
+    private fun playDoubleBeep() {
+        try {
+            val tone = ToneGenerator(AudioManager.STREAM_VOICE_CALL, 75)
+            tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 180)
         } catch (_: Exception) {}
     }
 
@@ -286,21 +365,22 @@ class JarvisForegroundService : Service() {
             setPlaybackState(
                 PlaybackStateCompat.Builder()
                     .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
-                    .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_PLAY)
+                    .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
                     .build()
             )
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
                     val keyEvent = mediaButtonEvent?.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
                     if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
-                        toggleMicStreaming()
+                        handleEarbudTap()
                         return true
                     }
                     return super.onMediaButtonEvent(mediaButtonEvent)
                 }
 
-                override fun onPlay() { toggleMicStreaming() }
-                override fun onPause() { toggleMicStreaming() }
+                override fun onPlay() { handleEarbudTap() }
+                override fun onPause() { handleEarbudTap() }
+                override fun onSkipToNext() { onEarbudDoubleTap() }
             })
             isActive = true
         }
@@ -373,7 +453,7 @@ class JarvisForegroundService : Service() {
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
                         .build()
                 )

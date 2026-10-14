@@ -10,6 +10,8 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 
 class BluetoothScoManager(
@@ -21,6 +23,9 @@ class BluetoothScoManager(
     private var isReceiverRegistered = false
     private var isDeviceCallbackRegistered = false
     private var audioFocusRequest: AudioFocusRequest? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+    private var isReconnecting = false
 
     private val deviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
@@ -42,16 +47,42 @@ class BluetoothScoManager(
                     AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
                         Log.d("BluetoothScoManager", "Bluetooth SCO Connected")
                         audioManager.isBluetoothScoOn = true
+                        isReconnecting = false
                         onScoStateChanged(true)
                     }
                     AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
                         Log.d("BluetoothScoManager", "Bluetooth SCO Disconnected")
                         audioManager.isBluetoothScoOn = false
                         onScoStateChanged(false)
+                        scheduleScoReconnect(1000L)
                     }
                 }
             }
         }
+    }
+
+    private val watchdogRunnable = object : Runnable {
+        override fun run() {
+            if (isScoStarted) {
+                if (isBluetoothHeadsetConnected()) {
+                    if (!audioManager.isBluetoothScoOn && !isReconnecting) {
+                        Log.d("BluetoothScoManager", "Watchdog: SCO off but headset connected, reconnecting...")
+                        routeBluetoothAudio()
+                    }
+                }
+                handler.postDelayed(this, 3000L)
+            }
+        }
+    }
+
+    private fun scheduleScoReconnect(delayMs: Long) {
+        if (!isScoStarted) return
+        handler.postDelayed({
+            if (isScoStarted && isBluetoothHeadsetConnected() && !audioManager.isBluetoothScoOn) {
+                Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth SCO...")
+                routeBluetoothAudio()
+            }
+        }, delayMs)
     }
 
     fun start() {
@@ -71,7 +102,8 @@ class BluetoothScoManager(
 
             routeBluetoothAudio()
             isScoStarted = true
-            Log.d("BluetoothScoManager", "Bluetooth SCO manager started")
+            handler.postDelayed(watchdogRunnable, 3000L)
+            Log.d("BluetoothScoManager", "Bluetooth SCO manager started with watchdog")
         } catch (e: Exception) {
             Log.e("BluetoothScoManager", "Failed to start SCO: ${e.message}")
         }
@@ -98,6 +130,7 @@ class BluetoothScoManager(
 
     private fun routeBluetoothAudio() {
         try {
+            isReconnecting = true
             var commDeviceSet = false
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val devices = audioManager.availableCommunicationDevices
@@ -111,8 +144,6 @@ class BluetoothScoManager(
                 }
             }
 
-            // CRITICAL: On Xiaomi MIUI/HyperOS (Redmi Note 11) and many Android devices,
-            // startBluetoothSco() MUST also be called to open the physical SCO RF voice link.
             try {
                 audioManager.startBluetoothSco()
                 audioManager.isBluetoothScoOn = true
@@ -154,6 +185,7 @@ class BluetoothScoManager(
     fun stop() {
         if (!isScoStarted) return
         try {
+            handler.removeCallbacksAndMessages(null)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isDeviceCallbackRegistered) {
                 audioManager.unregisterAudioDeviceCallback(deviceCallback)
                 isDeviceCallbackRegistered = false

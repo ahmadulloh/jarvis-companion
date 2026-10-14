@@ -125,6 +125,13 @@ class JarvisWebSocketClient(
         sendControl(json)
     }
 
+    fun sendInterrupt() {
+        val json = JSONObject().apply {
+            put("type", "interrupt")
+        }
+        sendControl(json)
+    }
+
     fun sendText(text: String) {
         val json = JSONObject().apply {
             put("type", "text")
