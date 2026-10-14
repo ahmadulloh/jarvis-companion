@@ -256,11 +256,37 @@ class JarvisForegroundService : Service() {
     private val tapHandler = Handler(Looper.getMainLooper())
     private var pendingTapRunnable: Runnable? = null
 
-    private fun handleEarbudTap() {
+    private fun handleEarbudTap(keyCode: Int = KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+        // 1. If JARVIS is speaking, ANY touch/button on the earbud interrupts immediately!
+        if (isSpeaking) {
+            Log.d("JarvisService", "Earbud tapped while speaking -> Immediate Interrupt!")
+            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+            pendingTapRunnable = null
+            lastTapTime = 0L
+            onEarbudDoubleTap()
+            return
+        }
+
+        // 2. i12 TWS and other Bluetooth earbuds send KEYCODE_MEDIA_NEXT / PREVIOUS on hardware double-tap
+        when (keyCode) {
+            KeyEvent.KEYCODE_MEDIA_NEXT,
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+            KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                Log.d("JarvisService", "Hardware double-tap keycode ($keyCode) -> Interrupted/Listening")
+                pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+                pendingTapRunnable = null
+                lastTapTime = 0L
+                onEarbudDoubleTap()
+                return
+            }
+        }
+
+        // 3. Single vs double tap detection on generic click events
         val now = SystemClock.elapsedRealtime()
         val diff = now - lastTapTime
 
-        if (diff in 50..450) {
+        if (diff in 50..500) {
             // DOUBLE TAP! (2 marta urildi)
             pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
             pendingTapRunnable = null
@@ -365,22 +391,32 @@ class JarvisForegroundService : Service() {
             setPlaybackState(
                 PlaybackStateCompat.Builder()
                     .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1.0f)
-                    .setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE or PlaybackStateCompat.ACTION_PLAY or PlaybackStateCompat.ACTION_SKIP_TO_NEXT)
+                    .setActions(
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE or
+                        PlaybackStateCompat.ACTION_PLAY or
+                        PlaybackStateCompat.ACTION_PAUSE or
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                        PlaybackStateCompat.ACTION_STOP
+                    )
                     .build()
             )
             setCallback(object : MediaSessionCompat.Callback() {
                 override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
                     val keyEvent = mediaButtonEvent?.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
                     if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
-                        handleEarbudTap()
+                        Log.d("JarvisService", "MediaButtonEvent keyCode=${keyEvent.keyCode}")
+                        handleEarbudTap(keyEvent.keyCode)
                         return true
                     }
                     return super.onMediaButtonEvent(mediaButtonEvent)
                 }
 
-                override fun onPlay() { handleEarbudTap() }
-                override fun onPause() { handleEarbudTap() }
+                override fun onPlay() { handleEarbudTap(KeyEvent.KEYCODE_MEDIA_PLAY) }
+                override fun onPause() { handleEarbudTap(KeyEvent.KEYCODE_MEDIA_PAUSE) }
                 override fun onSkipToNext() { onEarbudDoubleTap() }
+                override fun onSkipToPrevious() { onEarbudDoubleTap() }
+                override fun onStop() { onEarbudDoubleTap() }
             })
             isActive = true
         }

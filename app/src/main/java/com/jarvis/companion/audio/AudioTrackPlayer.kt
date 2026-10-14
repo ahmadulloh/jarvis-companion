@@ -49,7 +49,12 @@ class AudioTrackPlayer(
         }
     }
 
+    private var discardUntil = 0L
+
     fun write(pcmChunk: ByteArray) {
+        if (System.currentTimeMillis() < discardUntil) {
+            return
+        }
         if (!isPlaying || audioTrack == null) {
             start()
         }
@@ -61,6 +66,7 @@ class AudioTrackPlayer(
     }
 
     fun flush() {
+        discardUntil = System.currentTimeMillis() + 800L
         try {
             audioTrack?.pause()
             audioTrack?.flush()
