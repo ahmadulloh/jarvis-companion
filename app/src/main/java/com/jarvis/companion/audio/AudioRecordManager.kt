@@ -154,12 +154,11 @@ class AudioRecordManager(
     fun updateRouting() {
         if (!isRecording) return
         Log.d("AudioRecordManager", "updateRouting called for route $currentRoute")
-        audioRecord?.let { record ->
-            if (currentRoute == AudioRoute.EARBUDS) {
-                bindBluetoothInputDevice(record)
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                record.preferredDevice = null
-            }
+        val record = audioRecord ?: return
+        if (currentRoute == AudioRoute.EARBUDS) {
+            bindBluetoothInputDevice(record)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            record.preferredDevice = null
         }
     }
 

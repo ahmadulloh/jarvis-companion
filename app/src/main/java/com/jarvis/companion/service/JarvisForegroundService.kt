@@ -26,9 +26,11 @@ import androidx.core.app.NotificationCompat
 import com.jarvis.companion.MainActivity
 import com.jarvis.companion.R
 import com.jarvis.companion.audio.AudioRecordManager
+import com.jarvis.companion.audio.AudioRoute
 import com.jarvis.companion.audio.AudioTrackPlayer
 import com.jarvis.companion.audio.BluetoothScoManager
 import com.jarvis.companion.network.JarvisWebSocketClient
+import com.jarvis.companion.util.PhoneActionManager
 import com.jarvis.companion.util.PreferencesHelper
 
 class JarvisForegroundService : Service() {
