@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_ios_card"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="0.08"
+        android:text="JARVIS SOZLAMALARI"
+        android:textColor="@color/night_text_primary"
+        android:textSize="16sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Server IP (Tailscale):"
+        android:textColor="@color/night_text_secondary"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etDialogServer"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_ios_action_chip"
+        android:hint="100.112.86.116:8000"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/night_text_primary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Xavfsizlik kaliti (Token):"
+        android:textColor="@color/night_text_secondary"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etDialogToken"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_ios_action_chip"
+        android:hint="jarvis-phone-companion-token"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/night_text_primary"
+        android:textSize="13sp" />
+
+    <CheckBox
+        android:id="@+id/cbDialogAutoStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Telefon yoqilganda avtomatik ulanish"
+        android:textColor="@color/night_text_primary"
+        android:textSize="12sp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGrantNotificationAccess"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/night_segment_bg"
+        android:text="💬 Telegram xabarlariga ruxsat berish"
+        android:textColor="@color/night_text_primary"
+        android:textSize="12sp"
+        app:cornerRadius="12dp"
+        app:strokeColor="@color/night_card_border"
+        app:strokeWidth="1dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnDialogSave"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginTop="18dp"
+        android:backgroundTint="@color/jarvis_cyan"
+        android:fontFamily="sans-serif-bold"
+        android:text="Saqlash va Ulanish"
+        android:textColor="#070A12"
+        android:textSize="13sp"
+        app:cornerRadius="14dp" />
+
+</LinearLayout>

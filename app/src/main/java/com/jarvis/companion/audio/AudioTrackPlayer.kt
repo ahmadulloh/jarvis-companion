@@ -49,9 +49,13 @@ class AudioTrackPlayer(
         }
     }
 
+    var currentRoute: AudioRoute = AudioRoute.EARBUDS
     private var discardUntil = 0L
 
     fun write(pcmChunk: ByteArray) {
+        if (currentRoute == AudioRoute.PC) {
+            return
+        }
         if (System.currentTimeMillis() < discardUntil) {
             return
         }

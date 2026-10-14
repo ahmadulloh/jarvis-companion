@@ -55,9 +55,20 @@ class JarvisForegroundService : Service() {
 
         const val ACTION_SEND_TEXT = "com.jarvis.companion.ACTION_SEND_TEXT"
         const val EXTRA_COMMAND_TEXT = "extra_command_text"
+
+        const val ACTION_SET_ROUTE = "com.jarvis.companion.ACTION_SET_ROUTE"
+        const val EXTRA_ROUTE = "extra_route"
+        const val BROADCAST_ROUTE_CHANGE = "com.jarvis.companion.ROUTE_CHANGE"
+        const val EXTRA_ROUTE_NAME = "extra_route_name"
+
+        const val BROADCAST_QURON_UPDATE = "com.jarvis.companion.QURON_UPDATE"
+        const val EXTRA_QURON_URL = "extra_quron_url"
+        const val EXTRA_QURON_SURA = "extra_quron_sura"
+        const val EXTRA_QURON_OYAT = "extra_quron_oyat"
     }
 
     private lateinit var prefs: PreferencesHelper
+    private lateinit var phoneActionManager: PhoneActionManager
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
     private var mediaSession: MediaSessionCompat? = null
@@ -67,6 +78,7 @@ class JarvisForegroundService : Service() {
     private lateinit var audioPlayer: AudioTrackPlayer
     private lateinit var wsClient: JarvisWebSocketClient
 
+    private var currentAudioRoute: AudioRoute = AudioRoute.EARBUDS
     private var isMicStreaming = false
     private var isConnected = false
     private var isSpeaking = false
@@ -77,6 +89,12 @@ class JarvisForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         prefs = PreferencesHelper(this)
+        phoneActionManager = PhoneActionManager(this)
+        currentAudioRoute = try {
+            AudioRoute.valueOf(prefs.audioRoute)
+        } catch (_: Exception) {
+            AudioRoute.EARBUDS
+        }
 
         acquireLocks()
         createNotificationChannel()
@@ -206,9 +224,88 @@ class JarvisForegroundService : Service() {
                             broadcastState(state)
                         }
                     }
+                    "phone_action" -> {
+                        val id = json.optString("id", "")
+                        val act = json.optString("action", "")
+                        val query = json.optString("query", "")
+                        val message = json.optString("message", "")
+                        val time = json.optString("time", "")
+                        val limit = json.optInt("limit", 5)
+
+                        val resText = when (act) {
+                            "call" -> phoneActionManager.makeCall(query)
+                            "sms" -> phoneActionManager.sendSms(query, message)
+                            "reminder" -> phoneActionManager.setReminder(query, time)
+                            "telegram_messages" -> phoneActionManager.getTelegramMessages(limit)
+                            else -> "Noma'lum amal: $act"
+                        }
+
+                        wsClient.sendControl(org.json.JSONObject().apply {
+                            put("type", "phone_action_result")
+                            put("id", id)
+                            put("result", resText)
+                        })
+                        broadcastActionLog("phone_$act", resText)
+                    }
+                    "set_route" -> {
+                        val rStr = json.optString("route", "").uppercase()
+                        try {
+                            val route = AudioRoute.valueOf(rStr)
+                            setAudioRoute(route)
+                        } catch (_: Exception) {}
+                    }
+                    "quron_lesson" -> {
+                        val url = json.optString("url", "")
+                        val sura = json.optString("sura", "")
+                        val oyat = json.optInt("oyat", 0)
+                        broadcastQuronUpdate(url, sura, oyat)
+                        broadcastActionLog("quron", "Qur'on darsi: $sura $oyat-oyat")
+                    }
                 }
             }
         )
+    }
+
+    fun setAudioRoute(route: AudioRoute) {
+        currentAudioRoute = route
+        prefs.audioRoute = route.name
+        scoManager.setAudioRoute(route)
+        audioRecorder.setAudioRoute(route)
+        audioPlayer.currentRoute = route
+
+        val label = when (route) {
+            AudioRoute.PC -> "💻 Kompyuter rejimi"
+            AudioRoute.PHONE -> "📱 Telefon dinamigi"
+            AudioRoute.EARBUDS -> "🎧 Bluetooth quloqchin"
+        }
+        broadcastActionLog("audio_route", label)
+        broadcastRouteChange(route.name)
+        updateNotification()
+
+        if (isConnected) {
+            wsClient.sendControl(org.json.JSONObject().apply {
+                put("type", "route_change")
+                put("route", route.name.lowercase())
+            })
+        }
+    }
+
+    private fun broadcastRouteChange(routeName: String) {
+        val intent = Intent(BROADCAST_ROUTE_CHANGE).apply {
+            putExtra(EXTRA_ROUTE_NAME, routeName)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastQuronUpdate(url: String, sura: String, oyat: Int) {
+        val intent = Intent(BROADCAST_QURON_UPDATE).apply {
+            putExtra(EXTRA_QURON_URL, url)
+            putExtra(EXTRA_QURON_SURA, sura)
+            putExtra(EXTRA_QURON_OYAT, oyat)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -225,7 +322,13 @@ class JarvisForegroundService : Service() {
                 // Always start continuous microphone recording
                 isMicStreaming = true
                 audioRecorder.start()
+                setAudioRoute(currentAudioRoute)
                 broadcastState("MIC_ON")
+            }
+            ACTION_SET_ROUTE -> {
+                val rName = intent?.getStringExtra(EXTRA_ROUTE) ?: AudioRoute.EARBUDS.name
+                val r = try { AudioRoute.valueOf(rName) } catch (_: Exception) { AudioRoute.EARBUDS }
+                setAudioRoute(r)
             }
             ACTION_TOGGLE_MIC -> {
                 toggleMicStreaming()

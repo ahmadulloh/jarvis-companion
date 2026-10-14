@@ -26,4 +26,8 @@ class PreferencesHelper(context: Context) {
     var isServiceRunning: Boolean
         get() = prefs.getBoolean("service_running", false)
         set(value) = prefs.edit().putBoolean("service_running", value).apply()
+
+    var audioRoute: String
+        get() = prefs.getString("audio_route", "EARBUDS") ?: "EARBUDS"
+        set(value) = prefs.edit().putString("audio_route", value).apply()
 }

@@ -111,6 +111,10 @@ class AudioRecordManager(
                 while (isRecording) {
                     val readBytes = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                     if (readBytes > 0) {
+                        if (currentRoute == AudioRoute.PC) {
+                            // In PC mode, PC uses its own microphone - phone companion mic is silent
+                            continue
+                        }
                         applyGain(buffer, readBytes)
                         val chunk = buffer.copyOf(readBytes)
                         onAudioChunk(chunk)
@@ -127,6 +131,14 @@ class AudioRecordManager(
         }
     }
 
+    var currentRoute: AudioRoute = AudioRoute.EARBUDS
+
+    fun setAudioRoute(route: AudioRoute) {
+        currentRoute = route
+        gainBoost = if (route == AudioRoute.EARBUDS) 2.5f else 1.2f
+        updateRouting()
+    }
+
     private fun bindBluetoothInputDevice(record: AudioRecord): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val btInput = getBluetoothInputDevice()
@@ -141,9 +153,13 @@ class AudioRecordManager(
 
     fun updateRouting() {
         if (!isRecording) return
-        Log.d("AudioRecordManager", "updateRouting called on SCO state change")
+        Log.d("AudioRecordManager", "updateRouting called for route $currentRoute")
         audioRecord?.let { record ->
-            bindBluetoothInputDevice(record)
+            if (currentRoute == AudioRoute.EARBUDS) {
+                bindBluetoothInputDevice(record)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                record.preferredDevice = null
+            }
         }
     }
 

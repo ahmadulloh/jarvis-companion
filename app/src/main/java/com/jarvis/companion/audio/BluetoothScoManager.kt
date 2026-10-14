@@ -56,6 +56,53 @@ class BluetoothScoManager(
         return audioManager.isBluetoothScoOn
     }
 
+    var currentRoute: AudioRoute = AudioRoute.EARBUDS
+
+    fun setAudioRoute(route: AudioRoute) {
+        currentRoute = route
+        Log.d("BluetoothScoManager", "setAudioRoute -> $route")
+        when (route) {
+            AudioRoute.EARBUDS -> {
+                try {
+                    audioManager.isSpeakerphoneOn = false
+                } catch (_: Exception) {}
+                routeBluetoothAudio()
+            }
+            AudioRoute.PHONE -> {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        val devices = audioManager.availableCommunicationDevices
+                        val speaker = devices.find { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
+                        if (speaker != null) {
+                            audioManager.setCommunicationDevice(speaker)
+                        } else {
+                            audioManager.clearCommunicationDevice()
+                        }
+                    }
+                    audioManager.stopBluetoothSco()
+                    audioManager.isBluetoothScoOn = false
+                    audioManager.isSpeakerphoneOn = true
+                } catch (e: Exception) {
+                    Log.w("BluetoothScoManager", "setAudioRoute PHONE error: ${e.message}")
+                }
+                notifyStateChanged(false)
+            }
+            AudioRoute.PC -> {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        audioManager.clearCommunicationDevice()
+                    }
+                    audioManager.stopBluetoothSco()
+                    audioManager.isBluetoothScoOn = false
+                    audioManager.isSpeakerphoneOn = false
+                } catch (e: Exception) {
+                    Log.w("BluetoothScoManager", "setAudioRoute PC error: ${e.message}")
+                }
+                notifyStateChanged(false)
+            }
+        }
+    }
+
     private val scoReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED) {
@@ -72,7 +119,9 @@ class BluetoothScoManager(
                         audioManager.isBluetoothScoOn = false
                         if (!isBluetoothAudioRouted()) {
                             notifyStateChanged(false)
-                            scheduleScoReconnect(1500L)
+                            if (currentRoute == AudioRoute.EARBUDS) {
+                                scheduleScoReconnect(1500L)
+                            }
                         }
                     }
                 }
@@ -82,7 +131,7 @@ class BluetoothScoManager(
 
     private val watchdogRunnable = object : Runnable {
         override fun run() {
-            if (isScoStarted) {
+            if (isScoStarted && currentRoute == AudioRoute.EARBUDS) {
                 if (isBluetoothHeadsetConnected()) {
                     if (!isBluetoothAudioRouted() && !isReconnecting) {
                         Log.d("BluetoothScoManager", "Watchdog: Audio route lost but headset connected, reconnecting...")
@@ -90,14 +139,16 @@ class BluetoothScoManager(
                     }
                 }
                 handler.postDelayed(this, 5000L)
+            } else if (isScoStarted) {
+                handler.postDelayed(this, 5000L)
             }
         }
     }
 
     private fun scheduleScoReconnect(delayMs: Long) {
-        if (!isScoStarted) return
+        if (!isScoStarted || currentRoute != AudioRoute.EARBUDS) return
         handler.postDelayed({
-            if (isScoStarted && isBluetoothHeadsetConnected() && !isBluetoothAudioRouted()) {
+            if (isScoStarted && currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected() && !isBluetoothAudioRouted()) {
                 Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth audio...")
                 routeBluetoothAudio()
             }
