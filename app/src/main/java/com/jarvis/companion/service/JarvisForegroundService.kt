@@ -651,7 +651,7 @@ class JarvisForegroundService : Service() {
                     mp.start()
                     val vol = if (isSpeaking) 0.15f else 1.0f
                     mp.setVolume(vol, vol)
-                    val dev = if (isBluetoothScoActive) "Quloqchinda" else "Telefonda"
+                    val dev = if (currentAudioRoute == AudioRoute.EARBUDS) "Quloqchinda" else "Telefonda"
                     broadcastActionLog("musiqa", "$dev ijro etilmoqda: $title")
                     updateNotification()
                 }
