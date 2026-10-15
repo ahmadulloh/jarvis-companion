@@ -11,6 +11,7 @@ import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.ToneGenerator
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
@@ -262,6 +263,16 @@ class JarvisForegroundService : Service() {
                         val oyat = json.optInt("oyat", 0)
                         broadcastQuronUpdate(url, sura, oyat)
                         broadcastActionLog("quron", "Qur'on darsi: $sura $oyat-oyat")
+                        if (url.isNotEmpty()) {
+                            try {
+                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(browserIntent)
+                            } catch (e: Exception) {
+                                Log.e("JarvisService", "Failed to open lesson URL: ${e.message}")
+                            }
+                        }
                     }
                 }
             }

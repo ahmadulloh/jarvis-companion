@@ -10,9 +10,11 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.view.Window
 import android.webkit.WebChromeClient
@@ -130,7 +132,10 @@ class MainActivity : AppCompatActivity() {
                     val url = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_URL) ?: ""
                     val sura = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_SURA) ?: ""
                     val oyat = intent.getIntExtra(JarvisForegroundService.EXTRA_QURON_OYAT, 0)
-                    if (url.isNotEmpty()) quronWebUrl = url
+                    if (url.isNotEmpty()) {
+                        quronWebUrl = url
+                        openQuronLesson(url)
+                    }
                     tvQuronBadge.text = "FAOL"
                     tvQuronBadge.setTextColor(Color.parseColor("#10B981"))
                     if (sura.isNotEmpty()) {
@@ -381,18 +386,33 @@ class MainActivity : AppCompatActivity() {
         btnStartQuron.setOnClickListener {
             sendJarvisCommand("Qur'on darsini boshlaymiz")
             tvQuronBadge.text = "BOSHLANMOQDA"
+            if (quronWebUrl.isNotEmpty()) {
+                openQuronLesson(quronWebUrl)
+            }
         }
         btnOpenQuronWeb.setOnClickListener {
             if (quronWebUrl.isNotEmpty()) {
-                openWebUrl(quronWebUrl)
+                openQuronLesson(quronWebUrl)
             } else {
                 val server = prefs.serverAddress.trim()
                     .removePrefix("http://")
                     .removePrefix("https://")
                     .removePrefix("ws://")
                     .removePrefix("wss://")
-                openWebUrl("http://$server/")
+                openQuronLesson("http://$server/")
             }
+        }
+    }
+
+    private fun openQuronLesson(url: String) {
+        try {
+            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(browserIntent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Xatolik brauzerni ochishda: ${e.message}")
+            openWebUrl(url)
         }
     }
 
@@ -403,7 +423,11 @@ class MainActivity : AppCompatActivity() {
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
         webViewDashboard.webViewClient = WebViewClient()
-        webViewDashboard.webChromeClient = WebChromeClient()
+        webViewDashboard.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: android.webkit.PermissionRequest?) {
+                request?.grant(request.resources)
+            }
+        }
         webViewDashboard.loadUrl(url)
     }
 
