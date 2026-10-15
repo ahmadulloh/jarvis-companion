@@ -4,134 +4,99 @@
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/night_bg">
+    android:background="@color/day_bg">
 
-    <!-- Top iOS-style Minimal Header Bar -->
+    <!-- Top iOS-style Minimal Header Bar (Matching Screenshot) -->
     <LinearLayout
         android:id="@+id/headerBar"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="64dp"
         android:layout_alignParentTop="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="20dp"
         android:paddingEnd="20dp">
 
-        <ImageView
-            android:id="@+id/ivLogo"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            app:srcCompat="@drawable/ic_jarvis"
-            app:tint="@color/jarvis_cyan" />
-
         <TextView
             android:id="@+id/tvHeaderTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
             android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.12"
+            android:letterSpacing="0.14"
             android:text="J.A.R.V.I.S"
-            android:textColor="@color/night_text_primary"
-            android:textSize="18sp" />
+            android:textColor="@color/day_text_primary"
+            android:textSize="20sp" />
 
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Status Pill Badge -->
+        <!-- Status Badge -->
         <TextView
             android:id="@+id/tvStatusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_ios_action_chip"
             android:fontFamily="sans-serif-medium"
-            android:paddingStart="12dp"
-            android:paddingTop="5dp"
-            android:paddingEnd="12dp"
-            android:paddingBottom="5dp"
-            android:text="● ULANGAN"
+            android:paddingStart="10dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="4dp"
+            android:text="● ALOQADA"
             android:textColor="@color/jarvis_accent"
-            android:textSize="11sp" />
+            android:textSize="10sp" />
 
-        <!-- Day/Night Auto-Theme Toggle Button -->
+        <!-- Theme Toggle -->
         <ImageButton
             android:id="@+id/btnThemeToggle"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_marginStart="10dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Mavzu"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_moon" />
+            app:srcCompat="@drawable/ic_sun"
+            app:tint="@color/day_text_secondary" />
+
+        <!-- User Profile Avatar (Click to Login / Edit Profile) -->
+        <FrameLayout
+            android:id="@+id/layoutProfileAvatar"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="8dp">
+
+            <ImageView
+                android:id="@+id/ivUserProfile"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_circle_avatar"
+                android:contentDescription="Profil"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_profile_default" />
+        </FrameLayout>
 
         <!-- Settings Cog Button -->
         <ImageButton
             android:id="@+id/btnOpenSettings"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_marginStart="4dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Sozlamalar"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_jarvis"
-            app:tint="@color/night_text_secondary" />
+            app:srcCompat="@drawable/ic_settings"
+            app:tint="@color/day_text_secondary" />
     </LinearLayout>
 
-    <!-- 3-Way Device Route Selector (iOS Capsule Segmented Control) -->
-    <LinearLayout
-        android:id="@+id/layoutSegmentBar"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_below="@id/headerBar"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginEnd="20dp"
-        android:background="@drawable/bg_ios_segment_bar"
-        android:orientation="horizontal"
-        android:padding="3dp">
-
-        <TextView
-            android:id="@+id/btnRoutePc"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="💻 Kompyuter"
-            android:textColor="@color/night_text_secondary"
-            android:textSize="12sp"
-            android:fontFamily="sans-serif-medium" />
-
-        <TextView
-            android:id="@+id/btnRoutePhone"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="📱 Telefon"
-            android:textColor="@color/night_text_secondary"
-            android:textSize="12sp"
-            android:fontFamily="sans-serif-medium" />
-
-        <TextView
-            android:id="@+id/btnRouteEarbuds"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/bg_ios_pill_active"
-            android:gravity="center"
-            android:text="🎧 Quloqchin"
-            android:textColor="@color/night_pill_active_text"
-            android:textSize="12sp"
-            android:fontFamily="sans-serif-bold" />
-    </LinearLayout>
-
-    <!-- Scrollable Center & Bottom Content -->
+    <!-- Scrollable Center Body -->
     <ScrollView
+        android:id="@+id/mainScrollView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layoutSegmentBar"
+        android:layout_above="@id/bottomBarContainer"
+        android:layout_below="@id/headerBar"
         android:fillViewport="true"
         android:overScrollMode="never"
         android:scrollbars="none">
@@ -142,15 +107,15 @@
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingStart="20dp"
-            android:paddingTop="12dp"
+            android:paddingTop="8dp"
             android:paddingEnd="20dp"
-            android:paddingBottom="24dp">
+            android:paddingBottom="16dp">
 
-            <!-- Center AI Arena: Glowing Jarvis Orb -->
+            <!-- Center AI Orb Arena (Full Width with Soundwave Bars) -->
             <FrameLayout
-                android:layout_width="230dp"
-                android:layout_height="230dp"
-                android:layout_marginTop="4dp">
+                android:layout_width="match_parent"
+                android:layout_height="260dp"
+                android:layout_marginTop="2dp">
 
                 <com.jarvis.companion.ui.JarvisOrbView
                     android:id="@+id/jarvisOrb"
@@ -163,9 +128,9 @@
                 android:id="@+id/tvOrbStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.06"
+                android:letterSpacing="0.08"
                 android:text="JARVIS TAYYOR"
                 android:textColor="@color/jarvis_cyan"
                 android:textSize="16sp" />
@@ -174,17 +139,157 @@
                 android:id="@+id/tvOrbSubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="2dp"
                 android:gravity="center"
                 android:text="Labbay, Axmadulloh sir, eshitaman..."
-                android:textColor="@color/night_text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/day_text_secondary"
+                android:textSize="12sp" />
+
+            <!-- Qur'on Ustozi AI Card (Matches Screenshot! Gone by default, appears when requested) -->
+            <LinearLayout
+                android:id="@+id/cardQuronLesson"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_day_card"
+                android:elevation="3dp"
+                android:orientation="vertical"
+                android:padding="16dp"
+                android:visibility="gone">
+
+                <!-- Header with Title & Close button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="Quron"
+                        app:srcCompat="@drawable/ic_quron" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="14dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvQuronTitle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:letterSpacing="0.06"
+                            android:text="QUR'ON USTOZI AI"
+                            android:textColor="@color/day_text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/tvQuronInfo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Tajvid va qiroat o'rganish"
+                            android:textColor="@color/day_text_secondary"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/btnCloseQuronCard"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:gravity="center"
+                        android:text="✕"
+                        android:textColor="@color/day_text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <!-- Action Buttons: DARSNI BOSHLASH and KUNLIK REJA -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnStartQuron"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1.2"
+                        android:backgroundTint="@null"
+                        android:background="@drawable/bg_cyan_button_gradient"
+                        android:fontFamily="sans-serif-bold"
+                        android:letterSpacing="0.04"
+                        android:text="DARSNI BOSHLASH"
+                        android:textAllCaps="true"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOpenQuronWeb"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="10dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="@color/day_segment_bg"
+                        android:fontFamily="sans-serif-bold"
+                        android:letterSpacing="0.04"
+                        android:text="KUNLIK REJA"
+                        android:textAllCaps="true"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="11sp"
+                        app:cornerRadius="16dp"
+                        app:strokeColor="@color/day_card_border"
+                        app:strokeWidth="1dp" />
+                </LinearLayout>
+
+                <!-- Progress Bar: Bugungi dars: Fotiha -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvQuronLessonName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="Bugungi dars: Fotiha surasi"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="🔥 2h"
+                        android:textColor="@color/day_text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <ProgressBar
+                    android:id="@+id/pbQuronProgress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="6dp"
+                    android:max="100"
+                    android:progress="45"
+                    android:progressTint="@color/jarvis_cyan" />
+            </LinearLayout>
 
             <!-- Quick Action Shortcut Chips (Horizontal Scroll) -->
             <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:overScrollMode="never"
                 android:scrollbars="none">
 
@@ -194,18 +299,33 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/chipCallMom"
+                        android:id="@+id/chipOpenQuron"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-medium"
-                        android:paddingStart="14dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="7dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="7dp"
+                        android:text="📖 Qur'on Ustozi"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/chipCallMom"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_ios_action_chip"
+                        android:fontFamily="sans-serif-medium"
+                        android:paddingStart="12dp"
+                        android:paddingTop="7dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="7dp"
                         android:text="📞 Onamga telefon"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="12sp" />
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipReadTelegram"
@@ -214,13 +334,13 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-medium"
-                        android:paddingStart="14dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
-                        android:text="💬 Telegram xabarlari"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="12sp" />
+                        android:paddingStart="12dp"
+                        android:paddingTop="7dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="7dp"
+                        android:text="💬 Telegram"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipSetReminder"
@@ -229,13 +349,13 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-medium"
-                        android:paddingStart="14dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
-                        android:text="⏰ Eslatma qo'yish"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="12sp" />
+                        android:paddingStart="12dp"
+                        android:paddingTop="7dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="7dp"
+                        android:text="⏰ Eslatma"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipInterrupt"
@@ -244,13 +364,13 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-medium"
-                        android:paddingStart="14dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="7dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="7dp"
                         android:text="⏹ To'xtatish"
                         android:textColor="@color/jarvis_red"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
             </HorizontalScrollView>
 
@@ -259,8 +379,9 @@
                 android:id="@+id/cardAiSecretary"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_ios_card"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_day_card"
+                android:elevation="2dp"
                 android:orientation="vertical"
                 android:padding="16dp">
 
@@ -274,18 +395,18 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="🤖"
-                        android:textSize="20sp" />
+                        android:textSize="18sp" />
 
                     <TextView
                         android:id="@+id/tvSecretaryTitle"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
+                        android:layout_marginStart="8dp"
                         android:layout_weight="1"
                         android:fontFamily="sans-serif-bold"
                         android:text="AI Kotib (Qo'ng'iroq Yordamchisi)"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="14sp" />
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="13sp" />
 
                     <TextView
                         android:id="@+id/tvSecretaryToggle"
@@ -293,42 +414,33 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingStart="10dp"
-                        android:paddingTop="4dp"
-                        android:paddingEnd="10dp"
-                        android:paddingBottom="4dp"
+                        android:paddingStart="8dp"
+                        android:paddingTop="3dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="3dp"
                         android:text="YOQILGAN"
-                        android:textColor="@color/jarvis_cyan"
-                        android:textSize="11sp" />
+                        android:textColor="@color/jarvis_accent"
+                        android:textSize="10sp" />
                 </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvSecretarySubtitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:text="Qo'ng'iroq kelganda o'rningizga gaplashib, xabarlarni yozib oladi."
-                    android:textColor="@color/night_text_secondary"
-                    android:textSize="12sp" />
+                    android:layout_marginTop="4dp"
+                    android:text="Siz band bo'lganingizda o'rningizga odob bilan javob beradi."
+                    android:textColor="@color/day_text_secondary"
+                    android:textSize="11sp" />
 
-                <!-- Current Reason Section -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:fontFamily="sans-serif-medium"
-                    android:text="Men hozir qayerdaman? (Sababni tanlang):"
-                    android:textColor="@color/night_text_primary"
-                    android:textSize="12sp" />
-
+                <!-- Reason pills -->
                 <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
+                    android:layout_marginTop="10dp"
+                    android:overScrollMode="never"
                     android:scrollbars="none">
 
                     <LinearLayout
-                        android:id="@+id/layoutReasonChips"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
@@ -338,183 +450,90 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_ios_pill_active"
-                            android:fontFamily="sans-serif-medium"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
+                            android:fontFamily="sans-serif-bold"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
                             android:text="📚 Darsdaman"
                             android:textColor="@color/night_pill_active_text"
-                            android:textSize="12sp" />
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipReasonMashina"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:background="@drawable/bg_ios_action_chip"
                             android:fontFamily="sans-serif-medium"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
                             android:text="🚗 Mashinadaman"
-                            android:textColor="@color/night_text_primary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/day_text_primary"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipReasonBand"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:background="@drawable/bg_ios_action_chip"
                             android:fontFamily="sans-serif-medium"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
-                            android:text="💼 Bandman / Majlis"
-                            android:textColor="@color/night_text_primary"
-                            android:textSize="12sp" />
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
+                            android:text="💼 Bandman"
+                            android:textColor="@color/day_text_primary"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipReasonNamoz"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:background="@drawable/bg_ios_action_chip"
                             android:fontFamily="sans-serif-medium"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
                             android:text="🕌 Namozdaman"
-                            android:textColor="@color/night_text_primary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/day_text_primary"
+                            android:textSize="11sp" />
 
                         <TextView
                             android:id="@+id/chipReasonCustom"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:background="@drawable/bg_ios_action_chip"
                             android:fontFamily="sans-serif-medium"
-                            android:paddingStart="12dp"
-                            android:paddingTop="6dp"
-                            android:paddingEnd="12dp"
-                            android:paddingBottom="6dp"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
                             android:text="✍️ Boshqa..."
-                            android:textColor="@color/night_text_primary"
-                            android:textSize="12sp" />
+                            android:textColor="@color/day_text_primary"
+                            android:textSize="11sp" />
                     </LinearLayout>
                 </HorizontalScrollView>
 
-                <!-- Status preview banner -->
                 <TextView
                     android:id="@+id/tvSecretaryPreview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_ios_action_chip"
-                    android:paddingStart="12dp"
-                    android:paddingTop="8dp"
-                    android:paddingEnd="12dp"
-                    android:paddingBottom="8dp"
-                    android:text="💬 Jarvis aytadi: «Assalomu alaykum. Axmadulloh sir hozir darsdalar, shuning uchun gaplasha olmadilar. Xabaringizni eshitaman...»"
-                    android:textColor="@color/night_text_secondary"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <!-- Quran Lesson iOS Modern Card -->
-            <LinearLayout
-                android:id="@+id/cardQuronLesson"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_ios_card"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        app:srcCompat="@drawable/ic_quron" />
-
-                    <TextView
-                        android:id="@+id/tvQuronTitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-bold"
-                        android:text="Qur'on Ustozi AI"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tvQuronBadge"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:paddingStart="8dp"
-                        android:paddingTop="3dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="3dp"
-                        android:text="TAYYOR"
-                        android:textColor="@color/jarvis_accent"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvQuronInfo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Darsni boshlang: qori qiroatini quloqchinda eshitasiz va mashq qilasiz."
-                    android:textColor="@color/night_text_secondary"
-                    android:textSize="12sp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnStartQuron"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_weight="1"
-                        android:backgroundTint="@color/jarvis_accent"
-                        android:fontFamily="sans-serif-bold"
-                        android:text="▶ Darsni boshlash"
-                        android:textAllCaps="false"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp"
-                        app:cornerRadius="14dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnOpenQuronWeb"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:backgroundTint="@color/night_segment_bg"
-                        android:fontFamily="sans-serif-medium"
-                        android:text="📖 Dars oynasi"
-                        android:textAllCaps="false"
-                        android:textColor="@color/night_text_primary"
-                        android:textSize="12sp"
-                        app:cornerRadius="14dp"
-                        app:strokeColor="@color/night_card_border"
-                        app:strokeWidth="1dp" />
-                </LinearLayout>
+                    android:background="@drawable/bg_ios_action_chip"
+                    android:paddingStart="10dp"
+                    android:paddingTop="6dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="6dp"
+                    android:text="💬 Assalomu alaykum. Axmadulloh sir hozir darsdalar, shuning uchun gaplasha olmadilar..."
+                    android:textColor="@color/day_text_secondary"
+                    android:textSize="11sp" />
             </LinearLayout>
 
             <!-- Collapsible Live Activity HUD Card -->
@@ -522,63 +541,80 @@
                 android:id="@+id/cardLiveHud"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_ios_card"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_day_card"
+                android:elevation="2dp"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="14dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-bold"
-                    android:text="Jonli Muloqot"
-                    android:textColor="@color/night_text_primary"
-                    android:textSize="13sp" />
+                    android:text="Jonli Muloqot va Xabarlar"
+                    android:textColor="@color/day_text_primary"
+                    android:textSize="12sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvLiveFeed"
                     android:layout_width="match_parent"
-                    android:layout_height="130dp"
-                    android:layout_marginTop="8dp"
+                    android:layout_height="110dp"
+                    android:layout_marginTop="6dp"
                     android:nestedScrollingEnabled="false"
                     android:scrollbars="vertical" />
-
-                <!-- Text command row -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <EditText
-                        android:id="@+id/etCommandInput"
-                        android:layout_width="0dp"
-                        android:layout_height="40dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:hint="Buyruq yozing..."
-                        android:paddingStart="12dp"
-                        android:paddingEnd="12dp"
-                        android:textColor="@color/night_text_primary"
-                        android:textColorHint="@color/night_text_secondary"
-                        android:textSize="13sp" />
-
-                    <ImageButton
-                        android:id="@+id/btnSendCommand"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_pill_active"
-                        android:contentDescription="Yuborish"
-                        android:scaleType="centerInside"
-                        app:srcCompat="@drawable/ic_mic"
-                        app:tint="@color/night_pill_active_text" />
-                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- Bottom Command Input Bar (Fixed at Bottom, Matches Screenshot!) -->
+    <LinearLayout
+        android:id="@+id/bottomBarContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="20dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="16dp">
+
+        <!-- Rounded Pill Input Container -->
+        <FrameLayout
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_bottom_input_pill"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <EditText
+                android:id="@+id/etCommandInput"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:hint="Buyruq yozing..."
+                android:imeOptions="actionSend"
+                android:inputType="text"
+                android:textColor="@color/day_text_primary"
+                android:textColorHint="@color/day_text_secondary"
+                android:textSize="14sp" />
+        </FrameLayout>
+
+        <!-- Floating Circular Cyan Mic Button (Matches Screenshot!) -->
+        <ImageButton
+            android:id="@+id/btnSendCommand"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginStart="12dp"
+            android:background="@drawable/bg_circle_mic_cyan"
+            android:contentDescription="Mikrofon"
+            android:elevation="4dp"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_mic"
+            app:tint="#FFFFFF" />
+    </LinearLayout>
 
     <!-- Hidden WebView for Web HUD / Quran Lesson -->
     <WebView

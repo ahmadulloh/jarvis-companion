@@ -25,6 +25,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -57,13 +58,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvStatusBadge: TextView
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var btnOpenSettings: ImageButton
-    private var isNightMode = true
+    private lateinit var layoutProfileAvatar: View
+    private lateinit var ivUserProfile: ImageView
+    private var isNightMode = false // Default Day mode matching screenshot!
 
-    // 3-Way Device Route
-    private lateinit var layoutSegmentBar: View
-    private lateinit var btnRoutePc: TextView
-    private lateinit var btnRoutePhone: TextView
-    private lateinit var btnRouteEarbuds: TextView
+    // Active Device Route
     private var activeRoute: AudioRoute = AudioRoute.EARBUDS
 
     // AI Orb & Status
@@ -72,6 +71,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvOrbSubtitle: TextView
 
     // Quick Action Chips
+    private lateinit var chipOpenQuron: TextView
     private lateinit var chipCallMom: TextView
     private lateinit var chipReadTelegram: TextView
     private lateinit var chipSetReminder: TextView
@@ -92,13 +92,16 @@ class MainActivity : AppCompatActivity() {
     // Quran Lesson Card
     private lateinit var cardQuronLesson: View
     private lateinit var tvQuronTitle: TextView
-    private lateinit var tvQuronBadge: TextView
     private lateinit var tvQuronInfo: TextView
+    private lateinit var tvQuronLessonName: TextView
+    private lateinit var pbQuronProgress: ProgressBar
     private lateinit var btnStartQuron: MaterialButton
     private lateinit var btnOpenQuronWeb: MaterialButton
+    private lateinit var btnCloseQuronCard: TextView
     private var quronWebUrl: String = ""
 
     // HUD & Input
+    private lateinit var cardLiveHud: View
     private lateinit var rvLiveFeed: RecyclerView
     private lateinit var etCommandInput: EditText
     private lateinit var btnSendCommand: ImageButton
@@ -118,11 +121,8 @@ class MainActivity : AppCompatActivity() {
                     val speaker = intent.getStringExtra(JarvisForegroundService.EXTRA_SPEAKER) ?: ""
                     val text = intent.getStringExtra(JarvisForegroundService.EXTRA_TEXT) ?: ""
                     if (text.isNotBlank()) {
-                        val isUser = speaker.equals("user", ignoreCase = true)
-                        val title = if (isUser) "Siz" else "JARVIS"
-                        val type = if (isUser) EventType.USER else EventType.JARVIS
-                        addFeedEvent(LiveEvent(type, title, text, currentTime()))
-                        tvOrbSubtitle.text = text
+                        val type = if (speaker.equals("JARVIS", ignoreCase = true)) EventType.JARVIS else EventType.USER
+                        addFeedEvent(LiveEvent(type, speaker, text, currentTime()))
                     }
                 }
                 JarvisForegroundService.BROADCAST_ACTION_LOG -> {
@@ -133,24 +133,23 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 JarvisForegroundService.BROADCAST_ROUTE_CHANGE -> {
-                    val rName = intent.getStringExtra(JarvisForegroundService.EXTRA_ROUTE_NAME) ?: return
+                    val rName = intent.getStringExtra(JarvisForegroundService.EXTRA_ROUTE) ?: ""
                     try {
-                        val r = AudioRoute.valueOf(rName)
-                        activeRoute = r
-                        updateRouteSegmentUi(r)
+                        activeRoute = AudioRoute.valueOf(rName)
                     } catch (_: Exception) {}
                 }
                 JarvisForegroundService.BROADCAST_QURON_UPDATE -> {
-                    val url = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_URL) ?: ""
-                    val sura = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_SURA) ?: ""
-                    val oyat = intent.getIntExtra(JarvisForegroundService.EXTRA_QURON_OYAT, 0)
+                    val url = intent.getStringExtra("url") ?: ""
+                    val sura = intent.getStringExtra("sura") ?: ""
+                    val oyat = intent.getIntExtra("oyat", 0)
                     if (url.isNotEmpty()) {
                         quronWebUrl = url
+                        cardQuronLesson.visibility = View.VISIBLE
                         openQuronLesson(url)
                     }
-                    tvQuronBadge.text = "FAOL"
-                    tvQuronBadge.setTextColor(Color.parseColor("#10B981"))
                     if (sura.isNotEmpty()) {
+                        cardQuronLesson.visibility = View.VISIBLE
+                        tvQuronLessonName.text = "Bugungi dars: $sura surasi, $oyat-oyat"
                         tvQuronInfo.text = "$sura surasi, $oyat-oyat tilovati va mashqi davom etmoqda."
                     }
                 }
@@ -172,12 +171,12 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         initAutoTheme()
-        setupRouteSelector()
         setupOrbInteractions()
         setupQuickActions()
         setupSecretaryCard()
         setupQuronCard()
         setupFeedAndInput()
+        setupProfileAndAuth()
         setupSettingsDialog()
 
         checkPermissionsAndStart()
@@ -189,16 +188,14 @@ class MainActivity : AppCompatActivity() {
         tvStatusBadge = findViewById(R.id.tvStatusBadge)
         btnThemeToggle = findViewById(R.id.btnThemeToggle)
         btnOpenSettings = findViewById(R.id.btnOpenSettings)
-
-        layoutSegmentBar = findViewById(R.id.layoutSegmentBar)
-        btnRoutePc = findViewById(R.id.btnRoutePc)
-        btnRoutePhone = findViewById(R.id.btnRoutePhone)
-        btnRouteEarbuds = findViewById(R.id.btnRouteEarbuds)
+        layoutProfileAvatar = findViewById(R.id.layoutProfileAvatar)
+        ivUserProfile = findViewById(R.id.ivUserProfile)
 
         jarvisOrb = findViewById(R.id.jarvisOrb)
         tvOrbStatus = findViewById(R.id.tvOrbStatus)
         tvOrbSubtitle = findViewById(R.id.tvOrbSubtitle)
 
+        chipOpenQuron = findViewById(R.id.chipOpenQuron)
         chipCallMom = findViewById(R.id.chipCallMom)
         chipReadTelegram = findViewById(R.id.chipReadTelegram)
         chipSetReminder = findViewById(R.id.chipSetReminder)
@@ -217,23 +214,34 @@ class MainActivity : AppCompatActivity() {
 
         cardQuronLesson = findViewById(R.id.cardQuronLesson)
         tvQuronTitle = findViewById(R.id.tvQuronTitle)
-        tvQuronBadge = findViewById(R.id.tvQuronBadge)
         tvQuronInfo = findViewById(R.id.tvQuronInfo)
+        tvQuronLessonName = findViewById(R.id.tvQuronLessonName)
+        pbQuronProgress = findViewById(R.id.pbQuronProgress)
         btnStartQuron = findViewById(R.id.btnStartQuron)
         btnOpenQuronWeb = findViewById(R.id.btnOpenQuronWeb)
+        btnCloseQuronCard = findViewById(R.id.btnCloseQuronCard)
 
+        cardLiveHud = findViewById(R.id.cardLiveHud)
         rvLiveFeed = findViewById(R.id.rvLiveFeed)
         etCommandInput = findViewById(R.id.etCommandInput)
         btnSendCommand = findViewById(R.id.btnSendCommand)
         webViewDashboard = findViewById(R.id.webViewDashboard)
+
+        activeRoute = try {
+            AudioRoute.valueOf(prefs.audioRoute)
+        } catch (_: Exception) {
+            AudioRoute.EARBUDS
+        }
+
+        jarvisOrb.showFemaleAiPersona = (prefs.avatarMode == "FEMALE_AI")
     }
 
     /**
-     * Automatic Day / Night Theme detection based on hour (06:00 - 19:00 = Day, else Night).
+     * Automatic Day / Night Theme detection based on hour (07:00 - 19:00 = Day, else Night).
      */
     private fun initAutoTheme() {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        isNightMode = hour !in 6..18
+        isNightMode = hour !in 7..19
         applyTheme(isNightMode)
 
         btnThemeToggle.setOnClickListener {
@@ -250,94 +258,27 @@ class MainActivity : AppCompatActivity() {
             btnThemeToggle.setImageResource(R.drawable.ic_moon)
             tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
             tvOrbSubtitle.setTextColor(ContextCompat.getColor(this, R.color.night_text_secondary))
+            cardAiSecretary.setBackgroundResource(R.drawable.bg_ios_card)
+            cardQuronLesson.setBackgroundResource(R.drawable.bg_ios_card)
+            cardLiveHud.setBackgroundResource(R.drawable.bg_ios_card)
         } else {
             rootContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.day_bg))
             tvHeaderTitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_primary))
             btnThemeToggle.setImageResource(R.drawable.ic_sun)
             tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_blue))
             tvOrbSubtitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_secondary))
+            cardAiSecretary.setBackgroundResource(R.drawable.bg_day_card)
+            cardQuronLesson.setBackgroundResource(R.drawable.bg_day_card)
+            cardLiveHud.setBackgroundResource(R.drawable.bg_day_card)
         }
-        updateRouteSegmentUi(activeRoute)
         if (::cardAiSecretary.isInitialized) {
             updateSecretaryUi()
         }
     }
 
-    /**
-     * 3-Way Device Route Control (Kompyuter, Telefon, Quloqchin).
-     */
-    private fun setupRouteSelector() {
-        activeRoute = try {
-            AudioRoute.valueOf(prefs.audioRoute)
-        } catch (_: Exception) {
-            AudioRoute.EARBUDS
-        }
-        updateRouteSegmentUi(activeRoute)
-
-        btnRoutePc.setOnClickListener {
-            switchAudioRoute(AudioRoute.PC)
-        }
-        btnRoutePhone.setOnClickListener {
-            switchAudioRoute(AudioRoute.PHONE)
-        }
-        btnRouteEarbuds.setOnClickListener {
-            switchAudioRoute(AudioRoute.EARBUDS)
-        }
-    }
-
-    private fun switchAudioRoute(route: AudioRoute) {
-        activeRoute = route
-        prefs.audioRoute = route.name
-        updateRouteSegmentUi(route)
-
-        val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_SET_ROUTE
-            putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
-        }
-        startService(intent)
-
-        val label = when (route) {
-            AudioRoute.PC -> "💻 Kompyuterga o'tkazildi"
-            AudioRoute.PHONE -> "📱 Telefondagi ovoz/mikrofon yoqildi"
-            AudioRoute.EARBUDS -> "🎧 Bluetooth quloqchin faol"
-        }
-        Toast.makeText(this, label, Toast.LENGTH_SHORT).show()
-    }
-
-    private fun updateRouteSegmentUi(route: AudioRoute) {
-        val activeTextCol = if (isNightMode) ContextCompat.getColor(this, R.color.night_pill_active_text) else Color.WHITE
-        val inactiveTextCol = if (isNightMode) ContextCompat.getColor(this, R.color.night_text_secondary) else ContextCompat.getColor(this, R.color.day_text_secondary)
-
-        btnRoutePc.background = null
-        btnRoutePhone.background = null
-        btnRouteEarbuds.background = null
-
-        btnRoutePc.setTextColor(inactiveTextCol)
-        btnRoutePhone.setTextColor(inactiveTextCol)
-        btnRouteEarbuds.setTextColor(inactiveTextCol)
-
-        when (route) {
-            AudioRoute.PC -> {
-                btnRoutePc.setBackgroundResource(R.drawable.bg_ios_pill_active)
-                btnRoutePc.setTextColor(activeTextCol)
-            }
-            AudioRoute.PHONE -> {
-                btnRoutePhone.setBackgroundResource(R.drawable.bg_ios_pill_active)
-                btnRoutePhone.setTextColor(activeTextCol)
-            }
-            AudioRoute.EARBUDS -> {
-                btnRouteEarbuds.setBackgroundResource(R.drawable.bg_ios_pill_active)
-                btnRouteEarbuds.setTextColor(activeTextCol)
-            }
-        }
-    }
-
-    /**
-     * AI Glowing Orb Interactions.
-     */
     private fun setupOrbInteractions() {
         jarvisOrb.setOnClickListener {
-            // Tapping orb wakes Jarvis or interrupts speaking immediately
+            // Wake Jarvis or interrupt speaking
             val intent = Intent(this, JarvisForegroundService::class.java).apply {
                 action = JarvisForegroundService.ACTION_WAKE
             }
@@ -350,73 +291,69 @@ class MainActivity : AppCompatActivity() {
             "SPEAKING" -> {
                 jarvisOrb.state = OrbState.SPEAKING
                 tvOrbStatus.text = "JARVIS GAPIRMOQDA"
+                tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
                 tvStatusBadge.text = "● GAPIRMOQDA"
                 tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
             }
             "LISTENING" -> {
                 jarvisOrb.state = OrbState.LISTENING
-                tvOrbStatus.text = "ESHITMOQDA..."
+                tvOrbStatus.text = "JARVIS ESHITMOQDA..."
+                tvOrbStatus.setTextColor(Color.parseColor("#10B981"))
                 tvStatusBadge.text = "● ESHITMOQDA"
-                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_accent))
+                tvStatusBadge.setTextColor(Color.parseColor("#10B981"))
             }
-            "CONNECTED" -> {
+            "THINKING" -> {
+                jarvisOrb.state = OrbState.THINKING
+                tvOrbStatus.text = "JARVIS O'YLAMOQDA..."
+                tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_amber))
+                tvStatusBadge.text = "● O'YLAMOQDA"
+                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_amber))
+            }
+            else -> {
                 jarvisOrb.state = OrbState.IDLE
                 tvOrbStatus.text = "JARVIS TAYYOR"
-                tvStatusBadge.text = "● ON-LINE"
+                tvOrbStatus.setTextColor(if (isNightMode) ContextCompat.getColor(this, R.color.jarvis_cyan) else ContextCompat.getColor(this, R.color.jarvis_blue))
+                tvStatusBadge.text = "● ALOQADA"
                 tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_accent))
-            }
-            "DISCONNECTED" -> {
-                jarvisOrb.state = OrbState.IDLE
-                tvOrbStatus.text = "OFFLINE"
-                tvStatusBadge.text = "● OFFLINE"
-                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_red))
             }
         }
     }
 
-    /**
-     * Quick Action Shortcuts (Calls, Telegram, Reminders).
-     */
     private fun setupQuickActions() {
+        chipOpenQuron.setOnClickListener {
+            cardQuronLesson.visibility = View.VISIBLE
+            cardQuronLesson.animate().alpha(1f).setDuration(250).start()
+            Toast.makeText(this, "Qur'on Ustozi AI ochildi", Toast.LENGTH_SHORT).show()
+        }
         chipCallMom.setOnClickListener {
             sendJarvisCommand("Onamga telefon qil")
         }
         chipReadTelegram.setOnClickListener {
-            if (!JarvisNotificationListener.isNotificationAccessGranted(this)) {
-                promptNotificationAccess()
-            } else {
-                sendJarvisCommand("Telegramga kirib shaxsiyga kelgan xabarlarni aytib ber")
-            }
+            sendJarvisCommand("Telegramdagi yangi xabarlarni aytib ber")
         }
         chipSetReminder.setOnClickListener {
-            sendJarvisCommand("Eslatma qo'y")
+            sendJarvisCommand("Eslatma qo'yish")
         }
         chipInterrupt.setOnClickListener {
+            sendJarvisCommand("To'xtat")
             val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_EARBUD_TAP
+                action = JarvisForegroundService.ACTION_INTERRUPT
             }
             startService(intent)
         }
     }
 
-    private fun promptNotificationAccess() {
-        Toast.makeText(this, "Telegram xabarlarini o'qish uchun bildirishnomaga ruxsat bering", Toast.LENGTH_LONG).show()
-        try {
-            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-        } catch (_: Exception) {}
-    }
-
-    /**
-     * AI Kotib (Call Secretary) setup.
-     */
     private fun setupSecretaryCard() {
-        updateSecretaryUi()
-
         tvSecretaryToggle.setOnClickListener {
-            prefs.aiSecretaryEnabled = !prefs.aiSecretaryEnabled
+            val newVal = !prefs.aiSecretaryEnabled
+            prefs.aiSecretaryEnabled = newVal
             updateSecretaryUi()
-            val status = if (prefs.aiSecretaryEnabled) "YOQILDI" else "O'CHIRILDI"
-            Toast.makeText(this, "AI Kotib $status", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_SET_SECRETARY
+                putExtra("enabled", newVal)
+            }
+            startService(intent)
+            Toast.makeText(this, if (newVal) "AI Kotib yoqildi" else "AI Kotib o'chirildi", Toast.LENGTH_SHORT).show()
         }
 
         chipReasonDars.setOnClickListener { selectSecretaryReason("Darsdaman") }
@@ -424,28 +361,39 @@ class MainActivity : AppCompatActivity() {
         chipReasonBand.setOnClickListener { selectSecretaryReason("Bandman / Majlis") }
         chipReasonNamoz.setOnClickListener { selectSecretaryReason("Namozdaman") }
         chipReasonCustom.setOnClickListener { promptCustomReasonDialog() }
+
+        updateSecretaryUi()
     }
 
     private fun selectSecretaryReason(reason: String) {
         prefs.aiSecretaryReason = reason
         updateSecretaryUi()
-        Toast.makeText(this, "Holat tanlandi: $reason", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, JarvisForegroundService::class.java).apply {
+            action = JarvisForegroundService.ACTION_SET_SECRETARY
+            putExtra("enabled", prefs.aiSecretaryEnabled)
+            putExtra("reason", reason)
+        }
+        startService(intent)
+        Toast.makeText(this, "Bandlik sababi: $reason", Toast.LENGTH_SHORT).show()
     }
 
     private fun updateSecretaryUi() {
         val enabled = prefs.aiSecretaryEnabled
+        val reason = prefs.aiSecretaryReason
+
         if (enabled) {
             tvSecretaryToggle.text = "YOQILGAN"
-            tvSecretaryToggle.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
+            tvSecretaryToggle.setTextColor(ContextCompat.getColor(this, R.color.jarvis_accent))
+            tvSecretarySubtitle.text = "Siz band bo'lganingizda o'rningizga odob bilan javob beradi."
         } else {
             tvSecretaryToggle.text = "O'CHIRILGAN"
-            tvSecretaryToggle.setTextColor(Color.parseColor("#9CA3AF"))
+            tvSecretaryToggle.setTextColor(ContextCompat.getColor(this, R.color.jarvis_red))
+            tvSecretarySubtitle.text = "AI Kotib hozir faol emas (oddiy qo'ng'iroq)."
         }
 
-        val reason = prefs.aiSecretaryReason
         val activeBg = R.drawable.bg_ios_pill_active
         val normalBg = R.drawable.bg_ios_action_chip
-        val activeText = ContextCompat.getColor(this, R.color.night_pill_active_text)
+        val activeText = if (isNightMode) ContextCompat.getColor(this, R.color.night_pill_active_text) else Color.WHITE
         val normalText = if (isNightMode) ContextCompat.getColor(this, R.color.night_text_primary) else ContextCompat.getColor(this, R.color.day_text_primary)
 
         val chips = listOf(
@@ -511,15 +459,23 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Quran Lesson Card setup.
+     * User requested: "Quron ustoz ai qachon so'rsam paydo bo'lsin" -> GONE by default!
      */
     private fun setupQuronCard() {
+        cardQuronLesson.visibility = if (prefs.quronCardVisible) View.VISIBLE else View.GONE
+
+        btnCloseQuronCard.setOnClickListener {
+            cardQuronLesson.visibility = View.GONE
+            prefs.quronCardVisible = false
+        }
+
         btnStartQuron.setOnClickListener {
             sendJarvisCommand("Qur'on darsini boshlaymiz")
-            tvQuronBadge.text = "BOSHLANMOQDA"
             if (quronWebUrl.isNotEmpty()) {
                 openQuronLesson(quronWebUrl)
             }
         }
+
         btnOpenQuronWeb.setOnClickListener {
             if (quronWebUrl.isNotEmpty()) {
                 openQuronLesson(quronWebUrl)
@@ -549,40 +505,28 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     private fun openWebUrl(url: String) {
         webViewDashboard.visibility = View.VISIBLE
-        val settings = webViewDashboard.settings
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = true
+        webViewDashboard.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_DEFAULT
+        }
         webViewDashboard.webViewClient = WebViewClient()
-        webViewDashboard.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: android.webkit.PermissionRequest?) {
-                request?.grant(request.resources)
-            }
-        }
+        webViewDashboard.webChromeClient = WebChromeClient()
         webViewDashboard.loadUrl(url)
-    }
-
-    override fun onBackPressed() {
-        if (webViewDashboard.visibility == View.VISIBLE) {
-            if (webViewDashboard.canGoBack()) {
-                webViewDashboard.goBack()
-            } else {
-                webViewDashboard.visibility = View.GONE
-            }
-            return
-        }
-        super.onBackPressed()
     }
 
     private fun setupFeedAndInput() {
         eventAdapter = LiveEventAdapter()
-        val lm = LinearLayoutManager(this).apply { stackFromEnd = true }
-        rvLiveFeed.layoutManager = lm
+        rvLiveFeed.layoutManager = LinearLayoutManager(this).apply {
+            stackFromEnd = true
+        }
         rvLiveFeed.adapter = eventAdapter
 
         addFeedEvent(LiveEvent(
             EventType.SYSTEM,
             "TIZIM",
-            "JARVIS Mark 57 Companion tayyor. 3 ta qurilmadan birini tanlang.",
+            "JARVIS Mark 57 Companion tayyor. Xizmatingizdaman!",
             currentTime()
         ))
 
@@ -604,6 +548,63 @@ class MainActivity : AppCompatActivity() {
         addFeedEvent(LiveEvent(EventType.USER, "Siz", cmd, currentTime()))
     }
 
+    /**
+     * User Profile & Authentication Dialog (Google / Manual Registration).
+     */
+    private fun setupProfileAndAuth() {
+        layoutProfileAvatar.setOnClickListener {
+            showAuthProfileDialog()
+        }
+    }
+
+    private fun showAuthProfileDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_auth_profile)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val etName = dialog.findViewById<EditText>(R.id.etProfileName)
+        val etEmail = dialog.findViewById<EditText>(R.id.etProfileEmail)
+        val btnGoogle = dialog.findViewById<MaterialButton>(R.id.btnGoogleSignIn)
+        val btnSave = dialog.findViewById<MaterialButton>(R.id.btnProfileSave)
+        val btnLogout = dialog.findViewById<MaterialButton>(R.id.btnProfileLogout)
+
+        etName.setText(prefs.userName)
+        etEmail.setText(prefs.userEmail)
+
+        btnGoogle.setOnClickListener {
+            // Google Sign-In simulation / Account link
+            prefs.userName = "Axmadulloh sir"
+            prefs.userEmail = "axmadulloh.dev@gmail.com"
+            prefs.isLoggedIn = true
+            dialog.dismiss()
+            Toast.makeText(this, "Google orqali muvaffaqiyatli ulandi: ${prefs.userName}", Toast.LENGTH_LONG).show()
+        }
+
+        btnSave.setOnClickListener {
+            val name = etName.text.toString().trim()
+            val email = etEmail.text.toString().trim()
+            if (name.isNotEmpty()) prefs.userName = name
+            if (email.isNotEmpty()) prefs.userEmail = email
+            prefs.isLoggedIn = true
+            dialog.dismiss()
+            Toast.makeText(this, "Profil ma'lumotlari saqlandi!", Toast.LENGTH_SHORT).show()
+        }
+
+        btnLogout.setOnClickListener {
+            prefs.userName = "Foydalanuvchi"
+            prefs.userEmail = ""
+            prefs.isLoggedIn = false
+            dialog.dismiss()
+            Toast.makeText(this, "Hisobdan chiqildi", Toast.LENGTH_SHORT).show()
+        }
+
+        dialog.show()
+    }
+
+    /**
+     * Settings Dialog with 3-Way Device Route Control, AI Persona, and Quran options.
+     */
     private fun setupSettingsDialog() {
         btnOpenSettings.setOnClickListener {
             val dialog = Dialog(this)
@@ -611,31 +612,102 @@ class MainActivity : AppCompatActivity() {
             dialog.setContentView(R.layout.dialog_settings)
             dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
+            val btnPc = dialog.findViewById<TextView>(R.id.btnDialogRoutePc)
+            val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
+            val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
+
+            val btnPersonaFemale = dialog.findViewById<TextView>(R.id.btnPersonaFemaleAi)
+            val btnPersonaOrb = dialog.findViewById<TextView>(R.id.btnPersonaNeuralOrb)
+
             val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
             val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
             val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
+            val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
             val btnNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
             val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
+
+            var selectedRoute = activeRoute
+            var selectedPersona = prefs.avatarMode
+
+            fun updateDialogRouteUi() {
+                val activeBg = R.drawable.bg_ios_pill_active
+                val actText = Color.BLACK
+                val inactText = Color.GRAY
+
+                btnPc.background = null; btnPhone.background = null; btnEarbuds.background = null
+                btnPc.setTextColor(inactText); btnPhone.setTextColor(inactText); btnEarbuds.setTextColor(inactText)
+
+                when (selectedRoute) {
+                    AudioRoute.PC -> { btnPc.setBackgroundResource(activeBg); btnPc.setTextColor(actText) }
+                    AudioRoute.PHONE -> { btnPhone.setBackgroundResource(activeBg); btnPhone.setTextColor(actText) }
+                    AudioRoute.EARBUDS -> { btnEarbuds.setBackgroundResource(activeBg); btnEarbuds.setTextColor(actText) }
+                }
+            }
+
+            fun updateDialogPersonaUi() {
+                val activeBg = R.drawable.bg_ios_pill_active
+                btnPersonaFemale.background = null; btnPersonaOrb.background = null
+                btnPersonaFemale.setTextColor(Color.GRAY); btnPersonaOrb.setTextColor(Color.GRAY)
+
+                if (selectedPersona == "FEMALE_AI") {
+                    btnPersonaFemale.setBackgroundResource(activeBg)
+                    btnPersonaFemale.setTextColor(Color.BLACK)
+                } else {
+                    btnPersonaOrb.setBackgroundResource(activeBg)
+                    btnPersonaOrb.setTextColor(Color.BLACK)
+                }
+            }
+
+            updateDialogRouteUi()
+            updateDialogPersonaUi()
+
+            btnPc.setOnClickListener { selectedRoute = AudioRoute.PC; updateDialogRouteUi() }
+            btnPhone.setOnClickListener { selectedRoute = AudioRoute.PHONE; updateDialogRouteUi() }
+            btnEarbuds.setOnClickListener { selectedRoute = AudioRoute.EARBUDS; updateDialogRouteUi() }
+
+            btnPersonaFemale.setOnClickListener { selectedPersona = "FEMALE_AI"; updateDialogPersonaUi() }
+            btnPersonaOrb.setOnClickListener { selectedPersona = "ORB"; updateDialogPersonaUi() }
 
             etServer.setText(prefs.serverAddress)
             etToken.setText(prefs.authToken)
             cbBoot.isChecked = prefs.autoStartOnBoot
+            cbQuron.isChecked = prefs.quronCardVisible
 
             btnNotif.setOnClickListener {
                 promptNotificationAccess()
             }
 
             btnSave.setOnClickListener {
+                activeRoute = selectedRoute
+                prefs.audioRoute = selectedRoute.name
+                prefs.avatarMode = selectedPersona
+                jarvisOrb.showFemaleAiPersona = (selectedPersona == "FEMALE_AI")
+
                 prefs.serverAddress = etServer.text.toString().trim()
                 prefs.authToken = etToken.text.toString().trim()
                 prefs.autoStartOnBoot = cbBoot.isChecked
+                prefs.quronCardVisible = cbQuron.isChecked
+                cardQuronLesson.visibility = if (cbQuron.isChecked) View.VISIBLE else View.GONE
+
+                val routeIntent = Intent(this, JarvisForegroundService::class.java).apply {
+                    action = JarvisForegroundService.ACTION_SET_ROUTE
+                    putExtra(JarvisForegroundService.EXTRA_ROUTE, selectedRoute.name)
+                }
+                startService(routeIntent)
+
                 dialog.dismiss()
                 startJarvisService()
-                Toast.makeText(this, "Sozlamalar saqlandi!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Sozlamalar saqlandi: ${selectedRoute.name}", Toast.LENGTH_SHORT).show()
             }
 
             dialog.show()
         }
+    }
+
+    private fun promptNotificationAccess() {
+        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+        startActivity(intent)
+        Toast.makeText(this, "Telegram uchun 'Jarvis Companion'ni yoqing", Toast.LENGTH_LONG).show()
     }
 
     private fun addFeedEvent(event: LiveEvent) {

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_ios_card"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- Header Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-black"
+        android:letterSpacing="0.08"
+        android:text="PROFIL VA HISOB"
+        android:textColor="@color/night_text_primary"
+        android:textSize="17sp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Google yoki shaxsiy hisobingiz orqali ulaning"
+        android:textColor="@color/night_text_secondary"
+        android:textSize="12sp" />
+
+    <!-- Avatar Circle -->
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp">
+
+        <ImageView
+            android:id="@+id/ivDialogAvatar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_circle_avatar"
+            android:padding="3dp"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_profile_default" />
+
+        <TextView
+            android:id="@+id/tvChangeAvatar"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="bottom|end"
+            android:background="@drawable/bg_circle_mic_cyan"
+            android:gravity="center"
+            android:text="📷"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp" />
+    </FrameLayout>
+
+    <!-- Google One-Tap Sign-In Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnGoogleSignIn"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="#FFFFFF"
+        android:fontFamily="sans-serif-bold"
+        android:text="Google orqali kirish"
+        android:textAllCaps="false"
+        android:textColor="#1F2937"
+        android:textSize="13sp"
+        app:cornerRadius="16dp"
+        app:icon="@drawable/ic_google"
+        app:iconGravity="textStart"
+        app:iconTint="@null"
+        app:strokeColor="#D1D5DB"
+        app:strokeWidth="1dp" />
+
+    <!-- Divider -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="@color/night_card_border" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:text="yoki elektron pochta bilan"
+            android:textColor="@color/night_text_secondary"
+            android:textSize="11sp" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"
+            android:background="@color/night_card_border" />
+    </LinearLayout>
+
+    <!-- Name input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Ismingiz:"
+        android:textColor="@color/night_text_secondary"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etProfileName"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_ios_action_chip"
+        android:hint="Axmadulloh sir"
+        android:inputType="textPersonName"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/night_text_primary"
+        android:textSize="13sp" />
+
+    <!-- Email input -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="Elektron pochta:"
+        android:textColor="@color/night_text_secondary"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etProfileEmail"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_ios_action_chip"
+        android:hint="axmadulloh@gmail.com"
+        android:inputType="textEmailAddress"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:textColor="@color/night_text_primary"
+        android:textSize="13sp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:orientation="horizontal">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnProfileLogout"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/night_segment_bg"
+            android:fontFamily="sans-serif-medium"
+            android:text="Chiqish"
+            android:textAllCaps="false"
+            android:textColor="@color/jarvis_red"
+            android:textSize="12sp"
+            app:cornerRadius="14dp"
+            app:strokeColor="@color/night_card_border"
+            app:strokeWidth="1dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnProfileSave"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1.6"
+            android:backgroundTint="@color/jarvis_cyan"
+            android:fontFamily="sans-serif-bold"
+            android:text="Saqlash / Kirish"
+            android:textAllCaps="false"
+            android:textColor="#070A12"
+            android:textSize="13sp"
+            app:cornerRadius="14dp" />
+    </LinearLayout>
+
+</LinearLayout>

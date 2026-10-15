@@ -1,93 +1,213 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_ios_card"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-black"
-        android:letterSpacing="0.08"
-        android:text="JARVIS SOZLAMALARI"
-        android:textColor="@color/night_text_primary"
-        android:textSize="16sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Server IP (Tailscale):"
-        android:textColor="@color/night_text_secondary"
-        android:textSize="12sp" />
-
-    <EditText
-        android:id="@+id/etDialogServer"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_ios_action_chip"
-        android:hint="100.112.86.116:8000"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@color/night_text_primary"
-        android:textSize="13sp" />
-
-    <TextView
-        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Xavfsizlik kaliti (Token):"
-        android:textColor="@color/night_text_secondary"
-        android:textSize="12sp" />
+        android:orientation="vertical"
+        android:padding="22dp">
 
-    <EditText
-        android:id="@+id/etDialogToken"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="6dp"
-        android:background="@drawable/bg_ios_action_chip"
-        android:hint="jarvis-phone-companion-token"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:textColor="@color/night_text_primary"
-        android:textSize="13sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.08"
+            android:text="JARVIS SOZLAMALARI"
+            android:textColor="@color/night_text_primary"
+            android:textSize="17sp" />
 
-    <CheckBox
-        android:id="@+id/cbDialogAutoStart"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Telefon yoqilganda avtomatik ulanish"
-        android:textColor="@color/night_text_primary"
-        android:textSize="12sp" />
+        <!-- 3-Way Device Route Selector inside Settings -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="Ovoz va Boshqaruv Qurilmasi:"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGrantNotificationAccess"
-        android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:layout_marginTop="10dp"
-        android:backgroundTint="@color/night_segment_bg"
-        android:text="💬 Telegram xabarlariga ruxsat berish"
-        android:textColor="@color/night_text_primary"
-        android:textSize="12sp"
-        app:cornerRadius="12dp"
-        app:strokeColor="@color/night_card_border"
-        app:strokeWidth="1dp" />
+        <LinearLayout
+            android:id="@+id/dialogSegmentBar"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_ios_segment_bar"
+            android:orientation="horizontal"
+            android:padding="3dp">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnDialogSave"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="18dp"
-        android:backgroundTint="@color/jarvis_cyan"
-        android:fontFamily="sans-serif-bold"
-        android:text="Saqlash va Ulanish"
-        android:textColor="#070A12"
-        android:textSize="13sp"
-        app:cornerRadius="14dp" />
+            <TextView
+                android:id="@+id/btnDialogRoutePc"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="💻 Kompyuter"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium" />
 
-</LinearLayout>
+            <TextView
+                android:id="@+id/btnDialogRoutePhone"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="📱 Telefon"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <TextView
+                android:id="@+id/btnDialogRouteEarbuds"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_ios_pill_active"
+                android:gravity="center"
+                android:text="🎧 Quloqchin"
+                android:textColor="@color/night_pill_active_text"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-bold" />
+        </LinearLayout>
+
+        <!-- AI Persona Selection: Female AI vs Neural Orb -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="AI Qiyofasi (Markaziy Vizualizatsiya):"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/dialogPersonaBar"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_ios_segment_bar"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <TextView
+                android:id="@+id/btnPersonaFemaleAi"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_ios_pill_active"
+                android:gravity="center"
+                android:text="👩 Ayol AI Qiyofasi"
+                android:textColor="@color/night_pill_active_text"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-bold" />
+
+            <TextView
+                android:id="@+id/btnPersonaNeuralOrb"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="🌐 Neyron Sfera"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- Server IP -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Server IP (Tailscale):"
+            android:textColor="@color/night_text_secondary"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etDialogServer"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/bg_ios_action_chip"
+            android:hint="100.112.86.116:8000"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@color/night_text_primary"
+            android:textSize="13sp" />
+
+        <!-- Token -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Xavfsizlik kaliti (Token):"
+            android:textColor="@color/night_text_secondary"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etDialogToken"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/bg_ios_action_chip"
+            android:hint="jarvis-phone-companion-token"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="@color/night_text_primary"
+            android:textSize="13sp" />
+
+        <!-- Checkbox Auto-start -->
+        <CheckBox
+            android:id="@+id/cbDialogAutoStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Telefon yoqilganda avtomatik ulanish"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <!-- Checkbox Quran card always visible -->
+        <CheckBox
+            android:id="@+id/cbDialogQuronAlways"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Qur'on Ustozi kartasini doimiy ko'rsatish"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <!-- Notification Access button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGrantNotificationAccess"
+            android:layout_width="match_parent"
+            android:layout_height="42dp"
+            android:layout_marginTop="10dp"
+            android:backgroundTint="@color/night_segment_bg"
+            android:text="💬 Telegram xabarlariga ruxsat"
+            android:textAllCaps="false"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/night_card_border"
+            app:strokeWidth="1dp" />
+
+        <!-- Save button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDialogSave"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="16dp"
+            android:backgroundTint="@color/jarvis_cyan"
+            android:fontFamily="sans-serif-bold"
+            android:text="Saqlash va Ulanish"
+            android:textAllCaps="false"
+            android:textColor="#070A12"
+            android:textSize="13sp"
+            app:cornerRadius="14dp" />
+
+    </LinearLayout>
+</ScrollView>

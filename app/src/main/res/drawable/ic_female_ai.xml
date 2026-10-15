@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+  <!-- Glowing Cyber Aura / Head -->
+  <path
+      android:fillColor="#00E5FF"
+      android:pathData="M24,4C16.82,4 11,9.82 11,17c0,5.2 3.05,9.68 7.45,11.75C13.25,31.42 10,36.32 10,42h4c0,-6.63 5.37,-12 12,-12s12,5.37 12,12h4c0,-5.68 -3.25,-10.58 -8.45,-13.25C33.95,26.68 37,22.2 37,17C37,9.82 31.18,4 24,4zM24,8c4.97,0 9,4.03 9,9s-4.03,9 -9,9s-9,-4.03 -9,-9S19.03,8 24,8z"/>
+  <!-- Expressive Eyes -->
+  <path
+      android:fillColor="#FFFFFF"
+      android:pathData="M20,16a2,2 0 1,0 0.01,0M28,16a2,2 0 1,0 0.01,0"/>
+  <!-- AI Speech Pulse Wave at mouth -->
+  <path
+      android:strokeColor="#00E5FF"
+      android:strokeWidth="1.5"
+      android:strokeLineCap="round"
+      android:pathData="M22,21 Q24,23 26,21"/>
+</vector>

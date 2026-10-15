@@ -38,4 +38,28 @@ class PreferencesHelper(context: Context) {
     var aiSecretaryReason: String
         get() = prefs.getString("ai_secretary_reason", "Darsdaman") ?: "Darsdaman"
         set(value) = prefs.edit().putString("ai_secretary_reason", value.trim()).apply()
+
+    var userName: String
+        get() = prefs.getString("user_name", "Axmadulloh sir") ?: "Axmadulloh sir"
+        set(value) = prefs.edit().putString("user_name", value.trim()).apply()
+
+    var userEmail: String
+        get() = prefs.getString("user_email", "axmadulloh@gmail.com") ?: "axmadulloh@gmail.com"
+        set(value) = prefs.edit().putString("user_email", value.trim()).apply()
+
+    var userAvatarUri: String
+        get() = prefs.getString("user_avatar_uri", "") ?: ""
+        set(value) = prefs.edit().putString("user_avatar_uri", value.trim()).apply()
+
+    var isLoggedIn: Boolean
+        get() = prefs.getBoolean("is_logged_in", true)
+        set(value) = prefs.edit().putBoolean("is_logged_in", value).apply()
+
+    var avatarMode: String
+        get() = prefs.getString("avatar_mode", "FEMALE_AI") ?: "FEMALE_AI"
+        set(value) = prefs.edit().putString("avatar_mode", value).apply()
+
+    var quronCardVisible: Boolean
+        get() = prefs.getBoolean("quron_card_visible", false)
+        set(value) = prefs.edit().putBoolean("quron_card_visible", value).apply()
 }
