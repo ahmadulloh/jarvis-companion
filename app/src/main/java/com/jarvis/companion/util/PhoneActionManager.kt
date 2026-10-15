@@ -398,7 +398,7 @@ class PhoneActionManager(private val context: Context) {
             if (contact != null) {
                 contact
             } else {
-                return "Kechirasiz, Axmadulloh sir, SMS yuborish uchun '$q' kontaktlar orasidan topilmadi."
+                return "Kechirasiz, Axmadulloh sir, SMS yuborish uchun '$q' (lotin, kirill yoki ruscha shakllarida) kontaktlar orasidan topilmadi."
             }
         }
 
@@ -408,7 +408,16 @@ class PhoneActionManager(private val context: Context) {
         ) == PackageManager.PERMISSION_GRANTED
 
         if (!hasSmsPermission) {
-            return "SMS yuborish uchun dasturga SMS ruxsati berilmagan, sir."
+            try {
+                val intent = Intent(Intent.ACTION_SENDTO, Uri.parse("smsto:${Uri.encode(targetNumber)}")).apply {
+                    putExtra("sms_body", message)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                return "Axmadulloh sir, $targetName ($targetNumber) uchun SMS xabari tayyorlandi: '$message'"
+            } catch (e: Exception) {
+                return "SMS yuborish uchun dasturga SMS ruxsati berilmagan, sir."
+            }
         }
 
         try {
