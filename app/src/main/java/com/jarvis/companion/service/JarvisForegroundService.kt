@@ -407,8 +407,8 @@ class JarvisForegroundService : Service() {
                 })
             }
             ACTION_SET_SECRETARY -> {
-                val enabled = intent.getBooleanExtra("enabled", prefs.aiSecretaryEnabled)
-                val reason = intent.getStringExtra("reason") ?: prefs.aiSecretaryReason
+                val enabled = intent?.getBooleanExtra("enabled", prefs.aiSecretaryEnabled) ?: prefs.aiSecretaryEnabled
+                val reason = intent?.getStringExtra("reason") ?: prefs.aiSecretaryReason
                 prefs.aiSecretaryEnabled = enabled
                 prefs.aiSecretaryReason = reason
             }
