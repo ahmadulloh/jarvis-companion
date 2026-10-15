@@ -32,35 +32,20 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:compressDebugAssets
 > Task :app:desugarDebugFileDependencies
 > Task :app:mergeDebugStartupProfile
-> Task :app:processDebugManifestForPackage
-> Task :app:checkDebugDuplicateClasses
-> Task :app:processDebugResources
-> Task :app:mergeExtDexDebug
 > Task :app:mergeDebugJniLibFolders
-> Task :app:mergeLibDexDebug
+> Task :app:checkDebugDuplicateClasses
 > Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:mergeLibDexDebug
 > Task :app:stripDebugDebugSymbols NO-SOURCE
 > Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeExtDexDebug
+> Task :app:processDebugResources
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/audio/AudioRecordManager.kt:160:20 'if' must have both main and 'else' branches if used as an expression
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:71:46 Unresolved reference: PhoneActionManager
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:81:36 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:81:49 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:92:30 Unresolved reference: PhoneActionManager
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:94:13 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:96:13 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:253:41 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:269:30 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:276:21 'when' expression must be exhaustive, add necessary 'else' branch
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:277:13 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:278:13 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:279:13 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:329:68 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:330:31 Unresolved reference: AudioRoute
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:330:82 Unresolved reference: AudioRoute
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:654:35 Unresolved reference: isBluetoothScoActive
 
 FAILURE: Build failed with an exception.
 
