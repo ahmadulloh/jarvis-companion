@@ -182,9 +182,19 @@ class JarvisForegroundService : Service() {
                             else -> ""
                         }
 
-                        if (finalUrl.isNotEmpty()) {
-                            playMediaStream(finalUrl, directUrlRaw, title)
+                        // Prefer directUrl if remote (YouTube CDN / https), fallback to finalUrl (PC server stream)
+                        val primaryUrl = if (directUrlRaw.startsWith("http://") || directUrlRaw.startsWith("https://")) directUrlRaw else finalUrl
+                        val fallbackUrl = if (primaryUrl == directUrlRaw) finalUrl else directUrlRaw
+
+                        if (primaryUrl.isNotEmpty()) {
+                            playMediaStream(primaryUrl, fallbackUrl, title)
                         }
+                    }
+                    "media_mute" -> {
+                        val muted = json.optBoolean("muted", false)
+                        val vol = if (muted) 0.0f else (if (isSpeaking) 0.15f else 1.0f)
+                        mediaPlayer?.setVolume(vol, vol)
+                        broadcastActionLog("musiqa", if (muted) "Ovoz o'chirildi" else "Ovoz yoqildi")
                     }
                     "media_pause" -> {
                         val paused = json.optBoolean("paused", true)
@@ -632,8 +642,8 @@ class JarvisForegroundService : Service() {
             mediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .build()
                 )
                 setDataSource(url)
@@ -641,7 +651,8 @@ class JarvisForegroundService : Service() {
                     mp.start()
                     val vol = if (isSpeaking) 0.15f else 1.0f
                     mp.setVolume(vol, vol)
-                    broadcastActionLog("musiqa", "Quloqchinda ijro etilmoqda: $title")
+                    val dev = if (isBluetoothScoActive) "Quloqchinda" else "Telefonda"
+                    broadcastActionLog("musiqa", "$dev ijro etilmoqda: $title")
                     updateNotification()
                 }
                 setOnCompletionListener {
