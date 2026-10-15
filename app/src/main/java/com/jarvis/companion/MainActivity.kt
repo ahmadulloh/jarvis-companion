@@ -17,7 +17,9 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.view.Window
+import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -115,6 +117,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSendCommand: ImageButton
     private lateinit var eventAdapter: LiveEventAdapter
     private lateinit var webViewDashboard: WebView
+    private lateinit var containerWebView: View
+    private lateinit var tvWebTitle: TextView
+    private lateinit var btnOpenExternalBrowser: TextView
+    private lateinit var btnCloseWebView: TextView
 
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
 
@@ -250,6 +256,15 @@ class MainActivity : AppCompatActivity() {
         etCommandInput = findViewById(R.id.etCommandInput)
         btnSendCommand = findViewById(R.id.btnSendCommand)
         webViewDashboard = findViewById(R.id.webViewDashboard)
+        containerWebView = findViewById(R.id.containerWebView)
+        tvWebTitle = findViewById(R.id.tvWebTitle)
+        btnOpenExternalBrowser = findViewById(R.id.btnOpenExternalBrowser)
+        btnCloseWebView = findViewById(R.id.btnCloseWebView)
+
+        btnCloseWebView.setOnClickListener {
+            containerWebView.visibility = View.GONE
+            webViewDashboard.loadUrl("about:blank")
+        }
 
         activeRoute = try {
             AudioRoute.valueOf(prefs.audioRoute)
@@ -299,6 +314,10 @@ class MainActivity : AppCompatActivity() {
             cardAiSecretary.setBackgroundResource(R.drawable.bg_day_card)
             cardQuronLesson.setBackgroundResource(R.drawable.bg_day_card)
             cardLiveHud.setBackgroundResource(R.drawable.bg_day_card)
+        }
+        if (::containerWebView.isInitialized) {
+            containerWebView.setBackgroundColor(ContextCompat.getColor(this, if (night) R.color.night_bg else R.color.day_bg))
+            tvWebTitle.setTextColor(ContextCompat.getColor(this, if (night) R.color.night_text_primary else R.color.day_text_primary))
         }
         if (::cardAiSecretary.isInitialized) {
             updateSecretaryUi()
@@ -574,29 +593,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun openQuronLesson(url: String) {
+    private fun resolveLessonUrl(rawUrl: String): String {
+        if (rawUrl.isBlank()) return ""
         try {
-            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val uri = Uri.parse(rawUrl)
+            val configuredServer = prefs.serverAddress.trim()
+                .removePrefix("http://")
+                .removePrefix("https://")
+                .removePrefix("ws://")
+                .removePrefix("wss://")
+
+            val configuredHost = if (configuredServer.contains(":")) {
+                configuredServer.substringBefore(":")
+            } else {
+                configuredServer
             }
-            startActivity(browserIntent)
+
+            if (configuredHost.isNotBlank()) {
+                val originalPort = uri.port
+                val newPortPart = if (originalPort != -1) ":$originalPort" else ""
+                val scheme = uri.scheme ?: "http"
+                val path = uri.path ?: ""
+                val query = if (uri.query != null) "?${uri.query}" else ""
+                val fragment = if (uri.fragment != null) "#${uri.fragment}" else ""
+                return "$scheme://$configuredHost$newPortPart$path$query$fragment"
+            }
         } catch (e: Exception) {
-            Log.e("MainActivity", "Xatolik brauzerni ochishda: ${e.message}")
-            openWebUrl(url)
+            Log.w("MainActivity", "Error resolving lesson URL: ${e.message}")
+        }
+        return rawUrl
+    }
+
+    private fun openQuronLesson(url: String) {
+        val resolvedUrl = resolveLessonUrl(url)
+        quronWebUrl = resolvedUrl
+        runOnUiThread {
+            btnOpenExternalBrowser.setOnClickListener {
+                try {
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(resolvedUrl)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(browserIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Brauzer ochishda xatolik", Toast.LENGTH_SHORT).show()
+                }
+            }
+            openWebUrl(resolvedUrl)
         }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun openWebUrl(url: String) {
-        webViewDashboard.visibility = View.VISIBLE
+        if (url.isBlank()) return
+        containerWebView.visibility = View.VISIBLE
+        tvWebTitle.text = "📖 Qur'on Ustozi AI"
         webViewDashboard.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_DEFAULT
+            allowFileAccess = true
+            databaseEnabled = true
         }
-        webViewDashboard.webViewClient = WebViewClient()
-        webViewDashboard.webChromeClient = WebChromeClient()
+        webViewDashboard.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                return false
+            }
+        }
+        webViewDashboard.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                runOnUiThread {
+                    try {
+                        request?.grant(request.resources)
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "WebRTC permission grant error: ${e.message}")
+                    }
+                }
+            }
+        }
         webViewDashboard.loadUrl(url)
     }
 
@@ -870,5 +944,18 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "startJarvisService error: ${e.message}")
         }
+    }
+
+    override fun onBackPressed() {
+        if (::containerWebView.isInitialized && containerWebView.visibility == View.VISIBLE) {
+            if (webViewDashboard.canGoBack()) {
+                webViewDashboard.goBack()
+            } else {
+                containerWebView.visibility = View.GONE
+                webViewDashboard.loadUrl("about:blank")
+            }
+            return
+        }
+        super.onBackPressed()
     }
 }
