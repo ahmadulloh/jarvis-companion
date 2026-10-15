@@ -69,6 +69,9 @@ class JarvisForegroundService : Service() {
         const val EXTRA_QURON_URL = "extra_quron_url"
         const val EXTRA_QURON_SURA = "extra_quron_sura"
         const val EXTRA_QURON_OYAT = "extra_quron_oyat"
+
+        const val ACTION_INTERRUPT = "com.jarvis.companion.ACTION_INTERRUPT"
+        const val ACTION_SET_SECRETARY = "com.jarvis.companion.ACTION_SET_SECRETARY"
     }
 
     private lateinit var prefs: PreferencesHelper
@@ -396,6 +399,18 @@ class JarvisForegroundService : Service() {
                     wsClient.sendText(cmd)
                     broadcastChatLog("user", cmd)
                 }
+            }
+            ACTION_INTERRUPT -> {
+                audioPlayer.flush()
+                wsClient.sendControl(org.json.JSONObject().apply {
+                    put("type", "interrupt")
+                })
+            }
+            ACTION_SET_SECRETARY -> {
+                val enabled = intent.getBooleanExtra("enabled", prefs.aiSecretaryEnabled)
+                val reason = intent.getStringExtra("reason") ?: prefs.aiSecretaryReason
+                prefs.aiSecretaryEnabled = enabled
+                prefs.aiSecretaryReason = reason
             }
             ACTION_STOP -> {
                 stopSelf()
