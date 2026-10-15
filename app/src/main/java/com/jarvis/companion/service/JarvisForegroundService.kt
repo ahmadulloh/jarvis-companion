@@ -1,5 +1,6 @@
 package com.jarvis.companion.service
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -7,6 +8,8 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -24,6 +27,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.KeyEvent
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.jarvis.companion.MainActivity
 import com.jarvis.companion.R
 import com.jarvis.companion.audio.AudioRecordManager
@@ -358,22 +362,65 @@ class JarvisForegroundService : Service() {
         sendBroadcast(intent)
     }
 
+    private var isForegroundStarted = false
+
+    private fun startForegroundSafely() {
+        if (isForegroundStarted) return
+        try {
+            val notification = buildNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                var fgsType = 0
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                    }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                        ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                    }
+                }
+                if (fgsType != 0) {
+                    startForeground(NOTIFICATION_ID, notification, fgsType)
+                } else {
+                    startForeground(NOTIFICATION_ID, notification)
+                }
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+            isForegroundStarted = true
+        } catch (e: Exception) {
+            Log.e("JarvisService", "startForegroundSafely error: ${e.message}")
+        }
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // ALWAYS satisfy Android 8+ foreground service requirements immediately
+        startForegroundSafely()
+
         val action = intent?.action ?: ACTION_START
 
         when (action) {
             ACTION_START -> {
-                startForeground(NOTIFICATION_ID, buildNotification())
                 prefs.isServiceRunning = true
-                scoManager.start()
-                audioPlayer.start()
-                wsClient.connect(prefs.serverAddress, prefs.authToken)
+                try { scoManager.start() } catch (e: Exception) { Log.e("JarvisService", "scoManager.start error: ${e.message}") }
+                try { audioPlayer.start() } catch (e: Exception) { Log.e("JarvisService", "audioPlayer.start error: ${e.message}") }
+                try { wsClient.connect(prefs.serverAddress, prefs.authToken) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
 
-                // Always start continuous microphone recording
-                isMicStreaming = true
-                audioRecorder.start()
-                setAudioRoute(currentAudioRoute)
-                broadcastState("MIC_ON")
+                // Only start audio recording if RECORD_AUDIO permission is granted
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    isMicStreaming = true
+                    try {
+                        audioRecorder.start()
+                    } catch (e: Exception) {
+                        Log.e("JarvisService", "audioRecorder.start error: ${e.message}")
+                    }
+                    setAudioRoute(currentAudioRoute)
+                    broadcastState("MIC_ON")
+                } else {
+                    isMicStreaming = false
+                    Log.w("JarvisService", "RECORD_AUDIO not granted yet, mic recording paused")
+                    broadcastState("IDLE")
+                }
             }
             ACTION_SET_ROUTE -> {
                 val rName = intent?.getStringExtra(EXTRA_ROUTE) ?: AudioRoute.EARBUDS.name
@@ -384,7 +431,7 @@ class JarvisForegroundService : Service() {
                 toggleMicStreaming()
             }
             ACTION_WAKE -> {
-                wsClient.sendWake()
+                try { wsClient.sendWake() } catch (_: Exception) {}
                 playBeep()
                 if (!isMicStreaming) {
                     toggleMicStreaming()
@@ -396,15 +443,17 @@ class JarvisForegroundService : Service() {
             ACTION_SEND_TEXT -> {
                 val cmd = intent?.getStringExtra(EXTRA_COMMAND_TEXT) ?: ""
                 if (cmd.isNotBlank()) {
-                    wsClient.sendText(cmd)
+                    try { wsClient.sendText(cmd) } catch (_: Exception) {}
                     broadcastChatLog("user", cmd)
                 }
             }
             ACTION_INTERRUPT -> {
-                audioPlayer.flush()
-                wsClient.sendControl(org.json.JSONObject().apply {
-                    put("type", "interrupt")
-                })
+                try {
+                    audioPlayer.flush()
+                    wsClient.sendControl(org.json.JSONObject().apply {
+                        put("type", "interrupt")
+                    })
+                } catch (_: Exception) {}
             }
             ACTION_SET_SECRETARY -> {
                 val enabled = intent?.getBooleanExtra("enabled", prefs.aiSecretaryEnabled) ?: prefs.aiSecretaryEnabled
@@ -729,6 +778,7 @@ class JarvisForegroundService : Service() {
     }
 
     override fun onDestroy() {
+        isForegroundStarted = false
         prefs.isServiceRunning = false
         stopMediaStream()
         audioRecorder.stop()

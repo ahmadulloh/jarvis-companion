@@ -1,9 +1,11 @@
 package com.jarvis.companion.audio
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
@@ -13,6 +15,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import androidx.core.content.ContextCompat
 
 class BluetoothScoManager(
     private val context: Context,
@@ -158,6 +161,12 @@ class BluetoothScoManager(
     fun start() {
         if (isScoStarted) return
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    Log.w("BluetoothScoManager", "BLUETOOTH_CONNECT permission not granted, skipping SCO start")
+                    return
+                }
+            }
             requestAudioFocus()
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
 
@@ -167,7 +176,11 @@ class BluetoothScoManager(
             }
 
             val filter = IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
-            context.registerReceiver(scoReceiver, filter)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(scoReceiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                context.registerReceiver(scoReceiver, filter)
+            }
             isReceiverRegistered = true
 
             routeBluetoothAudio()

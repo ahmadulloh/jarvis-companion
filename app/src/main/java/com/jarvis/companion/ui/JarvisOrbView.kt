@@ -171,6 +171,7 @@ class JarvisOrbView @JvmOverloads constructor(
         val cx = w / 2f
         val cy = h / 2f
         val maxRadius = minOf(cx, cy) * 0.88f
+        if (maxRadius <= 10f) return
         val coreRadius = maxRadius * 0.44f
 
         val activeAudio = audioLevel.coerceIn(0f, 1f)
@@ -179,6 +180,7 @@ class JarvisOrbView @JvmOverloads constructor(
 
         // ── 1. Deep Core Plasma & Aura (Radial Glow) ──────────────────────
         val glowRadius = coreRadius * 2.2f * dynamicScale
+        if (glowRadius <= 5f) return
         val auraAlpha = if (isNightMode) 80 else 55
         val auraColor = Color.argb(
             (auraAlpha * (0.8f + activeAudio * 0.5f)).toInt().coerceIn(0, 255),
@@ -334,15 +336,31 @@ class JarvisOrbView @JvmOverloads constructor(
         canvas.drawText("J.A.R.V.I.S", cx, cy - 2f, textPaint)
 
         subTextPaint.color = currentPrimaryColor
-        subTextPaint.textSize = coreRadius * 0.17f
+        var subSize = coreRadius * 0.17f
+        subTextPaint.textSize = subSize
         subTextPaint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
         val modeLabel = if (state == OrbState.SPEAKING) "GAPIRMOQDA" else if (state == OrbState.LISTENING) "ESHITMOQDA" else activeDomainTitle.uppercase()
+
+        // Auto-scale subText so it NEVER overflows the central core circle
+        val maxSubWidth = coreRadius * 1.45f
+        val measuredSub = subTextPaint.measureText(modeLabel)
+        if (measuredSub > maxSubWidth && measuredSub > 0f) {
+            subSize *= (maxSubWidth / measuredSub)
+            subTextPaint.textSize = subSize
+        }
         canvas.drawText(modeLabel, cx, cy + coreRadius * 0.32f, subTextPaint)
     }
 
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        if (!loopAnimator.isStarted) {
+            loopAnimator.start()
+        }
+    }
+
     override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
         loopAnimator.cancel()
         colorAnimator?.cancel()
+        super.onDetachedFromWindow()
     }
 }

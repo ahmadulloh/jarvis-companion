@@ -29,7 +29,7 @@ class DomainAdapter(
 
     override fun onBindViewHolder(holder: DomainViewHolder, position: Int) {
         val domain = domains[position]
-        holder.bind(domain, domain.id.equals(activeDomainId, ignoreCase = true), onDomainSelected)
+        holder.bind(domain, position, domain.id.equals(activeDomainId, ignoreCase = true), onDomainSelected)
     }
 
     override fun getItemCount(): Int = domains.size
@@ -43,15 +43,15 @@ class DomainAdapter(
         private val tvBadge: TextView = itemView.findViewById(R.id.tvDomainBadge)
         private val tvDescription: TextView = itemView.findViewById(R.id.tvDomainDescription)
 
-        fun bind(domain: JarvisDomain, isActive: Boolean, onSelect: (JarvisDomain) -> Unit) {
+        fun bind(domain: JarvisDomain, index: Int, isActive: Boolean, onSelect: (JarvisDomain) -> Unit) {
             tvIcon.text = domain.icon
-            tvTitle.text = "${adapterPosition + 1}. ${domain.titleUz}"
+            tvTitle.text = "${index + 1}. ${domain.titleUz}"
             tvCategory.text = domain.category
             tvCategory.setTextColor(domain.primaryColor)
             tvDescription.text = domain.description
 
             if (isActive) {
-                tvBadge.text = "FAOL REJIM ✓"
+                tvBadge.text = "FAOL ✓"
                 tvBadge.backgroundTintList = ColorStateList.valueOf(domain.primaryColor)
                 tvBadge.setTextColor(Color.parseColor("#0F172A"))
                 container.alpha = 1.0f

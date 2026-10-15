@@ -6,53 +6,57 @@
     android:layout_height="match_parent"
     android:background="@color/day_bg">
 
-    <!-- Top iOS-style Minimal Header Bar (Matching Screenshot) -->
+    <!-- Top iOS-style Responsive Minimal Header Bar -->
     <LinearLayout
         android:id="@+id/headerBar"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="58dp"
         android:layout_alignParentTop="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
-        <TextView
-            android:id="@+id/tvHeaderTitle"
+        <!-- Title + Live Status Badge Stacked (Saves massive horizontal space!) -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.14"
-            android:text="J.A.R.V.I.S"
-            android:textColor="@color/day_text_primary"
-            android:textSize="20sp" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.10"
+                android:text="J.A.R.V.I.S"
+                android:textColor="@color/day_text_primary"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="● ALOQADA"
+                android:textColor="@color/jarvis_accent"
+                android:textSize="9sp" />
+        </LinearLayout>
 
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Status Badge -->
-        <TextView
-            android:id="@+id/tvStatusBadge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_ios_action_chip"
-            android:fontFamily="sans-serif-medium"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="4dp"
-            android:text="● ALOQADA"
-            android:textColor="@color/jarvis_accent"
-            android:textSize="10sp" />
-
         <!-- Dynamic Domain Badge (Click opens 31 Domains) -->
         <TextView
             android:id="@+id/tvHeaderDomainBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="6dp"
+            android:maxWidth="115dp"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:background="@drawable/bg_ios_pill_active"
             android:clickable="true"
             android:focusable="true"
@@ -61,6 +65,7 @@
             android:paddingTop="4dp"
             android:paddingEnd="8dp"
             android:paddingBottom="4dp"
+            android:singleLine="true"
             android:text="⚡ ASOSIY"
             android:textColor="@color/night_pill_active_text"
             android:textSize="10sp" />
@@ -68,9 +73,9 @@
         <!-- Theme Toggle -->
         <ImageButton
             android:id="@+id/btnThemeToggle"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginStart="8dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Mavzu"
             android:scaleType="centerInside"
@@ -80,9 +85,9 @@
         <!-- User Profile Avatar (Click to Login / Edit Profile) -->
         <FrameLayout
             android:id="@+id/layoutProfileAvatar"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_marginStart="8dp">
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="6dp">
 
             <ImageView
                 android:id="@+id/ivUserProfile"
@@ -98,9 +103,9 @@
         <!-- Settings Cog Button -->
         <ImageButton
             android:id="@+id/btnOpenSettings"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginStart="6dp"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="4dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Sozlamalar"
             android:scaleType="centerInside"
@@ -124,15 +129,15 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:paddingStart="20dp"
-            android:paddingTop="8dp"
-            android:paddingEnd="20dp"
+            android:paddingStart="16dp"
+            android:paddingTop="6dp"
+            android:paddingEnd="16dp"
             android:paddingBottom="16dp">
 
             <!-- Center AI Orb Arena (Full Width with Soundwave Bars) -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="260dp"
+                android:layout_height="250dp"
                 android:layout_marginTop="2dp">
 
                 <com.jarvis.companion.ui.JarvisOrbView
@@ -144,24 +149,32 @@
             <!-- Minimalist AI Status Text -->
             <TextView
                 android:id="@+id/tvOrbStatus"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.08"
+                android:letterSpacing="0.06"
                 android:text="JARVIS TAYYOR"
                 android:textColor="@color/jarvis_cyan"
-                android:textSize="16sp" />
+                android:textSize="15sp" />
 
             <TextView
                 android:id="@+id/tvOrbSubtitle"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:gravity="center"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:lineSpacingExtra="2dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
                 android:text="Labbay, Axmadulloh sir, eshitaman..."
                 android:textColor="@color/day_text_secondary"
-                android:textSize="12sp" />
+                android:textSize="11sp" />
 
             <!-- Qur'on Ustozi AI Card (Matches Screenshot! Gone by default, appears when requested) -->
             <LinearLayout
@@ -324,13 +337,15 @@
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingStart="14dp"
-                        android:paddingTop="9dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="9dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="8dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:text="📞 Onamga telefon"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipDomainAction2"
@@ -339,13 +354,15 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingStart="14dp"
-                        android:paddingTop="9dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="9dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="8dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:text="💬 Telegram"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipDomainAction3"
@@ -354,13 +371,15 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingStart="14dp"
-                        android:paddingTop="9dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="9dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="8dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:text="⏰ Eslatma"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipDomainAction4"
@@ -369,13 +388,15 @@
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
-                        android:paddingStart="14dp"
-                        android:paddingTop="9dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="9dp"
+                        android:paddingStart="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="8dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:text="⚡ Tizim holati"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
 
                     <TextView
                         android:id="@+id/chipInterrupt"
@@ -385,12 +406,14 @@
                         android:background="@drawable/bg_ios_action_chip"
                         android:fontFamily="sans-serif-bold"
                         android:paddingStart="12dp"
-                        android:paddingTop="9dp"
+                        android:paddingTop="8dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="9dp"
+                        android:paddingBottom="8dp"
+                        android:singleLine="true"
+                        android:ellipsize="end"
                         android:text="⏹ To'xtatish"
                         android:textColor="@color/jarvis_red"
-                        android:textSize="12sp" />
+                        android:textSize="11sp" />
                 </LinearLayout>
             </HorizontalScrollView>
 

@@ -177,8 +177,13 @@ class MainActivity : AppCompatActivity() {
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ ->
-        startJarvisService()
+    ) { results ->
+        val recordAudioGranted = results[Manifest.permission.RECORD_AUDIO] == true
+        if (recordAudioGranted) {
+            startJarvisService()
+        } else {
+            Toast.makeText(this, "JARVIS ishlashi uchun mikrofon ruxsati zarur", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -303,10 +308,14 @@ class MainActivity : AppCompatActivity() {
     private fun setupOrbInteractions() {
         jarvisOrb.setOnClickListener {
             // Wake Jarvis or interrupt speaking
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_WAKE
+            try {
+                val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                    action = JarvisForegroundService.ACTION_WAKE
+                }
+                startService(intent)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "setupOrbInteractions error: ${e.message}")
             }
-            startService(intent)
         }
     }
 
@@ -346,10 +355,14 @@ class MainActivity : AppCompatActivity() {
     private fun setupQuickActions() {
         chipInterrupt.setOnClickListener {
             sendJarvisCommand("To'xtat")
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_INTERRUPT
+            try {
+                val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                    action = JarvisForegroundService.ACTION_INTERRUPT
+                }
+                startService(intent)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "chipInterrupt error: ${e.message}")
             }
-            startService(intent)
         }
     }
 
@@ -391,11 +404,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 6. Notify Backend about domain switch
-        val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_SEND_TEXT
-            putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, "DOMAIN_SWITCH:${domain.id}")
+        if (prefs.isServiceRunning) {
+            try {
+                val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                    action = JarvisForegroundService.ACTION_SEND_TEXT
+                    putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, "DOMAIN_SWITCH:${domain.id}")
+                }
+                startService(intent)
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Failed to notify service: ${e.message}")
+            }
         }
-        startService(intent)
 
         if (speakAnnouncement) {
             addFeedEvent(LiveEvent(
@@ -610,11 +629,15 @@ class MainActivity : AppCompatActivity() {
             applyDomain(detected, speakAnnouncement = true)
         }
 
-        val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_SEND_TEXT
-            putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
+        try {
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_SEND_TEXT
+                putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
+            }
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to send command to service: ${e.message}")
         }
-        startService(intent)
         addFeedEvent(LiveEvent(EventType.USER, "Siz", cmd, currentTime()))
     }
 
@@ -773,8 +796,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addFeedEvent(event: LiveEvent) {
-        eventAdapter.addEvent(event)
-        rvLiveFeed.scrollToPosition(eventAdapter.itemCount - 1)
+        rvLiveFeed.post {
+            try {
+                eventAdapter.addEvent(event)
+                rvLiveFeed.scrollToPosition(eventAdapter.itemCount - 1)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "addFeedEvent error: ${e.message}")
+            }
+        }
     }
 
     private fun currentTime(): String = timeFormat.format(Date())
@@ -829,13 +858,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startJarvisService() {
-        val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_START
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
+        try {
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_START
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "startJarvisService error: ${e.message}")
         }
     }
 }
