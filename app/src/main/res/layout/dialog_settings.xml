@@ -76,48 +76,53 @@
                 android:fontFamily="sans-serif-bold" />
         </LinearLayout>
 
-        <!-- AI Persona Selection: Female AI vs Neural Orb -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- SOHALAR VA REJIMLAR (31 TA SOHA) -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:fontFamily="sans-serif-bold"
-            android:text="AI Qiyofasi (Markaziy Vizualizatsiya):"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
-
-        <LinearLayout
-            android:id="@+id/dialogPersonaBar"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_ios_segment_bar"
-            android:orientation="horizontal"
-            android:padding="3dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/btnPersonaFemaleAi"
                 android:layout_width="0dp"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@drawable/bg_ios_pill_active"
-                android:gravity="center"
-                android:text="👩 Ayol AI Qiyofasi"
-                android:textColor="@color/night_pill_active_text"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-bold" />
+                android:fontFamily="sans-serif-bold"
+                android:text="🧠 Sohalar va Rejimlar (31 ta soha):"
+                android:textColor="@color/night_text_primary"
+                android:textSize="13sp" />
 
             <TextView
-                android:id="@+id/btnPersonaNeuralOrb"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="🌐 Neyron Sfera"
-                android:textColor="@color/night_text_secondary"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-medium" />
+                android:id="@+id/tvSettingsActiveDomainLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_ios_action_chip"
+                android:fontFamily="sans-serif-medium"
+                android:paddingStart="8dp"
+                android:paddingTop="3dp"
+                android:paddingEnd="8dp"
+                android:paddingBottom="3dp"
+                android:text="ASOSIY"
+                android:textColor="@color/jarvis_cyan"
+                android:textSize="10sp" />
         </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Ovozda soha nomini ayting (masalan: 'Haydovchi rejimi') yoki pastdan tanlang:"
+            android:textColor="@color/night_text_secondary"
+            android:textSize="11sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvSettingsDomains"
+            android:layout_width="match_parent"
+            android:layout_height="240dp"
+            android:layout_marginTop="8dp"
+            android:nestedScrollingEnabled="true"
+            android:scrollbars="vertical" />
 
         <!-- Server IP -->
         <TextView

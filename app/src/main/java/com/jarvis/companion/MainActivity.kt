@@ -27,6 +27,7 @@ import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.content.res.ColorStateList
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +36,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.jarvis.companion.audio.AudioRoute
+import com.jarvis.companion.domain.DomainAdapter
+import com.jarvis.companion.domain.JarvisDomain
+import com.jarvis.companion.domain.JarvisDomainRegistry
 import com.jarvis.companion.service.JarvisForegroundService
 import com.jarvis.companion.service.JarvisNotificationListener
 import com.jarvis.companion.ui.EventType
@@ -56,6 +60,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rootContainer: View
     private lateinit var tvHeaderTitle: TextView
     private lateinit var tvStatusBadge: TextView
+    private lateinit var tvHeaderDomainBadge: TextView
     private lateinit var btnThemeToggle: ImageButton
     private lateinit var btnOpenSettings: ImageButton
     private lateinit var layoutProfileAvatar: View
@@ -65,16 +70,19 @@ class MainActivity : AppCompatActivity() {
     // Active Device Route
     private var activeRoute: AudioRoute = AudioRoute.EARBUDS
 
+    // Active Domain (31 Soha)
+    private var currentDomain: JarvisDomain = JarvisDomainRegistry.ASOSIY
+
     // AI Orb & Status
     private lateinit var jarvisOrb: JarvisOrbView
     private lateinit var tvOrbStatus: TextView
     private lateinit var tvOrbSubtitle: TextView
 
-    // Quick Action Chips
-    private lateinit var chipOpenQuron: TextView
-    private lateinit var chipCallMom: TextView
-    private lateinit var chipReadTelegram: TextView
-    private lateinit var chipSetReminder: TextView
+    // Dynamic Domain Action Dock
+    private lateinit var chipDomainAction1: TextView
+    private lateinit var chipDomainAction2: TextView
+    private lateinit var chipDomainAction3: TextView
+    private lateinit var chipDomainAction4: TextView
     private lateinit var chipInterrupt: TextView
 
     // AI Kotib (Call Secretary) Card
@@ -123,6 +131,16 @@ class MainActivity : AppCompatActivity() {
                     if (text.isNotBlank()) {
                         val type = if (speaker.equals("JARVIS", ignoreCase = true)) EventType.JARVIS else EventType.USER
                         addFeedEvent(LiveEvent(type, speaker, text, currentTime()))
+
+                        // Automatic Voice Domain Detection
+                        if (type == EventType.USER) {
+                            val detectedDomain = JarvisDomainRegistry.findDomainByVoice(text)
+                            if (detectedDomain != null && detectedDomain.id != currentDomain.id) {
+                                runOnUiThread {
+                                    applyDomain(detectedDomain, speakAnnouncement = true)
+                                }
+                            }
+                        }
                     }
                 }
                 JarvisForegroundService.BROADCAST_ACTION_LOG -> {
@@ -195,10 +213,11 @@ class MainActivity : AppCompatActivity() {
         tvOrbStatus = findViewById(R.id.tvOrbStatus)
         tvOrbSubtitle = findViewById(R.id.tvOrbSubtitle)
 
-        chipOpenQuron = findViewById(R.id.chipOpenQuron)
-        chipCallMom = findViewById(R.id.chipCallMom)
-        chipReadTelegram = findViewById(R.id.chipReadTelegram)
-        chipSetReminder = findViewById(R.id.chipSetReminder)
+        tvHeaderDomainBadge = findViewById(R.id.tvHeaderDomainBadge)
+        chipDomainAction1 = findViewById(R.id.chipDomainAction1)
+        chipDomainAction2 = findViewById(R.id.chipDomainAction2)
+        chipDomainAction3 = findViewById(R.id.chipDomainAction3)
+        chipDomainAction4 = findViewById(R.id.chipDomainAction4)
         chipInterrupt = findViewById(R.id.chipInterrupt)
 
         cardAiSecretary = findViewById(R.id.cardAiSecretary)
@@ -233,7 +252,12 @@ class MainActivity : AppCompatActivity() {
             AudioRoute.EARBUDS
         }
 
-        jarvisOrb.showFemaleAiPersona = (prefs.avatarMode == "FEMALE_AI")
+        currentDomain = JarvisDomainRegistry.getDomainById(prefs.activeDomain)
+        applyDomain(currentDomain, speakAnnouncement = false)
+
+        tvHeaderDomainBadge.setOnClickListener {
+            btnOpenSettings.performClick()
+        }
     }
 
     /**
@@ -320,26 +344,67 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupQuickActions() {
-        chipOpenQuron.setOnClickListener {
-            cardQuronLesson.visibility = View.VISIBLE
-            cardQuronLesson.animate().alpha(1f).setDuration(250).start()
-            Toast.makeText(this, "Qur'on Ustozi AI ochildi", Toast.LENGTH_SHORT).show()
-        }
-        chipCallMom.setOnClickListener {
-            sendJarvisCommand("Onamga telefon qil")
-        }
-        chipReadTelegram.setOnClickListener {
-            sendJarvisCommand("Telegramdagi yangi xabarlarni aytib ber")
-        }
-        chipSetReminder.setOnClickListener {
-            sendJarvisCommand("Eslatma qo'yish")
-        }
         chipInterrupt.setOnClickListener {
             sendJarvisCommand("To'xtat")
             val intent = Intent(this, JarvisForegroundService::class.java).apply {
                 action = JarvisForegroundService.ACTION_INTERRUPT
             }
             startService(intent)
+        }
+    }
+
+    private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
+        currentDomain = domain
+        prefs.activeDomain = domain.id
+
+        // 1. Morph Neural Core Colors & Title
+        jarvisOrb.setDomainColors(domain.primaryColor, domain.glowColor, domain.titleUz)
+
+        // 2. Update Header Badge
+        tvHeaderDomainBadge.text = "${domain.icon} ${domain.titleUz.uppercase()}"
+        tvHeaderDomainBadge.backgroundTintList = ColorStateList.valueOf(domain.primaryColor)
+        tvHeaderDomainBadge.setTextColor(Color.parseColor("#0F172A"))
+
+        // 3. Update Status Subtitle
+        tvOrbStatus.text = "${domain.titleUz.uppercase()} REJIMI"
+        tvOrbStatus.setTextColor(domain.primaryColor)
+        tvOrbSubtitle.text = domain.motto
+
+        // 4. Update the 4 Dynamic Domain Action Pills
+        if (domain.actions.size >= 4) {
+            chipDomainAction1.text = "${domain.actions[0].icon} ${domain.actions[0].title}"
+            chipDomainAction1.setOnClickListener { sendJarvisCommand(domain.actions[0].promptCommand) }
+
+            chipDomainAction2.text = "${domain.actions[1].icon} ${domain.actions[1].title}"
+            chipDomainAction2.setOnClickListener { sendJarvisCommand(domain.actions[1].promptCommand) }
+
+            chipDomainAction3.text = "${domain.actions[2].icon} ${domain.actions[2].title}"
+            chipDomainAction3.setOnClickListener { sendJarvisCommand(domain.actions[2].promptCommand) }
+
+            chipDomainAction4.text = "${domain.actions[3].icon} ${domain.actions[3].title}"
+            chipDomainAction4.setOnClickListener { sendJarvisCommand(domain.actions[3].promptCommand) }
+        }
+
+        // 5. Quran card visibility (Din mode)
+        if (domain.id == "DIN") {
+            cardQuronLesson.visibility = View.VISIBLE
+        }
+
+        // 6. Notify Backend about domain switch
+        val intent = Intent(this, JarvisForegroundService::class.java).apply {
+            action = JarvisForegroundService.ACTION_SEND_TEXT
+            putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, "DOMAIN_SWITCH:${domain.id}")
+        }
+        startService(intent)
+
+        if (speakAnnouncement) {
+            addFeedEvent(LiveEvent(
+                EventType.SYSTEM,
+                "JARVIS",
+                "${domain.titleUz} rejimi faollashtirildi. ${domain.motto}",
+                currentTime()
+            ))
+            sendJarvisCommand("${domain.titleUz} rejimi faol. ${domain.motto}")
         }
     }
 
@@ -540,6 +605,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun sendJarvisCommand(cmd: String) {
+        val detected = JarvisDomainRegistry.findDomainByVoice(cmd)
+        if (detected != null && detected.id != currentDomain.id) {
+            applyDomain(detected, speakAnnouncement = true)
+        }
+
         val intent = Intent(this, JarvisForegroundService::class.java).apply {
             action = JarvisForegroundService.ACTION_SEND_TEXT
             putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
@@ -616,8 +686,21 @@ class MainActivity : AppCompatActivity() {
             val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
             val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
 
-            val btnPersonaFemale = dialog.findViewById<TextView>(R.id.btnPersonaFemaleAi)
-            val btnPersonaOrb = dialog.findViewById<TextView>(R.id.btnPersonaNeuralOrb)
+            val tvActiveLabel = dialog.findViewById<TextView>(R.id.tvSettingsActiveDomainLabel)
+            val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvSettingsDomains)
+
+            tvActiveLabel.text = "${currentDomain.icon} ${currentDomain.titleUz}"
+            tvActiveLabel.setTextColor(currentDomain.primaryColor)
+
+            rvDomains.layoutManager = LinearLayoutManager(this)
+            val domainAdapter = DomainAdapter(JarvisDomainRegistry.getAllDomains(), currentDomain.id) { selected ->
+                applyDomain(selected, speakAnnouncement = true)
+                tvActiveLabel.text = "${selected.icon} ${selected.titleUz}"
+                tvActiveLabel.setTextColor(selected.primaryColor)
+                dialog.dismiss()
+                Toast.makeText(this, "${selected.titleUz} rejimi faollashtirildi!", Toast.LENGTH_SHORT).show()
+            }
+            rvDomains.adapter = domainAdapter
 
             val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
             val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
@@ -627,7 +710,6 @@ class MainActivity : AppCompatActivity() {
             val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
 
             var selectedRoute = activeRoute
-            var selectedPersona = prefs.avatarMode
 
             fun updateDialogRouteUi() {
                 val activeBg = R.drawable.bg_ios_pill_active
@@ -644,29 +726,11 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            fun updateDialogPersonaUi() {
-                val activeBg = R.drawable.bg_ios_pill_active
-                btnPersonaFemale.background = null; btnPersonaOrb.background = null
-                btnPersonaFemale.setTextColor(Color.GRAY); btnPersonaOrb.setTextColor(Color.GRAY)
-
-                if (selectedPersona == "FEMALE_AI") {
-                    btnPersonaFemale.setBackgroundResource(activeBg)
-                    btnPersonaFemale.setTextColor(Color.BLACK)
-                } else {
-                    btnPersonaOrb.setBackgroundResource(activeBg)
-                    btnPersonaOrb.setTextColor(Color.BLACK)
-                }
-            }
-
             updateDialogRouteUi()
-            updateDialogPersonaUi()
 
             btnPc.setOnClickListener { selectedRoute = AudioRoute.PC; updateDialogRouteUi() }
             btnPhone.setOnClickListener { selectedRoute = AudioRoute.PHONE; updateDialogRouteUi() }
             btnEarbuds.setOnClickListener { selectedRoute = AudioRoute.EARBUDS; updateDialogRouteUi() }
-
-            btnPersonaFemale.setOnClickListener { selectedPersona = "FEMALE_AI"; updateDialogPersonaUi() }
-            btnPersonaOrb.setOnClickListener { selectedPersona = "ORB"; updateDialogPersonaUi() }
 
             etServer.setText(prefs.serverAddress)
             etToken.setText(prefs.authToken)
@@ -680,8 +744,6 @@ class MainActivity : AppCompatActivity() {
             btnSave.setOnClickListener {
                 activeRoute = selectedRoute
                 prefs.audioRoute = selectedRoute.name
-                prefs.avatarMode = selectedPersona
-                jarvisOrb.showFemaleAiPersona = (selectedPersona == "FEMALE_AI")
 
                 prefs.serverAddress = etServer.text.toString().trim()
                 prefs.authToken = etToken.text.toString().trim()

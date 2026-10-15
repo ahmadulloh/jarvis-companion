@@ -62,4 +62,8 @@ class PreferencesHelper(context: Context) {
     var quronCardVisible: Boolean
         get() = prefs.getBoolean("quron_card_visible", false)
         set(value) = prefs.edit().putBoolean("quron_card_visible", value).apply()
+
+    var activeDomain: String
+        get() = prefs.getString("active_domain", "ASOSIY") ?: "ASOSIY"
+        set(value) = prefs.edit().putString("active_domain", value.trim()).apply()
 }

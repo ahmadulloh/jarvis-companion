@@ -39,12 +39,30 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bg_ios_action_chip"
             android:fontFamily="sans-serif-medium"
-            android:paddingStart="10dp"
+            android:paddingStart="8dp"
             android:paddingTop="4dp"
-            android:paddingEnd="10dp"
+            android:paddingEnd="8dp"
             android:paddingBottom="4dp"
             android:text="● ALOQADA"
             android:textColor="@color/jarvis_accent"
+            android:textSize="10sp" />
+
+        <!-- Dynamic Domain Badge (Click opens 31 Domains) -->
+        <TextView
+            android:id="@+id/tvHeaderDomainBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_ios_pill_active"
+            android:clickable="true"
+            android:focusable="true"
+            android:fontFamily="sans-serif-bold"
+            android:paddingStart="8dp"
+            android:paddingTop="4dp"
+            android:paddingEnd="8dp"
+            android:paddingBottom="4dp"
+            android:text="⚡ ASOSIY"
+            android:textColor="@color/night_pill_active_text"
             android:textSize="10sp" />
 
         <!-- Theme Toggle -->
@@ -285,77 +303,79 @@
                     android:progressTint="@color/jarvis_cyan" />
             </LinearLayout>
 
-            <!-- Quick Action Shortcut Chips (Horizontal Scroll) -->
+            <!-- Dynamic Domain Quick Action Dock (Changes for every domain!) -->
             <HorizontalScrollView
+                android:id="@+id/layoutDomainDockScroll"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="16dp"
                 android:overScrollMode="never"
                 android:scrollbars="none">
 
                 <LinearLayout
+                    android:id="@+id/layoutDomainDock"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/chipOpenQuron"
+                        android:id="@+id/chipDomainAction1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-medium"
-                        android:paddingStart="12dp"
-                        android:paddingTop="7dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="7dp"
-                        android:text="📖 Qur'on Ustozi"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/chipCallMom"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-medium"
-                        android:paddingStart="12dp"
-                        android:paddingTop="7dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="7dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingStart="14dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="9dp"
                         android:text="📞 Onamga telefon"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
 
                     <TextView
-                        android:id="@+id/chipReadTelegram"
+                        android:id="@+id/chipDomainAction2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-medium"
-                        android:paddingStart="12dp"
-                        android:paddingTop="7dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="7dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingStart="14dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="9dp"
                         android:text="💬 Telegram"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
 
                     <TextView
-                        android:id="@+id/chipSetReminder"
+                        android:id="@+id/chipDomainAction3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-medium"
-                        android:paddingStart="12dp"
-                        android:paddingTop="7dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="7dp"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingStart="14dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="9dp"
                         android:text="⏰ Eslatma"
                         android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/chipDomainAction4"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_ios_action_chip"
+                        android:fontFamily="sans-serif-bold"
+                        android:paddingStart="14dp"
+                        android:paddingTop="9dp"
+                        android:paddingEnd="14dp"
+                        android:paddingBottom="9dp"
+                        android:text="⚡ Tizim holati"
+                        android:textColor="@color/day_text_primary"
+                        android:textSize="12sp" />
 
                     <TextView
                         android:id="@+id/chipInterrupt"
@@ -363,18 +383,18 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-medium"
+                        android:fontFamily="sans-serif-bold"
                         android:paddingStart="12dp"
-                        android:paddingTop="7dp"
+                        android:paddingTop="9dp"
                         android:paddingEnd="12dp"
-                        android:paddingBottom="7dp"
+                        android:paddingBottom="9dp"
                         android:text="⏹ To'xtatish"
                         android:textColor="@color/jarvis_red"
-                        android:textSize="11sp" />
+                        android:textSize="12sp" />
                 </LinearLayout>
             </HorizontalScrollView>
 
-            <!-- AI Kotib (Call Secretary) iOS Modern Card -->
+            <!-- AI Kotib (Call Secretary) iOS Modern Card (Hidden by default to keep screen uncluttered) -->
             <LinearLayout
                 android:id="@+id/cardAiSecretary"
                 android:layout_width="match_parent"
@@ -383,7 +403,8 @@
                 android:background="@drawable/bg_day_card"
                 android:elevation="2dp"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="16dp"
+                android:visibility="gone">
 
                 <LinearLayout
                     android:layout_width="match_parent"
