@@ -18,6 +18,9 @@
     <!-- Telefon qo'ng'iroqlari va Kontaktlar -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
 
     <!-- SMS yozish va o'qish -->
     <uses-permission android:name="android.permission.SEND_SMS" />

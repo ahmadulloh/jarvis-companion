@@ -77,6 +77,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipSetReminder: TextView
     private lateinit var chipInterrupt: TextView
 
+    // AI Kotib (Call Secretary) Card
+    private lateinit var cardAiSecretary: View
+    private lateinit var tvSecretaryTitle: TextView
+    private lateinit var tvSecretaryToggle: TextView
+    private lateinit var tvSecretarySubtitle: TextView
+    private lateinit var chipReasonDars: TextView
+    private lateinit var chipReasonMashina: TextView
+    private lateinit var chipReasonBand: TextView
+    private lateinit var chipReasonNamoz: TextView
+    private lateinit var chipReasonCustom: TextView
+    private lateinit var tvSecretaryPreview: TextView
+
     // Quran Lesson Card
     private lateinit var cardQuronLesson: View
     private lateinit var tvQuronTitle: TextView
@@ -163,6 +175,7 @@ class MainActivity : AppCompatActivity() {
         setupRouteSelector()
         setupOrbInteractions()
         setupQuickActions()
+        setupSecretaryCard()
         setupQuronCard()
         setupFeedAndInput()
         setupSettingsDialog()
@@ -190,6 +203,17 @@ class MainActivity : AppCompatActivity() {
         chipReadTelegram = findViewById(R.id.chipReadTelegram)
         chipSetReminder = findViewById(R.id.chipSetReminder)
         chipInterrupt = findViewById(R.id.chipInterrupt)
+
+        cardAiSecretary = findViewById(R.id.cardAiSecretary)
+        tvSecretaryTitle = findViewById(R.id.tvSecretaryTitle)
+        tvSecretaryToggle = findViewById(R.id.tvSecretaryToggle)
+        tvSecretarySubtitle = findViewById(R.id.tvSecretarySubtitle)
+        chipReasonDars = findViewById(R.id.chipReasonDars)
+        chipReasonMashina = findViewById(R.id.chipReasonMashina)
+        chipReasonBand = findViewById(R.id.chipReasonBand)
+        chipReasonNamoz = findViewById(R.id.chipReasonNamoz)
+        chipReasonCustom = findViewById(R.id.chipReasonCustom)
+        tvSecretaryPreview = findViewById(R.id.tvSecretaryPreview)
 
         cardQuronLesson = findViewById(R.id.cardQuronLesson)
         tvQuronTitle = findViewById(R.id.tvQuronTitle)
@@ -234,6 +258,9 @@ class MainActivity : AppCompatActivity() {
             tvOrbSubtitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_secondary))
         }
         updateRouteSegmentUi(activeRoute)
+        if (::cardAiSecretary.isInitialized) {
+            updateSecretaryUi()
+        }
     }
 
     /**
@@ -377,6 +404,109 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
         } catch (_: Exception) {}
+    }
+
+    /**
+     * AI Kotib (Call Secretary) setup.
+     */
+    private fun setupSecretaryCard() {
+        updateSecretaryUi()
+
+        tvSecretaryToggle.setOnClickListener {
+            prefs.aiSecretaryEnabled = !prefs.aiSecretaryEnabled
+            updateSecretaryUi()
+            val status = if (prefs.aiSecretaryEnabled) "YOQILDI" else "O'CHIRILDI"
+            Toast.makeText(this, "AI Kotib $status", Toast.LENGTH_SHORT).show()
+        }
+
+        chipReasonDars.setOnClickListener { selectSecretaryReason("Darsdaman") }
+        chipReasonMashina.setOnClickListener { selectSecretaryReason("Mashinadaman") }
+        chipReasonBand.setOnClickListener { selectSecretaryReason("Bandman / Majlis") }
+        chipReasonNamoz.setOnClickListener { selectSecretaryReason("Namozdaman") }
+        chipReasonCustom.setOnClickListener { promptCustomReasonDialog() }
+    }
+
+    private fun selectSecretaryReason(reason: String) {
+        prefs.aiSecretaryReason = reason
+        updateSecretaryUi()
+        Toast.makeText(this, "Holat tanlandi: $reason", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun updateSecretaryUi() {
+        val enabled = prefs.aiSecretaryEnabled
+        if (enabled) {
+            tvSecretaryToggle.text = "YOQILGAN"
+            tvSecretaryToggle.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
+        } else {
+            tvSecretaryToggle.text = "O'CHIRILGAN"
+            tvSecretaryToggle.setTextColor(Color.parseColor("#9CA3AF"))
+        }
+
+        val reason = prefs.aiSecretaryReason
+        val activeBg = R.drawable.bg_ios_pill_active
+        val normalBg = R.drawable.bg_ios_action_chip
+        val activeText = ContextCompat.getColor(this, R.color.night_pill_active_text)
+        val normalText = if (isNightMode) ContextCompat.getColor(this, R.color.night_text_primary) else ContextCompat.getColor(this, R.color.day_text_primary)
+
+        val chips = listOf(
+            chipReasonDars to "Darsdaman",
+            chipReasonMashina to "Mashinadaman",
+            chipReasonBand to "Bandman / Majlis",
+            chipReasonNamoz to "Namozdaman"
+        )
+
+        var matchedPreset = false
+        for ((chip, rName) in chips) {
+            if (reason.equals(rName, ignoreCase = true)) {
+                chip.setBackgroundResource(activeBg)
+                chip.setTextColor(activeText)
+                matchedPreset = true
+            } else {
+                chip.setBackgroundResource(normalBg)
+                chip.setTextColor(normalText)
+            }
+        }
+
+        if (!matchedPreset) {
+            chipReasonCustom.setBackgroundResource(activeBg)
+            chipReasonCustom.setTextColor(activeText)
+            chipReasonCustom.text = "✍️ $reason"
+        } else {
+            chipReasonCustom.setBackgroundResource(normalBg)
+            chipReasonCustom.setTextColor(normalText)
+            chipReasonCustom.text = "✍️ Boshqa..."
+        }
+
+        val r = reason.lowercase()
+        val reasonFormatted = when {
+            r.contains("dars") -> "darsdalar"
+            r.contains("mashina") || r.contains("hayda") -> "mashina haydamoqdalar"
+            r.contains("namoz") -> "namozdalar"
+            r.contains("majlis") || r.contains("band") -> "muhim majlisda bandlar"
+            r.contains("dam") -> "dam olmoqdalar"
+            else -> "$reason sababli hozir bandlar"
+        }
+
+        tvSecretaryPreview.text = "💬 Jarvis aytadi: «Assalomu alaykum. Axmadulloh sir hozir $reasonFormatted, shuning uchun go'shakni ko'tara olmadilar. Xabaringizni eshitaman...»"
+    }
+
+    private fun promptCustomReasonDialog() {
+        val et = EditText(this).apply {
+            hint = "Masalan: Sportdaman, Uydaman"
+            setText(prefs.aiSecretaryReason)
+            setPadding(40, 30, 40, 30)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("AI Kotib uchun sabab kiriting")
+            .setView(et)
+            .setPositiveButton("Saqlash") { _, _ ->
+                val txt = et.text.toString().trim()
+                if (txt.isNotEmpty()) {
+                    selectSecretaryReason(txt)
+                }
+            }
+            .setNegativeButton("Bekor qilish", null)
+            .show()
     }
 
     /**
@@ -543,7 +673,8 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CALL_PHONE,
             Manifest.permission.READ_CONTACTS,
-            Manifest.permission.SEND_SMS
+            Manifest.permission.SEND_SMS,
+            Manifest.permission.READ_PHONE_STATE
         )
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             permissions.add(Manifest.permission.BLUETOOTH_CONNECT)

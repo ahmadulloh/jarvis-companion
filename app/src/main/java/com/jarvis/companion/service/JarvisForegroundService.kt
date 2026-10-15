@@ -31,6 +31,7 @@ import com.jarvis.companion.audio.AudioRoute
 import com.jarvis.companion.audio.AudioTrackPlayer
 import com.jarvis.companion.audio.BluetoothScoManager
 import com.jarvis.companion.network.JarvisWebSocketClient
+import com.jarvis.companion.util.CallSecretaryManager
 import com.jarvis.companion.util.PhoneActionManager
 import com.jarvis.companion.util.PreferencesHelper
 
@@ -80,6 +81,7 @@ class JarvisForegroundService : Service() {
     private lateinit var audioRecorder: AudioRecordManager
     private lateinit var audioPlayer: AudioTrackPlayer
     private lateinit var wsClient: JarvisWebSocketClient
+    private lateinit var callSecretary: CallSecretaryManager
 
     private var currentAudioRoute: AudioRoute = AudioRoute.EARBUDS
     private var isMicStreaming = false
@@ -274,9 +276,31 @@ class JarvisForegroundService : Service() {
                             }
                         }
                     }
+                    "set_secretary_reason" -> {
+                        val reason = json.optString("reason", "Darsdaman")
+                        val enabled = json.optBoolean("enabled", true)
+                        prefs.aiSecretaryReason = reason
+                        prefs.aiSecretaryEnabled = enabled
+                        broadcastActionLog("ai_secretary", "Sabab o'rnatildi: $reason")
+                    }
+                    "trigger_secretary_call" -> {
+                        val target = json.optString("target", "")
+                        val reason = json.optString("reason", prefs.aiSecretaryReason)
+                        callSecretary.triggerSecretaryManually(target, reason)
+                    }
                 }
             }
         )
+
+        callSecretary = CallSecretaryManager(
+            this,
+            phoneActionManager,
+            wsClient,
+            prefs
+        ) { title, msg ->
+            broadcastActionLog(title, msg)
+        }
+        callSecretary.startMonitoring()
     }
 
     fun setAudioRoute(route: AudioRoute) {
@@ -685,6 +709,7 @@ class JarvisForegroundService : Service() {
         audioPlayer.stop()
         scoManager.stop()
         wsClient.disconnect()
+        try { callSecretary.release() } catch (_: Exception) {}
 
         mediaSession?.release()
         mediaSession = null

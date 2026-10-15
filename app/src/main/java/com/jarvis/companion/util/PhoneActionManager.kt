@@ -285,6 +285,49 @@ class PhoneActionManager(private val context: Context) {
     }
 
     /**
+     * Resolve contact name by incoming phone number.
+     */
+    @SuppressLint("Range")
+    fun searchContactByNumber(rawNumber: String): String? {
+        val digits = rawNumber.replace("+", "").replace(" ", "").replace("-", "")
+        if (digits.length < 7) return null
+
+        val hasReadContacts = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasReadContacts) return null
+
+        try {
+            val projection = arrayOf(
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER
+            )
+            val cursor = context.contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                null,
+                null,
+                null
+            ) ?: return null
+
+            cursor.use { c ->
+                while (c.moveToNext()) {
+                    val name = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)) ?: ""
+                    val num = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)) ?: ""
+                    val numDigits = num.replace("+", "").replace(" ", "").replace("-", "")
+                    if (numDigits.isNotEmpty() && (numDigits.endsWith(digits.takeLast(7)) || digits.endsWith(numDigits.takeLast(7)))) {
+                        return name
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "searchContactByNumber error: ${e.message}")
+        }
+        return null
+    }
+
+    /**
      * Call contact or phone number.
      */
     fun makeCall(queryOrNumber: String): String {
