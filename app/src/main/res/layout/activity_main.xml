@@ -18,12 +18,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:clipToPadding="false"
         android:paddingStart="20dp"
-        android:paddingTop="26dp"
+        android:paddingTop="14dp"
         android:paddingEnd="18dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp">
 
-        <!-- Brand Title: J . A . R . V . I . S -->
+        <!-- Brand Title: J · A · R · V · I · S -->
         <TextView
             android:id="@+id/tvBrandTitle"
             android:layout_width="wrap_content"
@@ -35,9 +36,9 @@
             android:clickable="true"
             android:focusable="true"
             android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.20"
+            android:letterSpacing="0.22"
             android:singleLine="true"
-            android:text="J . A . R . V . I . S"
+            android:text="J · A · R · V · I · S"
             android:textColor="#0B2A18"
             android:textSize="14sp" />
 

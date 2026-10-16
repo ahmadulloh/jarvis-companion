@@ -41,6 +41,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import android.media.AudioAttributes
+import android.media.AudioManager
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -67,6 +72,7 @@ class MainActivity : AppCompatActivity() {
     // ── Living Particle Intelligence View ──────────────────────────────────
     private lateinit var jarvisParticleView: JarvisParticleView
     private lateinit var rootContainer: View
+    private lateinit var topBar: View
     private lateinit var tvBrandTitle: TextView
     private lateinit var chipDomainSelector: LinearLayout
     private lateinit var viewChipDot: View
@@ -154,6 +160,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        WindowCompat.getInsetsController(window, window.decorView)?.isAppearanceLightStatusBars = true
+
         setContentView(R.layout.activity_main)
 
         prefs = PreferencesHelper(this)
@@ -192,12 +202,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         rootContainer = findViewById(R.id.rootContainer)
+        topBar = findViewById(R.id.topBar)
         jarvisParticleView = findViewById(R.id.jarvisParticleView)
         tvBrandTitle = findViewById(R.id.tvBrandTitle)
         chipDomainSelector = findViewById(R.id.chipDomainSelector)
         viewChipDot = findViewById(R.id.viewChipDot)
         tvChipTitle = findViewById(R.id.tvChipTitle)
         tvJarvisCaption = findViewById(R.id.tvJarvisCaption)
+
+        ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
+            val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
+            val density = resources.displayMetrics.density
+            val topPadding = if (statusBarHeight > 0) {
+                statusBarHeight + (10 * density).toInt()
+            } else {
+                (36 * density).toInt()
+            }
+            v.setPadding(v.paddingLeft, topPadding, v.paddingRight, (12 * density).toInt())
+            insets
+        }
 
         bottomBarContainer = findViewById(R.id.bottomBarContainer)
         etCommandInput = findViewById(R.id.etCommandInput)
@@ -312,6 +335,44 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildDomainAnnouncement(domain: JarvisDomain): String {
+        return when (domain.id.uppercase()) {
+            "ASOSIY" -> "Asosiy neyron rejim faol, Axmadulloh sir! Qo'ng'iroqlar, xabarlar, eslatmalar va universal kiber-intellektga tayyorman."
+            "HAYDOVCHI" -> "Haydovchi rejimi faol, Axmadulloh sir! To'liq qo'llarsiz boshqaruv, tirbandliklar, marshrut, yoqilg'i va xarajatlar hisobini yurita olaman."
+            "TALABA" -> "Talaba rejimi faol, Axmadulloh sir! Dars jadvali, konspektlar, imtihon tayyorgarligi va audio ma'ruzalarni tahlil qilishga tayyorman."
+            "O'QITUVCHI", "OQITUVCHI" -> "O'qituvchi rejimi faol, Axmadulloh sir! Dars ishlanmalari, test savollari va o'quvchilar baholarini nazorat qila olaman."
+            "DIN" -> "Din va Qur'on rejimi faol, Axmadulloh sir! Namoz vaqtlari, Qur'on tilovati, tajvid darslari va ma'sur duolarni eslatib turaman."
+            "DASTURCHI" -> "Dasturchi rejimi faol, Axmadulloh sir! Kod yozish, xatolarni tuzatish, arxitektura va API hujjatlarini tahlil qila olaman."
+            "DOKON", "DO'KON" -> "Do'kon rejimi faol, Axmadulloh sir! Mahsulotlar qoldig'i, kassa hisobi va kunlik sotuvlarni nazorat qilaman."
+            "MOLIYA" -> "Moliya rejimi faol, Axmadulloh sir! Daromad, xarajatlar, byudjet va moliyaviy hisobotlarni rejalashtiramiz."
+            "UY" -> "Aqlli uy rejimi faol, Axmadulloh sir! Chiroqlar, harorat va xavfsizlik tizimlarini ovozda boshqara olaman."
+            "SALOMATLIK" -> "Salomatlik rejimi faol, Axmadulloh sir! Suv ichish, dori qabul qilish va sog'lom turmush tarzingizni nazorat qilaman."
+            "TIL" -> "Til o'rganish rejimi faol, Axmadulloh sir! Lug'at, grammatika va suhbat amaliyotida yordam beraman."
+            "ONLAYN_SAVDO" -> "Onlayn savdo rejimi faol, Axmadulloh sir! Buyurtmalar, mijozlar bilan aloqa va yetkazib berishni boshqaramiz."
+            "KAFE" -> "Kafe va restoran rejimi faol, Axmadulloh sir! Menyu boshqaruvi, buyurtmalar va mahsulotlar sarfini hisoblayman."
+            "SALON" -> "Go'zallik saloni rejimi faol, Axmadulloh sir! Mijozlar qabuli, navbat va xizmatlar jadvalini yurita olaman."
+            "AVTOUSTA" -> "Avtousta rejimi faol, Axmadulloh sir! Diagnostika, ehtiyot qismlar va texnik xizmat ko'rsatishni nazorat qilamiz."
+            "USTA" -> "Usta rejimi faol, Axmadulloh sir! O'lchamlar, materiallar hisob-kitobi va buyurtmalar ro'yxatini yuritishda yordam beraman."
+            "MULK" -> "Ko'chmas mulk rejimi faol, Axmadulloh sir! Obyektlar bazasi, ijara va mijozlar shartnomalarini nazorat qilaman."
+            "FRILANSER" -> "Frilanser rejimi faol, Axmadulloh sir! Loyihalar muddatlari, soatbay hisob va mijozlar takliflarini yuritaman."
+            "MENEJER" -> "Menejer rejimi faol, Axmadulloh sir! Jamoa vazifalari, reja va loyiha monitoringini amalga oshiramiz."
+            "HR" -> "HR rejimi faol, Axmadulloh sir! Nomzodlar suhbati, rezyume saralash va xodimlar hisobini yurita olaman."
+            "YURIST" -> "Yurist rejimi faol, Axmadulloh sir! Qonunchilik, shartnomalar tahlili va huquqiy maslahatlarni taqdim etaman."
+            "IT_ADMIN" -> "IT-Administrator rejimi faol, Axmadulloh sir! Serverlar holati, tarmoq xavfsizligi va zaxira nusxalarni kuzataman."
+            "KONTENT" -> "Kontent-meyker rejimi faol, Axmadulloh sir! Post g'oyalari, ssenariylar va media-rejalarni tuzib beraman."
+            "FOTO_VIDEO" -> "Media rejimi faol, Axmadulloh sir! Kadrlash, ranglar tuzatish va video montaj g'oyalarida yordam beraman."
+            "MUSIQA" -> "Musiqa rejimi faol, Axmadulloh sir! Akkordlar, matn yozish va tovush muhandisligida yordam beraman."
+            "GAMER" -> "Geymer rejimi faol, Axmadulloh sir! O'yin strategiyalari, sozlamalar va tezkor maslahatlar beraman."
+            "FERMER" -> "Fermer xo'jaligi rejimi faol, Axmadulloh sir! Sug'orish jadvali, ekinlar holati va hosil hisobini yurita olaman."
+            "OILA" -> "Oila rejimi faol, Axmadulloh sir! Umumiy xaridlar, oilaviy bayramlar va rejalarni nazorat qilaman."
+            "KEKSA" -> "Keksa parvarishi rejimi faol, Axmadulloh sir! Dori ichish vaqtlari, shifokor qabullari va salomatlikni nazorat qilaman."
+            "SPORT" -> "Sport va fitnes rejimi faol, Axmadulloh sir! Mashg'ulotlar, taymer va kaloriyalar sarfini kuzatib boramiz."
+            "SAYOHAT" -> "Sayohat rejimi faol, Axmadulloh sir! Chiptalar, mehmonxonalar va shahar yo'riqnomalarini tayyorlayman."
+            "HAYVON" -> "Uy hayvonlari rejimi faol, Axmadulloh sir! Jonivorlar parvarishi, emlash va ovqatlantirish jadvalini nazorat qilaman."
+            else -> "${domain.titleUz} rejimi faol, Axmadulloh sir! ${domain.description}"
+        }
+    }
+
     // ── Soha almashtirish (Theme, Zarralar rangi, Top chip) ────────────────
     private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
         currentDomain = domain
@@ -340,10 +401,12 @@ class MainActivity : AppCompatActivity() {
         }
         viewChipDot.background = dotBg
 
-        showCaption("«${shortName}» faol")
+        val announcement = buildDomainAnnouncement(domain)
+        showCaption(announcement)
+        jarvisParticleView.showResult(domain.icon, announcement)
 
         if (speakAnnouncement) {
-            speakJarvis(domain.motto)
+            speakJarvis(announcement)
         }
     }
 
@@ -440,7 +503,12 @@ class MainActivity : AppCompatActivity() {
                         isVoiceListening = false
                         jarvisParticleView.setMicLevel(0f)
                         jarvisParticleView.setState(JarvisParticleState.IDLE)
-                        showCaption("")
+                        Log.d("MainActivity", "SpeechRecognizer onError code: $error")
+                        if (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                            showCaption("")
+                        } else {
+                            showCaption("Axmadulloh sir, buyruqni bosing yoki yozing")
+                        }
                     }
                     override fun onResults(results: Bundle?) {
                         isVoiceListening = false
@@ -479,6 +547,13 @@ class MainActivity : AppCompatActivity() {
             if (speechRecognizer == null) {
                 initSpeechRecognizer()
             }
+            if (speechRecognizer == null || !SpeechRecognizer.isRecognitionAvailable(this)) {
+                // Agar qurilmada offline ovoz xizmati bo'lmasa, sinov buyrug'i bajariladi
+                val demoCmd = if (currentDomain.actions.isNotEmpty()) currentDomain.actions[0].promptCommand else "Onamga telefon qil"
+                showCaption("«$demoCmd»")
+                sendJarvisCommand(demoCmd)
+                return
+            }
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uz-UZ")
@@ -511,7 +586,22 @@ class MainActivity : AppCompatActivity() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 isTtsReady = true
-                tts?.language = Locale("uz")
+                var langResult = tts?.setLanguage(Locale("uz"))
+                if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    langResult = tts?.setLanguage(Locale("ru"))
+                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                        tts?.setLanguage(Locale.getDefault())
+                    }
+                }
+
+                try {
+                    val attrs = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    tts?.setAudioAttributes(attrs)
+                } catch (_: Exception) {}
+
                 tts?.setSpeechRate(1.02f)
                 tts?.setPitch(0.98f)
 
@@ -537,20 +627,38 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 })
+            } else {
+                Log.e("MainActivity", "TTS initialization failed status: $status")
             }
         }
     }
 
     private fun speakJarvis(text: String) {
+        showCaption(text)
         if (!isTtsReady || tts == null) {
-            showCaption(text)
             return
         }
 
-        val params = Bundle().apply {
-            putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "JARVIS_REPLY_${System.currentTimeMillis()}")
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            audioManager?.let { am ->
+                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                if (currentVol == 0 && maxVol > 0) {
+                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.75f).toInt(), 0)
+                }
+            }
+
+            val utteranceId = "JARVIS_${System.currentTimeMillis()}"
+            val params = Bundle().apply {
+                putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+            }
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "speakJarvis error: ${e.message}")
         }
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID))
     }
 
     // ── Buyruqni Bajarish (Gemini AI yoki PC Bridge) ────────────────────────
