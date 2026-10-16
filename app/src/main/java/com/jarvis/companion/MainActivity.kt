@@ -67,9 +67,11 @@ import java.util.Locale
 class MainActivity : AppCompatActivity() {
 
     private lateinit var prefs: PreferencesHelper
+    private lateinit var phoneActionManager: PhoneActionManager
     private var vibrator: Vibrator? = null
 
-    // ── Living Particle Intelligence View ──────────────────────────────────
+    // ── Living Particle Intelligence Views ─────────────────────────────────
+    private lateinit var webViewLivingParticle: WebView
     private lateinit var jarvisParticleView: JarvisParticleView
     private lateinit var rootContainer: View
     private lateinit var topBar: View
@@ -170,6 +172,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         prefs = PreferencesHelper(this)
+        phoneActionManager = PhoneActionManager(this)
         initVibrator()
         initViews()
         initSpeechRecognizer()
@@ -207,6 +210,9 @@ class MainActivity : AppCompatActivity() {
         rootContainer = findViewById(R.id.rootContainer)
         topBar = findViewById(R.id.topBar)
         jarvisParticleView = findViewById(R.id.jarvisParticleView)
+        webViewLivingParticle = findViewById(R.id.webViewLivingParticle)
+        setupLivingParticleWebView()
+
         tvBrandTitle = findViewById(R.id.tvBrandTitle)
         chipDomainSelector = findViewById(R.id.chipDomainSelector)
         viewChipDot = findViewById(R.id.viewChipDot)
@@ -291,6 +297,114 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(quronWebUrl))
                 startActivity(intent)
             }
+        }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun setupLivingParticleWebView() {
+        webViewLivingParticle.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            allowFileAccess = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_DEFAULT
+        }
+        webViewLivingParticle.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        webViewLivingParticle.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                webViewLivingParticle.evaluateJavascript("window.jarvisSetModeById('${currentDomain.id}');", null)
+            }
+        }
+        webViewLivingParticle.webChromeClient = WebChromeClient()
+        webViewLivingParticle.addJavascriptInterface(JarvisBridge(), "AndroidBridge")
+        webViewLivingParticle.loadUrl("file:///android_asset/jarvis_ui.html")
+    }
+
+    inner class JarvisBridge {
+        @android.webkit.JavascriptInterface
+        fun onCanvasTap() {
+            runOnUiThread {
+                vibrateBrief(20)
+                if (isVoiceListening) {
+                    stopMobileVoiceRecognition()
+                } else {
+                    startMobileVoiceRecognition()
+                }
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun onExecuteCommand(cmd: String, emoji: String) {
+            runOnUiThread {
+                vibrateBrief(20)
+                sendJarvisCommand(cmd, emoji)
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun onDomainSelected(domainId: String, name: String, emoji: String) {
+            runOnUiThread {
+                vibrateBrief(25)
+                val domain = JarvisDomainRegistry.getDomainById(domainId)
+                applyDomain(domain, speakAnnouncement = true)
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun onSetReminderClicked(defaultReminderText: String) {
+            runOnUiThread {
+                vibrateBrief(20)
+                showSetReminderDialog(defaultReminderText)
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun openSettings() {
+            runOnUiThread {
+                vibrateBrief(20)
+                openSettingsDialog()
+            }
+        }
+    }
+
+    private fun showSetReminderDialog(defaultReminderText: String) {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        val view = layoutInflater.inflate(R.layout.dialog_reminder_quick, null)
+        dialog.setContentView(view)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
+        val etTitle = view.findViewById<EditText>(R.id.etReminderTitle)
+        val etTime = view.findViewById<EditText>(R.id.etReminderTime)
+        val btnSave = view.findViewById<MaterialButton>(R.id.btnSaveReminder)
+        val btnClose = view.findViewById<TextView>(R.id.btnCancelReminder)
+
+        etTitle?.setText(defaultReminderText)
+        btnClose?.setOnClickListener { dialog.dismiss() }
+
+        btnSave?.setOnClickListener {
+            val title = etTitle?.text?.toString()?.trim() ?: defaultReminderText
+            val time = etTime?.text?.toString()?.trim() ?: ""
+            if (title.isNotEmpty()) {
+                val res = phoneActionManager.setReminder(title, time)
+                deliverJarvisResponseToUi(res, "⏰")
+                dialog.dismiss()
+            }
+        }
+        dialog.show()
+    }
+
+    fun deliverJarvisResponseToUi(replyText: String, shapeEmoji: String = currentDomain.icon) {
+        runOnUiThread {
+            showCaption(replyText)
+            val clean = replyText.replace("'", "\\'").replace("\"", "\\\"").replace("\n", " ").trim()
+            val js = "window.jarvisDeliverResponse('$clean', '$shapeEmoji');"
+            try {
+                webViewLivingParticle.evaluateJavascript(js, null)
+            } catch (_: Exception) {}
+            jarvisParticleView.showResult(shapeEmoji, replyText)
+            speakJarvis(replyText)
         }
     }
 
@@ -412,7 +526,10 @@ class MainActivity : AppCompatActivity() {
         currentDomain = domain
         prefs.activeDomain = domain.id
 
-        // Zarralar tizimini yangi soha rangiga o'tkazish
+        // Webview va Native Zarralar tizimini yangi soha rangiga o'tkazish
+        try {
+            webViewLivingParticle.evaluateJavascript("window.jarvisSetModeById('${domain.id}');", null)
+        } catch (_: Exception) {}
         jarvisParticleView.setMode(domain)
 
         // Yuqori o'ngdagi Chip dizaynini yangilash (ixcham va qisqa nom)
@@ -437,9 +554,7 @@ class MainActivity : AppCompatActivity() {
 
         if (speakAnnouncement) {
             val announcement = buildDomainAnnouncement(domain)
-            showCaption(announcement)
-            jarvisParticleView.showResult(domain.icon, announcement)
-            speakJarvis(announcement)
+            deliverJarvisResponseToUi(announcement, domain.icon)
         } else {
             showCaption("")
         }
@@ -519,23 +634,27 @@ class MainActivity : AppCompatActivity() {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         isVoiceListening = true
+                        try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('listen');", null) } catch (_: Exception) {}
                         jarvisParticleView.setState(JarvisParticleState.LISTENING)
                         showCaption("Eshitmoqdaman, Axmadulloh sir...")
                     }
                     override fun onBeginningOfSpeech() {}
                     override fun onRmsChanged(rmsdB: Float) {
                         val norm = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+                        try { webViewLivingParticle.evaluateJavascript("window.jarvisSetMicLevel($norm);", null) } catch (_: Exception) {}
                         jarvisParticleView.setMicLevel(norm)
                     }
                     override fun onBufferReceived(buffer: ByteArray?) {}
                     override fun onEndOfSpeech() {
                         isVoiceListening = false
+                        try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('scan');", null) } catch (_: Exception) {}
                         jarvisParticleView.setMicLevel(0f)
                         jarvisParticleView.setState(JarvisParticleState.SEARCHING)
                         showCaption("Izlayapman…")
                     }
                     override fun onError(error: Int) {
                         isVoiceListening = false
+                        try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('idle');", null) } catch (_: Exception) {}
                         jarvisParticleView.setMicLevel(0f)
                         jarvisParticleView.setState(JarvisParticleState.IDLE)
                         Log.d("MainActivity", "SpeechRecognizer onError code: $error")
@@ -638,25 +757,43 @@ class MainActivity : AppCompatActivity() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
                 isTtsReady = true
-                var langResult = tts?.setLanguage(Locale("uz"))
-                if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    langResult = tts?.setLanguage(Locale("ru"))
-                    if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                var selectedVoice = false
+                try {
+                    val uzVoice = tts?.voices?.find { it.locale.language.startsWith("uz", ignoreCase = true) }
+                    if (uzVoice != null) {
+                        tts?.voice = uzVoice
+                        tts?.setLanguage(uzVoice.locale)
+                        selectedVoice = true
+                        Log.d("MainActivity", "Using native Uzbek TTS voice: ${uzVoice.name}")
+                    }
+                } catch (_: Exception) {}
+
+                if (!selectedVoice) {
+                    val trResult = tts?.setLanguage(Locale("tr"))
+                    if (trResult != TextToSpeech.LANG_MISSING_DATA && trResult != TextToSpeech.LANG_NOT_SUPPORTED) {
+                        selectedVoice = true
+                        Log.d("MainActivity", "Using Turkish TTS engine for fluent Uzbek Latin pronunciation")
+                    }
+                }
+
+                if (!selectedVoice) {
+                    val enResult = tts?.setLanguage(Locale.US)
+                    if (enResult == TextToSpeech.LANG_MISSING_DATA || enResult == TextToSpeech.LANG_NOT_SUPPORTED) {
                         tts?.setLanguage(Locale.getDefault())
                     }
                 }
 
                 try {
                     val attrs = AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                         .build()
                     tts?.setAudioAttributes(attrs)
                 } catch (_: Exception) {}
 
                 // Deeper, masculine, resonant JARVIS pitch and steady articulation pace
-                tts?.setSpeechRate(0.98f)
-                tts?.setPitch(0.92f)
+                tts?.setSpeechRate(1.0f)
+                tts?.setPitch(0.95f)
 
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
@@ -718,17 +855,43 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Buyruqni Bajarish (Gemini AI yoki PC Bridge) ────────────────────────
-    private fun sendJarvisCommand(cmd: String) {
+    private fun sendJarvisCommand(cmd: String, shapeEmoji: String = currentDomain.icon) {
         val detected = JarvisDomainRegistry.findDomainByVoice(cmd)
         if (detected != null && detected.id != currentDomain.id) {
             applyDomain(detected, speakAnnouncement = false)
         }
 
         showCaption("«$cmd»")
+        try {
+            webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('scan');", null)
+        } catch (_: Exception) {}
         jarvisParticleView.setState(JarvisParticleState.SEARCHING)
 
+        val lower = cmd.lowercase()
+        // 1. Eslatmalar (Reminders / Alarms in all domains)
+        if (lower.contains("eslat") || lower.contains("budilnik") || lower.contains("taymer") || lower.contains("reminder")) {
+            val res = phoneActionManager.setReminder(cmd, "")
+            deliverJarvisResponseToUi(res, "⏰")
+            return
+        }
+
+        // 2. Qo'ng'iroqlar
+        if (lower.startsWith("onamga telefon") || lower.contains("telefon qil") || lower.contains("qo'ng'iroq qil")) {
+            val target = if (lower.contains("onam")) "onam" else cmd.replace(Regex("(?i)telefon qil|qo'ng'iroq qil"), "").trim()
+            val res = phoneActionManager.makeCall(target)
+            deliverJarvisResponseToUi(res, "📞")
+            return
+        }
+
+        // 3. SMS xabarlar
+        if (lower.contains("sms yoz") || lower.contains("sms yubor")) {
+            val res = phoneActionManager.sendSms(cmd, "JARVIS xabari")
+            deliverJarvisResponseToUi(res, "✉️")
+            return
+        }
+
         if (prefs.connectionMode == "GEMINI_DIRECT") {
-            executeGeminiPrompt(cmd)
+            executeGeminiPrompt(cmd, shapeEmoji)
         } else {
             var sentToService = false
             try {
@@ -742,21 +905,22 @@ class MainActivity : AppCompatActivity() {
                 Log.e("MainActivity", "Failed to send command to service: ${e.message}")
             }
             if (!sentToService) {
-                executeGeminiPrompt(cmd)
+                executeGeminiPrompt(cmd, shapeEmoji)
             }
         }
     }
 
-    private fun executeGeminiPrompt(prompt: String) {
+    private fun executeGeminiPrompt(prompt: String, shapeEmoji: String = currentDomain.icon) {
         val apiKey = prefs.geminiApiKey
         if (apiKey.isBlank()) {
-            val guidance = "Axmadulloh sir, to'g'ridan-to'g'ri ishlash uchun Sozlamalardan bepul Google Gemini API kalitini kiriting."
-            showCaption(guidance)
-            jarvisParticleView.setState(JarvisParticleState.IDLE)
-            speakJarvis(guidance)
+            val guidance = "Axmadulloh sir, to'g'ridan-to'g'ri ishlash uchun Sozlamalardan Google Gemini API kalitini kiriting yoki kompyuterni ulang."
+            deliverJarvisResponseToUi(guidance, "⚙️")
             return
         }
 
+        try {
+            webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('scan');", null)
+        } catch (_: Exception) {}
         jarvisParticleView.setState(JarvisParticleState.SEARCHING)
         showCaption("Izlayapman…")
 
@@ -768,14 +932,10 @@ class MainActivity : AppCompatActivity() {
                 userName = prefs.userName
             )
             result.onSuccess { reply ->
-                showCaption(reply)
-                jarvisParticleView.showResult(currentDomain.icon, reply)
-                speakJarvis(reply)
+                deliverJarvisResponseToUi(reply, shapeEmoji)
             }.onFailure { err ->
                 val errorMsg = "Xatolik: ${err.message ?: "Aloqa uzildi"}"
-                showCaption(errorMsg)
-                jarvisParticleView.setState(JarvisParticleState.RELEASE)
-                speakJarvis("Kechirasiz, ser. API so'rovida xatolik yuz berdi.")
+                deliverJarvisResponseToUi("Kechirasiz ser, so'rovni bajarishda xatolik yuz berdi.", "⚠️")
             }
         }
     }
@@ -783,11 +943,26 @@ class MainActivity : AppCompatActivity() {
     fun updateOrbState(state: String) {
         runOnUiThread {
             when (state.uppercase()) {
-                "IDLE" -> jarvisParticleView.setState(JarvisParticleState.IDLE)
-                "LISTENING" -> jarvisParticleView.setState(JarvisParticleState.LISTENING)
-                "THINKING", "SEARCHING" -> jarvisParticleView.setState(JarvisParticleState.SEARCHING)
-                "SPEAKING" -> jarvisParticleView.setState(JarvisParticleState.SPEAKING)
-                "RELEASE" -> jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                "IDLE" -> {
+                    jarvisParticleView.setState(JarvisParticleState.IDLE)
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('idle');", null) } catch (_: Exception) {}
+                }
+                "LISTENING" -> {
+                    jarvisParticleView.setState(JarvisParticleState.LISTENING)
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('listen');", null) } catch (_: Exception) {}
+                }
+                "THINKING", "SEARCHING" -> {
+                    jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('scan');", null) } catch (_: Exception) {}
+                }
+                "SPEAKING" -> {
+                    jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('form');", null) } catch (_: Exception) {}
+                }
+                "RELEASE" -> {
+                    jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('release');", null) } catch (_: Exception) {}
+                }
                 else -> jarvisParticleView.setState(JarvisParticleState.IDLE)
             }
         }
@@ -1031,6 +1206,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        try {
+            webViewLivingParticle.removeJavascriptInterface("AndroidBridge")
+            webViewLivingParticle.loadUrl("about:blank")
+            webViewLivingParticle.destroy()
+        } catch (_: Exception) {}
         speechRecognizer?.destroy()
         speechRecognizer = null
         tts?.stop()

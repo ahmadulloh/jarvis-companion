@@ -355,19 +355,21 @@ class JarvisForegroundService : Service() {
 
     private fun startForegroundSafely() {
         if (isForegroundStarted) return
+        val notification = buildNotification()
         try {
-            val notification = buildNotification()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                var fgsType = ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                }
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                }
+                startForeground(NOTIFICATION_ID, notification, fgsType)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 var fgsType = 0
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
-                    }
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                        ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-                        fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
-                    }
-                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
                 }
                 startForeground(NOTIFICATION_ID, notification, fgsType)
             } else {
@@ -375,7 +377,14 @@ class JarvisForegroundService : Service() {
             }
             isForegroundStarted = true
         } catch (e: Throwable) {
-            Log.e("JarvisService", "startForegroundSafely error: ${e.message}")
+            Log.w("JarvisService", "Typed startForeground failed: ${e.message}, falling back to basic startForeground")
+            try {
+                @Suppress("DEPRECATION")
+                startForeground(NOTIFICATION_ID, notification)
+                isForegroundStarted = true
+            } catch (e2: Throwable) {
+                Log.e("JarvisService", "Fatal fallback startForeground failed: ${e2.message}")
+            }
         }
     }
 

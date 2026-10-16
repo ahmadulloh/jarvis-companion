@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>J.A.R.V.I.S — Tirik yordamchi</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg: #ffffff;
+  --fg: #0b2a18;
+  --mut: #5d7a69;
+  --acc: #12a550;
+  --card: #ffffff;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+
+/* Top Minimalist Cyber Bar */
+.top{
+  position:absolute;
+  top:calc(env(safe-area-inset-top, 0px) + 22px);
+  left:22px;
+  right:22px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  z-index:10;
+}
+.brand{
+  font-weight:900;
+  letter-spacing:.26em;
+  font-size:14px;
+  color:#0f172a;
+  cursor:pointer;
+  padding:6px 0;
+}
+.chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1.6px solid var(--acc);
+  background:#ffffff;
+  color:var(--acc);
+  padding:7px 14px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  transition:border-color .3s, color .3s, transform .15s;
+}
+.chip:active{transform:scale(0.96)}
+.chip i{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--acc);
+  box-shadow:0 0 8px var(--acc);
+  transition:background .3s;
+}
+
+/* Floating Caption */
+.cap{
+  position:absolute;
+  left:20px;
+  right:20px;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 11%);
+  text-align:center;
+  color:var(--mut);
+  font-size:15px;
+  font-weight:500;
+  line-height:1.4;
+  opacity:0;
+  transform:translateY(10px);
+  transition:opacity .35s ease, transform .35s ease;
+  pointer-events:none;
+  z-index:8;
+  max-width:440px;
+  margin:0 auto;
+}
+.cap.on{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* Quick Action Buttons (Bottom Pills) */
+.quick-bar{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 24px);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  z-index:9;
+  padding:0 16px;
+}
+.action-pill{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(255,255,255,0.92);
+  border:1px solid rgba(0,0,0,0.08);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  padding:9px 16px;
+  border-radius:999px;
+  font-size:13px;
+  font-weight:600;
+  color:#1e293b;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(0,0,0,0.05);
+  transition:all .18s;
+}
+.action-pill:active{
+  transform:scale(0.95);
+  background:#f1f5f9;
+}
+.action-pill.rem-btn{
+  border-color:rgba(18,165,80,0.3);
+  color:var(--acc);
+}
+
+/* Bottom Sheet */
+.sheet{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,0.38);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  display:none;
+  align-items:flex-end;
+  z-index:20;
+}
+.sheet.show{display:flex}
+.panel{
+  width:100%;
+  max-width:520px;
+  margin:0 auto;
+  background:#ffffff;
+  border-radius:26px 26px 0 0;
+  padding:22px 18px;
+  max-height:78%;
+  overflow-y:auto;
+  box-shadow:0 -12px 48px rgba(0,0,0,0.22);
+  animation:slideUp .25s ease-out;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.panel-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:14px;
+}
+.panel-title{
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.22em;
+  color:#64748b;
+  text-transform:uppercase;
+}
+.search-box{
+  width:100%;
+  background:#f8fafc;
+  border:1.5px solid #e2e8f0;
+  border-radius:14px;
+  padding:10px 14px;
+  font-size:14px;
+  color:#0f172a;
+  outline:none;
+  margin-bottom:14px;
+}
+.search-box:focus{
+  border-color:var(--acc);
+  background:#fff;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.m{
+  border:1.5px solid #f1f5f9;
+  border-radius:18px;
+  padding:14px 6px;
+  text-align:center;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  background:#f8fafc;
+  color:#334155;
+  transition:all .18s;
+}
+.m:active{transform:scale(0.96)}
+.m b{display:block;font-size:26px;margin-bottom:6px;line-height:1}
+.m.act{
+  border-color:var(--acc);
+  color:var(--acc);
+  background:#ffffff;
+  box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<!-- Top Bar -->
+<div class="top">
+  <div class="brand" id="btnBrand">J · A · R · V · I · S</div>
+  <div class="chip" id="chip">
+    <i></i><span id="chipT">Asosiy</span>
+  </div>
+</div>
+
+<!-- Floating Subtitle -->
+<div class="cap" id="cap"></div>
+
+<!-- Quick Action Pills -->
+<div class="quick-bar">
+  <div class="action-pill" id="btnQuickCmd">
+    <span id="quickCmdIcon">📞</span>
+    <span id="quickCmdText">Buyruq</span>
+  </div>
+  <div class="action-pill rem-btn" id="btnQuickReminder">
+    <span>⏰</span>
+    <span>Eslatma</span>
+  </div>
+</div>
+
+<!-- Bottom Sheet (Yo'nalishlar) -->
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">YO'NALISHNI TANLANG</div>
+      <div style="font-size:12px;color:var(--acc);cursor:pointer;font-weight:700" id="btnCloseSheet">Yopish</div>
+    </div>
+    <input type="text" class="search-box" id="searchBox" placeholder="Yo'nalishni qidirish..." />
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+
+<script>
+// 32 ta Yo'nalish — to'liq ranglar va buyruqlar
+const modes = [
+  {id:"ASOSIY", n:"Asosiy", sh:"📞", p:["#eafff1","#5fe08f","#12a550","#05532a"], cmd:"Onamga telefon qil", rem:"15 daqiqadan so'ng eslat"},
+  {id:"HAYDOVCHI", n:"Taxi", sh:"🚖", p:["#fff8dc","#ffd54a","#f0a000","#7a4a00"], cmd:"Eng yaqin buyurtmani top", rem:"19:00 ga mashina yuvish eslatmasi"},
+  {id:"TALABA", n:"O'quvchi", sh:"📚", p:["#e8f4ff","#6bb8ff","#1a6fe0","#0a2e73"], cmd:"Ertangi dars jadvalini top", rem:"08:00 ga darsga borish eslatmasi"},
+  {id:"OQITUVCHI", n:"O'qituvchi", sh:"🎓", p:["#f3eaff","#b794ff","#7a3fe0","#34127a"], cmd:"Dars rejasini tayyorla", rem:"14:00 ga majlis eslatmasi"},
+  {id:"USTA", n:"Usta", sh:"🛠️", p:["#fff0e6","#ff9a5a","#e0561a","#7a2208"], cmd:"Yaqin mijozlarni top", rem:"17:00 ga obyektga borish eslatmasi"},
+  {id:"DIN", n:"Din / Qur'on", sh:"🕌", p:["#e6fffa","#5eead4","#0d9488","#115e59"], cmd:"Qur'on ustozi darsini boshla", rem:"Bomdod namozi eslatmasi"},
+  {id:"DASTURCHI", n:"Dasturchi", sh:"💻", p:["#f0fdf4","#4ade80","#16a34a","#14532d"], cmd:"Kod xatosini tahlil qil", rem:"18:00 ga deploy qilish eslatmasi"},
+  {id:"MOLIYA", n:"Moliya", sh:"💰", p:["#ecfdf5","#34d399","#059669","#064e3b"], cmd:"Kunlik xarajatlarni hisobla", rem:"Oylik to'lovlar eslatmasi"},
+  {id:"DOKON", n:"Do'kon", sh:"🛒", p:["#eff6ff","#60a5fa","#2563eb","#1e3a8a"], cmd:"Mahsulotlar qoldig'ini tekshir", rem:"Kassa hisobini yopish eslatmasi"},
+  {id:"UY", n:"Aqlli Uy", sh:"🏠", p:["#fef2f2","#f87171","#dc2626","#7f1d1d"], cmd:"Zal chirog'ini o'chir", rem:"Xonani shamollatish eslatmasi"},
+  {id:"SALOMATLIK", n:"Salomatlik", sh:"🏥", p:["#fff1f2","#fb7185","#e11d48","#881337"], cmd:"Bugungi dori jadvalini ayt", rem:"Suv ichish eslatmasi"},
+  {id:"TIL", n:"Til O'rganish", sh:"🌍", p:["#f0f9ff","#38bdf8","#0284c7","#0c4a6e"], cmd:"10 ta yangi so'zni yodlaymiz", rem:"Grammatika mashqi eslatmasi"},
+  {id:"ONLAYN_SAVDO", n:"Savdo", sh:"📦", p:["#fefce8","#facc15","#ca8a04","#713f12"], cmd:"Yangi buyurtmalarni ko'rsat", rem:"Kuryer yetkazish eslatmasi"},
+  {id:"KAFE", n:"Kafe", sh:"☕", p:["#fafaf9","#a8a29e","#78716c","#292524"], cmd:"Bugungi buyurtmalar tushumi", rem:"Mahsulotlar buyurtmasi eslatmasi"},
+  {id:"SALON", n:"Salon", sh:"💇", p:["#fdf4ff","#e879f9","#c026d3","#701a75"], cmd:"Navbatdagi mijoz qachon?", rem:"Mijoz qabuli eslatmasi"},
+  {id:"AVTOUSTA", n:"Avtousta", sh:"🔧", p:["#f8fafc","#94a3b8","#475569","#0f172a"], cmd:"Diagnostika xulosasini yoz", rem:"Ehtiyot qism kelishi eslatmasi"},
+  {id:"MULK", n:"Ko'chmas Mulk", sh:"🏢", p:["#f1f5f9","#64748b","#334155","#0f172a"], cmd:"Ijaradagi xonadonlar holati", rem:"Ijara to'lovi eslatmasi"},
+  {id:"FRILANSER", n:"Frilanser", sh:"💼", p:["#ecfeff","#22d3ee","#0891b2","#164e63"], cmd:"Loyiha muddatini tekshir", rem:"Mijozga taqdimot eslatmasi"},
+  {id:"MENEJER", n:"Menejer", sh:"📊", p:["#eef2ff","#818cf8","#4f46e5","#312e81"], cmd:"Bugungi jamoa vazifalari", rem:"Reja hisoboti eslatmasi"},
+  {id:"HR", n:"HR Kadrlar", sh:"👥", p:["#fff7ed","#fb923c","#ea580c","#7c2d12"], cmd:"Nomzodlar rezyumesini ko'rsat", rem:"Suhbat o'tkazish eslatmasi"},
+  {id:"YURIST", n:"Yurist", sh:"⚖️", p:["#f8fafc","#64748b","#475569","#1e293b"], cmd:"Shartnoma bandini tahlil qil", rem:"Sud majlisi eslatmasi"},
+  {id:"IT_ADMIN", n:"IT-Admin", sh:"🖥️", p:["#f0fdf4","#22c55e","#15803d","#14532d"], cmd:"Serverlar yuklamasini ayt", rem:"Zaxira nusxa (backup) eslatmasi"},
+  {id:"KONTENT", n:"Kontent", sh:"✍️", p:["#fdf2f8","#f472b6","#db2777","#831843"], cmd:"Telegram post uchun g'oya ber", rem:"Post yuklash eslatmasi"},
+  {id:"FOTO_VIDEO", n:"Media", sh:"🎬", p:["#faf5ff","#c084fc","#9333ea","#581c87"], cmd:"Video montaj rejasini tuz", rem:"Suratga olish eslatmasi"},
+  {id:"MUSIQA", n:"Musiqa", sh:"🎵", p:["#f0fdfa","#2dd4bf","#0d9488","#134e4a"], cmd:"Yoqimli sokin kuy qo'y", rem:"Vokal mashqi eslatmasi"},
+  {id:"GAMER", n:"Geymer", sh:"🎮", p:["#f5f3ff","#a78bfa","#7c3aed","#4c1d95"], cmd:"O'yin strategiyasini tahlil qil", rem:"Turnir boshlanish eslatmasi"},
+  {id:"FERMER", n:"Fermer", sh:"🌾", p:["#fefce8","#eab308","#a16207","#422006"], cmd:"Sug'orish jadvalini tekshir", rem:"O'g'it sepish eslatmasi"},
+  {id:"UY_XARIDI", n:"Oila", sh:"👨‍👩‍👧", p:["#fff1f2","#f43f5e","#be123c","#881337"], cmd:"Haftalik xaridlar ro'yxati", rem:"Oilaviy bayram eslatmasi"},
+  {id:"KEKSA", n:"Keksa", sh:"🧓", p:["#fffbeb","#f59e0b","#b45309","#78350f"], cmd:"Bosim va qon bosimi o'lchovi", rem:"Dori ichish vaqti eslatmasi"},
+  {id:"SPORT", n:"Sport", sh:"⚽", p:["#f0fdf4","#16a34a","#15803d","#166534"], cmd:"Bugungi yugurish mashg'uloti", rem:"Zalga borish eslatmasi"},
+  {id:"SAYOHAT", n:"Sayohat", sh:"✈️", p:["#eff6ff","#3b82f6","#1d4ed8","#1e3a8a"], cmd:"Toshkent-Samarqand poyezd chiptasi", rem:"Yuklarni yig'ish eslatmasi"},
+  {id:"HAYVON", n:"Hayvon", sh:"🐾", p:["#fff7ed","#f97316","#c2410c","#7c2d12"], cmd:"Jonivor ovqatlanish rejimi", rem:"Veterinar qabuli eslatmasi"}
+];
+
+let cur = 0, phase = 'idle', t = 0, lvl = 0, tScan = 0;
+const cv = document.getElementById('c'), x = cv.getContext('2d'), $ = id => document.getElementById(id);
+let w, h, dpr;
+
+function rs() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  w = window.innerWidth;
+  h = window.innerHeight;
+  cv.width = w * dpr;
+  cv.height = h * dpr;
+  x.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+rs();
+window.addEventListener('resize', rs);
+
+const rnd = k => (Math.random() * 2 - 1) * k;
+const h2r = hx => [1, 3, 5].map(i => parseInt(hx.slice(i, i + 2), 16));
+
+const N = 2800, ps = [];
+for (let i = 0; i < N; i++) {
+  const arm = i % 3;
+  const r = Math.pow(Math.random(), 0.65);
+  const th = r * 5.2 + arm * 2.094 + rnd(0.35 * (1 - r * 0.5));
+  ps.push({
+    hx: r * Math.cos(th),
+    hz: r * Math.sin(th),
+    hy: rnd(0.1) * (1 - r * 0.4),
+    r,
+    x: window.innerWidth / 2,
+    y: window.innerHeight * 0.45,
+    vx: 0,
+    vy: 0,
+    ux: Math.random(),
+    uy: Math.random(),
+    fx: 0,
+    fy: 0,
+    fc: [40, 170, 90],
+    gc: [0, 0, 0],
+    c: [40, 170, 90],
+    ph: Math.random() * 6.28,
+    k: 0.5 + Math.random() * 0.9,
+    sz: 0.8 + Math.random() * 1.3
+  });
+}
+
+function paint() {
+  const P = modes[cur].p;
+  const A = h2r(P[2]), B = h2r(P[3]), C = h2r(P[1]);
+  for (const p of ps) {
+    const m = Math.min(1, p.r * 1.1);
+    const q = Math.random() < 0.18 ? C : A;
+    p.gc = [0, 1, 2].map(j => q[j] + (B[j] - q[j]) * m * 0.8);
+  }
+}
+paint();
+
+function sample(em) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 240;
+  const g = c.getContext('2d');
+  g.font = '190px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText(em, 120, 128);
+
+  const d = g.getImageData(0, 0, 240, 240).data;
+  const pts = [];
+  for (let y = 0; y < 240; y += 2) {
+    for (let xx = 0; xx < 240; xx += 2) {
+      const i = (y * 240 + xx) * 4;
+      if (d[i + 3] > 140) {
+        pts.push([xx, y, d[i], d[i + 1], d[i + 2]]);
+      }
+    }
+  }
+  return pts;
+}
+
+function setShape(emojiToSample) {
+  const em = emojiToSample || modes[cur].sh;
+  let pts = sample(em);
+  const S = Math.min(w, h) * 0.62;
+  const cx = w / 2;
+  const cy = h * 0.45;
+  if (pts.length < 50) {
+    pts = [];
+    for (let i = 0; i < 400; i++) {
+      const a = (i / 400) * 6.283;
+      pts.push([120 + Math.cos(a) * 80, 120 + Math.sin(a) * 80, 18, 165, 80]);
+    }
+  }
+  for (const p of ps) {
+    const q = pts[Math.floor(Math.random() * pts.length)];
+    p.fx = cx + (q[0] - 120) / 240 * S;
+    p.fy = cy + (q[1] - 120) / 240 * S;
+    p.fc = [q[2], q[3], q[4]];
+  }
+}
+
+function draw() {
+  t += 0.016;
+  const P = modes[cur].p;
+  const cx = w / 2;
+  const cy = h * 0.45;
+  const Rc = Math.min(w, h) * 0.2;
+  const maxL = Math.hypot(w, h) * 0.55;
+
+  const L = phase === 'listen' ? (0.3 + 0.3 * Math.sin(t * 7) * Math.sin(t * 2.3)) :
+            phase === 'scan' ? 0.25 :
+            (0.05 + 0.03 * Math.sin(t * 1.4));
+  lvl += (Math.abs(L) - lvl) * 0.12;
+
+  x.clearRect(0, 0, w, h);
+
+  // Soft Ambient Radial Glow
+  const gl = x.createRadialGradient(cx, cy, 0, cx, cy, Rc * 2.2);
+  gl.addColorStop(0, P[1] + (phase === 'idle' || phase === 'listen' ? '40' : '10'));
+  gl.addColorStop(1, P[1] + '00');
+  x.fillStyle = gl;
+  x.fillRect(0, 0, w, h);
+
+  // Galaxy 3D Matrix
+  const ang = t * 0.25;
+  const ca = Math.cos(ang), sa = Math.sin(ang);
+  const tl = 0.95 + 0.12 * Math.sin(t * 0.3);
+  const ct = Math.cos(tl), st = Math.sin(tl);
+  const G = Rc * 1.15 * (1 + 0.04 * Math.sin(t * 1.2)) * (phase === 'listen' ? 0.85 : 1);
+
+  // Expanding shockwaves in SCAN phase
+  const r1 = ((t - tScan) * maxL * 0.5) % maxL;
+  const r2 = (r1 + maxL * 0.5) % maxL;
+  if (phase === 'scan') {
+    x.lineWidth = 2;
+    for (const rr of [r1, r2]) {
+      x.strokeStyle = P[1] + '55';
+      x.beginPath();
+      x.arc(cx, cy, rr, 0, 6.283);
+      x.stroke();
+    }
+  }
+
+  // 2800 Particles Simulation
+  for (const p of ps) {
+    let tx, ty, k, s = 1, al, z = 0;
+    if (phase === 'scan') {
+      tx = p.ux * w + Math.sin(t * 0.6 + p.ph) * 28;
+      ty = p.uy * h + Math.cos(t * 0.5 + p.ph) * 28;
+      k = 0.012 * p.k;
+      al = 0.4;
+    } else if (phase === 'form' || phase === 'hold') {
+      tx = p.fx + (phase === 'hold' ? Math.sin(t * 4 + p.ph) * 1.4 : 0);
+      ty = p.fy + (phase === 'hold' ? Math.cos(t * 4 + p.ph) * 1.4 : 0);
+      k = (phase === 'hold' ? 0.14 : 0.05) * p.k;
+      al = 0.95;
+    } else {
+      const X = p.hx * ca + p.hz * sa;
+      const Z0 = -p.hx * sa + p.hz * ca;
+      const Y = p.hy * ct - Z0 * st;
+      z = p.hy * st + Z0 * ct;
+      const gg = G * (1 + lvl * 0.4 * Math.sin(t * 9 + p.ph * 3));
+      s = 1 / (1 - z * 0.25);
+      tx = cx + X * gg * s;
+      ty = cy + Y * gg * s;
+      k = (phase === 'release' ? 0.06 : 0.09) * p.k;
+      al = 0.3 + 0.5 * (z + 1) / 2;
+    }
+
+    p.vx *= 0.9;
+    p.vy *= 0.9;
+    p.x += (tx - p.x) * k + p.vx;
+    p.y += (ty - p.y) * k + p.vy;
+
+    const tc = (phase === 'form' || phase === 'hold') ? p.fc : p.gc;
+    for (let j = 0; j < 3; j++) p.c[j] += (tc[j] - p.c[j]) * 0.09;
+
+    let sz = p.sz * s * (phase === 'form' || phase === 'hold' ? 1.15 : 1);
+    if (phase === 'scan') {
+      const d = Math.hypot(p.x - cx, p.y - cy);
+      const i = Math.max(Math.exp(-Math.pow((d - r1) / 45, 2)), Math.exp(-Math.pow((d - r2) / 45, 2)));
+      al += i * 0.6;
+      sz += i * 3.2;
+    }
+
+    x.globalAlpha = Math.min(1, al);
+    x.fillStyle = 'rgb(' + (p.c[0] | 0) + ',' + (p.c[1] | 0) + ',' + (p.c[2] | 0) + ')';
+    x.beginPath();
+    x.arc(p.x, p.y, sz, 0, 6.283);
+    x.fill();
+  }
+  x.globalAlpha = 1;
+  requestAnimationFrame(draw);
+}
+draw();
+
+const cap = $('cap');
+let capTimer = null;
+function say(s, durationMs = 5000) {
+  clearTimeout(capTimer);
+  cap.textContent = s;
+  cap.classList.toggle('on', !!s);
+  if (s && durationMs > 0) {
+    capTimer = setTimeout(() => {
+      cap.classList.remove('on');
+    }, durationMs);
+  }
+}
+
+// Full Command Lifecycle Execution
+function triggerCommand(cmdText, customEmoji) {
+  if (phase !== 'idle' && phase !== 'release') return;
+  const m = modes[cur];
+  const query = cmdText || m.cmd;
+  const targetEmoji = customEmoji || m.sh;
+
+  setShape(targetEmoji);
+  phase = 'listen';
+  say('«' + query + '»', 3000);
+
+  setTimeout(() => {
+    phase = 'scan';
+    tScan = t;
+    say('Izlayapman…', 4000);
+    for (const p of ps) {
+      const a = Math.random() * 6.283;
+      const v = 14 + Math.random() * 30;
+      p.vx = Math.cos(a) * v;
+      p.vy = Math.sin(a) * v;
+    }
+
+    // Call native Android bridge
+    if (window.AndroidBridge && window.AndroidBridge.onExecuteCommand) {
+      window.AndroidBridge.onExecuteCommand(query, targetEmoji);
+    }
+  }, 1400);
+}
+
+// Called from Android Kotlin when JARVIS finds result / generates response
+window.jarvisDeliverResponse = function(replyText, shapeEmoji) {
+  setShape(shapeEmoji || modes[cur].sh);
+  phase = 'form';
+  say(replyText || 'Topdim, sir!', 6000);
+
+  setTimeout(() => {
+    if (phase === 'form') phase = 'hold';
+  }, 1800);
+
+  setTimeout(() => {
+    phase = 'release';
+    say('', 500);
+    for (const p of ps) {
+      p.vx = (p.x - w / 2) * 0.06 + rnd(6);
+      p.vy = (p.y - h * 0.45) * 0.06 + rnd(6);
+    }
+  }, 6200);
+
+  setTimeout(() => {
+    if (phase === 'release') phase = 'idle';
+  }, 8000);
+};
+
+// Canvas click initiates action
+cv.onclick = () => {
+  if (window.AndroidBridge && window.AndroidBridge.onCanvasTap) {
+    window.AndroidBridge.onCanvasTap();
+  } else {
+    triggerCommand();
+  }
+};
+
+function updateQuickPills() {
+  const m = modes[cur];
+  $('quickCmdIcon').textContent = m.sh;
+  $('quickCmdText').textContent = m.cmd.length > 20 ? m.cmd.substring(0, 18) + '…' : m.cmd;
+}
+
+function setMode(i, notifyBridge = true) {
+  cur = i;
+  document.documentElement.style.setProperty('--acc', modes[i].p[2]);
+  $('chipT').textContent = modes[i].n;
+  $('sheet').classList.remove('show');
+  updateQuickPills();
+  paint();
+  buildGrid();
+
+  if (notifyBridge && window.AndroidBridge && window.AndroidBridge.onDomainSelected) {
+    window.AndroidBridge.onDomainSelected(modes[i].id, modes[i].n, modes[i].sh);
+  }
+}
+
+function buildGrid(filterText = '') {
+  const q = filterText.toLowerCase().trim();
+  const list = modes.map((m, i) => ({ m, i })).filter(item => {
+    if (!q) return true;
+    return item.m.n.toLowerCase().includes(q) || item.m.cmd.toLowerCase().includes(q) || item.m.id.toLowerCase().includes(q);
+  });
+
+  $('grid').innerHTML = list.map(item => `
+    <div class="m ${item.i === cur ? 'act' : ''}" data-i="${item.i}">
+      <b>${item.m.sh}</b>
+      <div>${item.m.n}</div>
+    </div>
+  `).join('');
+}
+
+$('grid').onclick = ev => {
+  const m = ev.target.closest('.m');
+  if (m) setMode(+m.dataset.i);
+};
+
+$('chip').onclick = () => {
+  $('sheet').classList.add('show');
+  $('searchBox').value = '';
+  buildGrid();
+};
+
+$('btnCloseSheet').onclick = () => $('sheet').classList.remove('show');
+$('sheet').onclick = ev => { if (ev.target.id === 'sheet') $('sheet').classList.remove('show'); };
+
+$('searchBox').oninput = e => {
+  buildGrid(e.target.value);
+};
+
+// Quick action buttons
+$('btnQuickCmd').onclick = () => {
+  triggerCommand(modes[cur].cmd, modes[cur].sh);
+};
+
+$('btnQuickReminder').onclick = () => {
+  const m = modes[cur];
+  const remText = m.rem || "Eslatma";
+  if (window.AndroidBridge && window.AndroidBridge.onSetReminderClicked) {
+    window.AndroidBridge.onSetReminderClicked(remText);
+  } else {
+    triggerCommand(remText, "⏰");
+  }
+};
+
+$('btnBrand').onclick = () => {
+  if (window.AndroidBridge && window.AndroidBridge.openSettings) {
+    window.AndroidBridge.openSettings();
+  }
+};
+
+// Public JS API callable from Kotlin
+window.jarvisSetModeById = function(domainId) {
+  const idx = modes.findIndex(m => m.id.toUpperCase() === domainId.toUpperCase());
+  if (idx !== -1) setMode(idx, false);
+};
+
+window.jarvisSay = function(text, durationMs) {
+  say(text, durationMs);
+};
+
+window.jarvisSetPhase = function(p) {
+  phase = p;
+};
+
+window.jarvisSetMicLevel = function(val) {
+  lvl = val;
+};
+
+updateQuickPills();
+buildGrid();
+</script>
+</body>
+</html>

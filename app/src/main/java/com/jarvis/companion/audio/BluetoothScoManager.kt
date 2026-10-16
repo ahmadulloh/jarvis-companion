@@ -167,8 +167,12 @@ class BluetoothScoManager(
                     return
                 }
             }
-            requestAudioFocus()
-            audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            if (currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected()) {
+                requestAudioFocus()
+                audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+            } else {
+                audioManager.mode = AudioManager.MODE_NORMAL
+            }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 audioManager.registerAudioDeviceCallback(deviceCallback, null)

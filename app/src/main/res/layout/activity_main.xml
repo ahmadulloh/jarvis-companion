@@ -6,13 +6,21 @@
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <!-- 1. Fullscreen Living Particle Intelligence Canvas -->
+    <!-- 1. Fullscreen Living Particle Intelligence WebView (Hardware Accelerated uineyron.mp4 Canvas) -->
+    <WebView
+        android:id="@+id/webViewLivingParticle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFFFFF" />
+
+    <!-- Fallback Native Particle View -->
     <com.jarvis.companion.ui.JarvisParticleView
         android:id="@+id/jarvisParticleView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
-    <!-- 2. Minimalist Futuristic Top Bar (Constrained & Compact) -->
+    <!-- 2. Minimalist Futuristic Top Bar (Native Fallback, hidden when WebView is active) -->
     <RelativeLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -22,7 +30,8 @@
         android:paddingStart="20dp"
         android:paddingTop="14dp"
         android:paddingEnd="18dp"
-        android:paddingBottom="12dp">
+        android:paddingBottom="12dp"
+        android:visibility="gone">
 
         <!-- Brand Title: J · A · R · V · I · S -->
         <TextView
