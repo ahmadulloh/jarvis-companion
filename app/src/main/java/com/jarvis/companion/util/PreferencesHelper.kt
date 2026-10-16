@@ -66,4 +66,19 @@ class PreferencesHelper(context: Context) {
     var activeDomain: String
         get() = prefs.getString("active_domain", "ASOSIY") ?: "ASOSIY"
         set(value) = prefs.edit().putString("active_domain", value.trim()).apply()
+
+    // Hybrid Connection Mode: "GEMINI_DIRECT" or "PC_BRIDGE"
+    var connectionMode: String
+        get() = prefs.getString("connection_mode", "GEMINI_DIRECT") ?: "GEMINI_DIRECT"
+        set(value) = prefs.edit().putString("connection_mode", value.trim()).apply()
+
+    // Direct Google Gemini API Key for phone-only AI
+    var geminiApiKey: String
+        get() = prefs.getString("gemini_api_key", "") ?: ""
+        set(value) = prefs.edit().putString("gemini_api_key", value.trim()).apply()
+
+    // Show Text Input Bar (default false = clean, futuristic voice-first mode)
+    var showTextInputBar: Boolean
+        get() = prefs.getBoolean("show_text_input_bar", false)
+        set(value) = prefs.edit().putBoolean("show_text_input_bar", value).apply()
 }

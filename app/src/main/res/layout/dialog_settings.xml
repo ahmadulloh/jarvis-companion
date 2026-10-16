@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="22dp">
+        android:padding="20dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -22,7 +22,143 @@
             android:textColor="@color/night_text_primary"
             android:textSize="17sp" />
 
-        <!-- 3-Way Device Route Selector inside Settings -->
+        <!-- 1. Gibrid Aloqa Rejimi: Gemini AI yoki PC Bridge -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="Ishlash va Aloqa Rejimi (Gibrid):"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/dialogConnectionModeBar"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_ios_segment_bar"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <TextView
+                android:id="@+id/btnModeGemini"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_ios_pill_active"
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="🤖 Gemini AI (Telefonda)"
+                android:textColor="@color/night_pill_active_text"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-bold" />
+
+            <TextView
+                android:id="@+id/btnModePcBridge"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:text="💻 PC Bridge"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <!-- Container for Gemini Settings -->
+        <LinearLayout
+            android:id="@+id/layoutGeminiSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Google Gemini API Kaliti:"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etDialogGeminiKey"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_ios_action_chip"
+                android:hint="AIzaSy... (Google AI Studio)"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/night_text_primary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Kompyutersiz, to'g'ridan-to'g'ri telefonda sun'iy idrok bilan muloqot."
+                android:textColor="@color/jarvis_cyan"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Container for PC Bridge Settings -->
+        <LinearLayout
+            android:id="@+id/layoutPcSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Server IP (Tailscale):"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etDialogServer"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_ios_action_chip"
+                android:hint="100.112.86.116:8000"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/night_text_primary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Xavfsizlik kaliti (Token):"
+                android:textColor="@color/night_text_secondary"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/etDialogToken"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="5dp"
+                android:background="@drawable/bg_ios_action_chip"
+                android:hint="jarvis-phone-companion-token"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textColor="@color/night_text_primary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- 2. Device Route Selector inside Settings -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -88,7 +224,51 @@
                 android:fontFamily="sans-serif-bold" />
         </LinearLayout>
 
-        <!-- SOHALAR VA REJIMLAR (31 TA SOHA) -->
+        <!-- 3. Interfeys va Matn Yozish Sozlamasi -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="Interfeys Ko'rinishi:"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cbDialogShowTextInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="⌨️ Pastki matn yozish maydonini ko'rsatish"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="28dp"
+            android:text="O'chirilganda ilova toza, faqat ovozli va kuchli neyron ko'rinishda ochiladi."
+            android:textColor="@color/night_text_secondary"
+            android:textSize="10sp" />
+
+        <CheckBox
+            android:id="@+id/cbDialogAutoStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Telefon yoqilganda avtomatik ulanish"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/cbDialogQuronAlways"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Qur'on Ustozi kartasini doimiy ko'rsatish"
+            android:textColor="@color/night_text_primary"
+            android:textSize="12sp" />
+
+        <!-- 4. SOHALAR VA REJIMLAR (31 TA SOHA) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -131,78 +311,17 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvSettingsDomains"
             android:layout_width="match_parent"
-            android:layout_height="240dp"
+            android:layout_height="220dp"
             android:layout_marginTop="8dp"
             android:nestedScrollingEnabled="true"
             android:scrollbars="vertical" />
-
-        <!-- Server IP -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="Server IP (Tailscale):"
-            android:textColor="@color/night_text_secondary"
-            android:textSize="12sp" />
-
-        <EditText
-            android:id="@+id/etDialogServer"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/bg_ios_action_chip"
-            android:hint="100.112.86.116:8000"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textColor="@color/night_text_primary"
-            android:textSize="13sp" />
-
-        <!-- Token -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Xavfsizlik kaliti (Token):"
-            android:textColor="@color/night_text_secondary"
-            android:textSize="12sp" />
-
-        <EditText
-            android:id="@+id/etDialogToken"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="5dp"
-            android:background="@drawable/bg_ios_action_chip"
-            android:hint="jarvis-phone-companion-token"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textColor="@color/night_text_primary"
-            android:textSize="13sp" />
-
-        <!-- Checkbox Auto-start -->
-        <CheckBox
-            android:id="@+id/cbDialogAutoStart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Telefon yoqilganda avtomatik ulanish"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
-
-        <!-- Checkbox Quran card always visible -->
-        <CheckBox
-            android:id="@+id/cbDialogQuronAlways"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Qur'on Ustozi kartasini doimiy ko'rsatish"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
 
         <!-- Notification Access button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGrantNotificationAccess"
             android:layout_width="match_parent"
             android:layout_height="42dp"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:backgroundTint="@color/night_segment_bg"
             android:text="💬 Telegram xabarlariga ruxsat"
             android:textAllCaps="false"

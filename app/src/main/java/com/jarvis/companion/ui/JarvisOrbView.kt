@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.DashPathEffect
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.os.SystemClock
@@ -18,6 +19,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 enum class OrbState {
     IDLE,
@@ -64,7 +66,6 @@ class JarvisOrbView @JvmOverloads constructor(
     private var targetGlowColor: Int = Color.parseColor("#00B0FF")
 
     private val argbEvaluator = ArgbEvaluator()
-    private var colorTransitionFraction: Float = 1.0f
     private var colorAnimator: ValueAnimator? = null
 
     fun setDomainColors(primary: Int, glow: Int, domainTitle: String = activeDomainTitle) {
@@ -77,7 +78,7 @@ class JarvisOrbView @JvmOverloads constructor(
 
         colorAnimator?.cancel()
         colorAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 750L
+            duration = 700L
             addUpdateListener { anim ->
                 val f = anim.animatedValue as Float
                 currentPrimaryColor = argbEvaluator.evaluate(f, startPrimary, targetPrimaryColor) as Int
@@ -98,10 +99,18 @@ class JarvisOrbView @JvmOverloads constructor(
     private val sparkPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
+    private val lightningPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
     private val nodePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
     }
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+    }
+    private val shockwavePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
     }
     private val soundwavePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -117,7 +126,7 @@ class JarvisOrbView @JvmOverloads constructor(
         letterSpacing = 0.14f
     }
 
-    // Neural Synapse Nodes in 3D Spherical Space (Fibonacci Lattice)
+    // 3D Synaptic Nodes
     private class SynapseNode(
         val x0: Float,
         val y0: Float,
@@ -128,12 +137,13 @@ class JarvisOrbView @JvmOverloads constructor(
         var pulse: Float = 0f
     )
 
-    private val nodeCount = 38
+    private val nodeCount = 44
     private val nodes = ArrayList<SynapseNode>()
 
     private var rotationAngleY = 0f
     private var rotationAngleX = 0f
     private var phase = 0f
+    private val lightningPath = Path()
 
     private val loopAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
         duration = 5000L
@@ -141,15 +151,21 @@ class JarvisOrbView @JvmOverloads constructor(
         interpolator = LinearInterpolator()
         addUpdateListener {
             phase = it.animatedFraction
-            rotationAngleY += 0.016f
-            rotationAngleX += 0.009f
+            val speed = when (state) {
+                OrbState.THINKING -> 0.045f
+                OrbState.SPEAKING -> 0.030f
+                OrbState.LISTENING -> 0.022f
+                else -> 0.015f
+            }
+            rotationAngleY += speed
+            rotationAngleX += speed * 0.55f
             postInvalidateOnAnimation()
         }
     }
 
     init {
         // Initialize Fibonacci 3D sphere distribution
-        val phi = (1.0 + sqrt(5.0)) / 2.0 // Golden ratio
+        val phi = (1.0 + sqrt(5.0)) / 2.0
         for (i in 0 until nodeCount) {
             val theta = 2.0 * PI * i / phi
             val y = 1.0 - (i / (nodeCount - 1.0f).toDouble()) * 2.0
@@ -170,25 +186,62 @@ class JarvisOrbView @JvmOverloads constructor(
 
         val cx = w / 2f
         val cy = h / 2f
-        val maxRadius = minOf(cx, cy) * 0.88f
-        if (maxRadius <= 10f) return
+        val maxRadius = minOf(cx, cy) * 0.92f
+        if (maxRadius <= 15f) return
         val coreRadius = maxRadius * 0.44f
 
-        val activeAudio = audioLevel.coerceIn(0f, 1f)
-        val dynamicScale = 1.0f + (activeAudio * 0.22f)
-        val pulseWobble = sin(phase * 2 * PI).toFloat() * 0.06f
+        // Synthetic dynamic energy when speaking or listening
+        val baseAudio = audioLevel.coerceIn(0f, 1f)
+        val syntheticOscillation = when (state) {
+            OrbState.SPEAKING -> {
+                val wave1 = abs(sin(phase * 18.0 * PI)).toFloat()
+                val wave2 = abs(cos(phase * 29.0 * PI)).toFloat()
+                (0.35f + 0.45f * wave1 + 0.20f * wave2).coerceIn(0.2f, 1.0f)
+            }
+            OrbState.LISTENING -> {
+                val breathe = (sin(phase * 8.0 * PI).toFloat() + 1f) * 0.5f
+                (0.25f + 0.35f * breathe + baseAudio * 0.5f).coerceIn(0.15f, 1.0f)
+            }
+            OrbState.THINKING -> {
+                val spin = abs(sin(phase * 24.0 * PI)).toFloat()
+                (0.30f + 0.35f * spin).coerceIn(0.2f, 0.8f)
+            }
+            else -> baseAudio * 0.8f
+        }
+        val activeAudio = maxOf(baseAudio, syntheticOscillation)
+        val dynamicScale = 1.0f + (activeAudio * 0.25f)
+        val pulseWobble = sin(phase * 2 * PI).toFloat() * 0.08f
+
+        // ── 0. High-Energy Concentric Expanding Shockwaves ────────────────
+        if (state == OrbState.SPEAKING || state == OrbState.LISTENING || activeAudio > 0.15f) {
+            val shockCount = 3
+            shockwavePaint.strokeWidth = 2.0f
+            for (s in 0 until shockCount) {
+                val shockPhase = (phase * 2.2f + (s.toFloat() / shockCount)) % 1.0f
+                val shockRadius = coreRadius + (maxRadius - coreRadius) * shockPhase
+                val shockAlpha = ((1.0f - shockPhase) * (if (state == OrbState.SPEAKING) 160 else 90)).toInt().coerceIn(0, 255)
+
+                shockwavePaint.color = Color.argb(
+                    shockAlpha,
+                    Color.red(currentGlowColor),
+                    Color.green(currentGlowColor),
+                    Color.blue(currentGlowColor)
+                )
+                shockwavePaint.pathEffect = DashPathEffect(floatArrayOf(16f, 12f), phase * 90f)
+                canvas.drawCircle(cx, cy, shockRadius, shockwavePaint)
+            }
+        }
 
         // ── 1. Deep Core Plasma & Aura (Radial Glow) ──────────────────────
-        val glowRadius = coreRadius * 2.2f * dynamicScale
-        if (glowRadius <= 5f) return
-        val auraAlpha = if (isNightMode) 80 else 55
+        val glowRadius = coreRadius * 2.4f * dynamicScale
+        val auraAlpha = if (isNightMode) 95 else 65
         val auraColor = Color.argb(
             (auraAlpha * (0.8f + activeAudio * 0.5f)).toInt().coerceIn(0, 255),
             Color.red(currentGlowColor),
             Color.green(currentGlowColor),
             Color.blue(currentGlowColor)
         )
-        val centerAlpha = if (isNightMode) 220 else 240
+        val centerAlpha = if (isNightMode) 235 else 250
         val centerColor = Color.argb(
             centerAlpha,
             Color.red(currentPrimaryColor),
@@ -199,42 +252,45 @@ class JarvisOrbView @JvmOverloads constructor(
         plasmaPaint.shader = RadialGradient(
             cx, cy, glowRadius,
             intArrayOf(centerColor, auraColor, Color.TRANSPARENT),
-            floatArrayOf(0.0f, 0.45f, 1.0f),
+            floatArrayOf(0.0f, 0.40f, 1.0f),
             Shader.TileMode.CLAMP
         )
         canvas.drawCircle(cx, cy, glowRadius, plasmaPaint)
 
         // ── 2. Quantum Cybernetic Rotating HUD Rings ───────────────────────
         val ring1Radius = coreRadius * 1.55f * dynamicScale
-        ringPaint.color = Color.argb(70, Color.red(currentPrimaryColor), Color.green(currentPrimaryColor), Color.blue(currentPrimaryColor))
-        ringPaint.strokeWidth = 1.8f
-        ringPaint.pathEffect = DashPathEffect(floatArrayOf(24f, 16f, 8f, 16f), phase * 180f)
+        ringPaint.color = Color.argb(85, Color.red(currentPrimaryColor), Color.green(currentPrimaryColor), Color.blue(currentPrimaryColor))
+        ringPaint.strokeWidth = 2.2f
+        ringPaint.pathEffect = DashPathEffect(floatArrayOf(30f, 15f, 10f, 15f), phase * 220f)
         canvas.drawCircle(cx, cy, ring1Radius, ringPaint)
 
         val ring2Radius = coreRadius * 1.85f * (1f + pulseWobble)
-        ringPaint.color = Color.argb(45, Color.red(currentGlowColor), Color.green(currentGlowColor), Color.blue(currentGlowColor))
-        ringPaint.strokeWidth = 1.2f
-        ringPaint.pathEffect = DashPathEffect(floatArrayOf(12f, 28f), -phase * 240f)
+        ringPaint.color = Color.argb(55, Color.red(currentGlowColor), Color.green(currentGlowColor), Color.blue(currentGlowColor))
+        ringPaint.strokeWidth = 1.5f
+        ringPaint.pathEffect = DashPathEffect(floatArrayOf(14f, 26f), -phase * 300f)
         canvas.drawCircle(cx, cy, ring2Radius, ringPaint)
 
+        // Outer HUD Track Ring
+        val ring3Radius = coreRadius * 2.15f
+        ringPaint.color = Color.argb(40, Color.red(currentPrimaryColor), Color.green(currentPrimaryColor), Color.blue(currentPrimaryColor))
+        ringPaint.strokeWidth = 1.0f
+        ringPaint.pathEffect = DashPathEffect(floatArrayOf(4f, 32f), phase * 120f)
+        canvas.drawCircle(cx, cy, ring3Radius, ringPaint)
+
         // ── 3. 3D Synaptic Neural Particle Mesh ────────────────────────────
-        val sphereRadius = coreRadius * 1.25f * (dynamicScale + pulseWobble * 0.5f)
+        val sphereRadius = coreRadius * 1.28f * (dynamicScale + pulseWobble * 0.5f)
 
         val cosY = cos(rotationAngleY)
         val sinY = sin(rotationAngleY)
         val cosX = cos(rotationAngleX)
         val sinX = sin(rotationAngleX)
 
-        // Project 3D nodes to 2D screen with rotation
         for (node in nodes) {
-            // Rotate Y
             val x1 = node.x0 * cosY + node.z0 * sinY
             val z1 = -node.x0 * sinY + node.z0 * cosY
-            // Rotate X
             val y2 = node.y0 * cosX - z1 * sinX
             val z2 = node.y0 * sinX + z1 * cosX
 
-            // Perspective scale
             val fov = 3.2f
             val scale = fov / (fov + z2 * 0.85f)
 
@@ -244,8 +300,8 @@ class JarvisOrbView @JvmOverloads constructor(
             node.pulse = (sin((phase * 2 * PI + node.x0 * 3f)).toFloat() + 1f) * 0.5f
         }
 
-        // Draw Interconnecting Synapse Filaments (Lines between nearby nodes)
-        val maxDistSq = (sphereRadius * 0.72f) * (sphereRadius * 0.72f)
+        // Draw Interconnecting Synapse Filaments
+        val maxDistSq = (sphereRadius * 0.74f) * (sphereRadius * 0.74f)
         for (i in 0 until nodeCount) {
             val n1 = nodes[i]
             for (j in i + 1 until nodeCount) {
@@ -256,8 +312,8 @@ class JarvisOrbView @JvmOverloads constructor(
 
                 if (distSq < maxDistSq) {
                     val normDist = 1.0f - (distSq / maxDistSq)
-                    val depthAlpha = ((n1.pz + n2.pz + 2.0f) / 4.0f).coerceIn(0.15f, 1.0f)
-                    val alpha = (normDist * depthAlpha * (60 + activeAudio * 140)).toInt().coerceIn(10, 240)
+                    val depthAlpha = ((n1.pz + n2.pz + 2.0f) / 4.0f).coerceIn(0.18f, 1.0f)
+                    val alpha = (normDist * depthAlpha * (80 + activeAudio * 155)).toInt().coerceIn(15, 255)
 
                     synapseLinePaint.color = Color.argb(
                         alpha,
@@ -265,26 +321,49 @@ class JarvisOrbView @JvmOverloads constructor(
                         Color.green(currentPrimaryColor),
                         Color.blue(currentPrimaryColor)
                     )
-                    synapseLinePaint.strokeWidth = (1.0f + normDist * 1.5f + activeAudio * 1.2f)
+                    synapseLinePaint.strokeWidth = (1.2f + normDist * 1.8f + activeAudio * 1.5f)
                     canvas.drawLine(n1.px, n1.py, n2.px, n2.py, synapseLinePaint)
 
-                    // Occasional electrical spark traversing filament
-                    if ((i + j) % 7 == 0 && (activeAudio > 0.1f || state == OrbState.SPEAKING)) {
-                        val sparkPos = (phase * 3.5f + (i * 0.13f)) % 1.0f
+                    // Travelling Electrical Sparks along synapses
+                    if ((i + j) % 5 == 0 && (activeAudio > 0.12f || state == OrbState.SPEAKING)) {
+                        val sparkPos = (phase * 4.0f + (i * 0.19f)) % 1.0f
                         val sx = n1.px + (n2.px - n1.px) * sparkPos
                         val sy = n1.py + (n2.py - n1.py) * sparkPos
                         sparkPaint.color = Color.WHITE
-                        canvas.drawCircle(sx, sy, 2.5f * dynamicScale, sparkPaint)
+                        canvas.drawCircle(sx, sy, 3.0f * dynamicScale, sparkPaint)
                     }
                 }
+            }
+        }
+
+        // ── 3b. High-Voltage Electric Lightning Arcs (Alive Neural Sparks!) ─
+        if (state == OrbState.SPEAKING || (state == OrbState.LISTENING && activeAudio > 0.2f)) {
+            lightningPaint.color = Color.WHITE
+            lightningPaint.strokeWidth = 2.4f
+            val rand = Random(SystemClock.uptimeMillis() / 70)
+            val arcCount = if (state == OrbState.SPEAKING) 3 else 1
+
+            for (a in 0 until arcCount) {
+                val idx1 = rand.nextInt(nodeCount)
+                val idx2 = (idx1 + rand.nextInt(5) + 3) % nodeCount
+                val p1 = nodes[idx1]
+                val p2 = nodes[idx2]
+
+                lightningPath.reset()
+                lightningPath.moveTo(p1.px, p1.py)
+                val midX = (p1.px + p2.px) / 2f + (rand.nextFloat() - 0.5f) * 28f
+                val midY = (p1.px + p2.px) / 2f + (rand.nextFloat() - 0.5f) * 28f
+                lightningPath.lineTo(midX, midY)
+                lightningPath.lineTo(p2.px, p2.py)
+                canvas.drawPath(lightningPath, lightningPaint)
             }
         }
 
         // Draw Synapse Nodes (Glowing energy dots)
         for (node in nodes) {
             val depthScale = ((node.pz + 1.2f) / 2.4f).coerceIn(0.4f, 1.3f)
-            val nodeRadius = (2.4f + node.pulse * 2.2f + activeAudio * 3.5f) * depthScale
-            val nodeAlpha = (140 * depthScale + activeAudio * 115).toInt().coerceIn(40, 255)
+            val nodeRadius = (2.8f + node.pulse * 2.5f + activeAudio * 4.2f) * depthScale
+            val nodeAlpha = (150 * depthScale + activeAudio * 105).toInt().coerceIn(50, 255)
 
             nodePaint.color = Color.argb(
                 nodeAlpha,
@@ -294,29 +373,28 @@ class JarvisOrbView @JvmOverloads constructor(
             )
             canvas.drawCircle(node.px, node.py, nodeRadius, nodePaint)
 
-            // White hot center for prominent nodes
-            if (depthScale > 0.95f) {
-                nodePaint.color = Color.argb((200 * depthScale).toInt(), 255, 255, 255)
-                canvas.drawCircle(node.px, node.py, nodeRadius * 0.45f, nodePaint)
+            // Bright white-hot center for front-facing nodes
+            if (depthScale > 0.90f) {
+                nodePaint.color = Color.argb((220 * depthScale).toInt(), 255, 255, 255)
+                canvas.drawCircle(node.px, node.py, nodeRadius * 0.48f, nodePaint)
             }
         }
 
-        // ── 4. Horizontal Cybernetic Soundwave Bars ──────────────────────
-        val barCount = 20
+        // ── 4. Horizontal Cybernetic Soundwave Equalizer Bars ─────────────
+        val barCount = 24
         val barSpacing = w / (barCount + 4)
         val waveBaseY = cy
 
-        soundwavePaint.strokeWidth = 3f
+        soundwavePaint.strokeWidth = 3.2f
         for (i in 0 until barCount) {
             val bx = barSpacing * (i + 2.5f)
             val distFromCenter = abs(bx - cx) / cx
-            val centerFalloff = (1.0f - distFromCenter * 0.75f).coerceIn(0.1f, 1.0f)
+            val centerFalloff = (1.0f - distFromCenter * 0.70f).coerceIn(0.1f, 1.0f)
 
-            // Only draw outside the inner core circle
-            if (abs(bx - cx) > coreRadius * 0.75f) {
-                val waveVal = sin(phase * 12.0f + i * 0.65f)
-                val barHeight = (4f + activeAudio * 55f * centerFalloff * abs(waveVal).toFloat())
-                val barAlpha = (90 + activeAudio * 140).toInt().coerceIn(30, 255)
+            if (abs(bx - cx) > coreRadius * 0.72f) {
+                val waveVal = sin(phase * 14.0f + i * 0.60f)
+                val barHeight = (5f + activeAudio * 65f * centerFalloff * abs(waveVal).toFloat())
+                val barAlpha = (95 + activeAudio * 150).toInt().coerceIn(35, 255)
 
                 soundwavePaint.color = Color.argb(
                     barAlpha,
@@ -328,7 +406,7 @@ class JarvisOrbView @JvmOverloads constructor(
             }
         }
 
-        // ── 5. Minimal Holographic Core Center Text ────────────────────────
+        // ── 5. Holographic Core Center Text ─────────────────────────────────
         val textColor = if (isNightMode) Color.WHITE else Color.parseColor("#0F172A")
         textPaint.color = textColor
         textPaint.textSize = coreRadius * 0.28f
@@ -339,9 +417,13 @@ class JarvisOrbView @JvmOverloads constructor(
         var subSize = coreRadius * 0.17f
         subTextPaint.textSize = subSize
         subTextPaint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
-        val modeLabel = if (state == OrbState.SPEAKING) "GAPIRMOQDA" else if (state == OrbState.LISTENING) "ESHITMOQDA" else activeDomainTitle.uppercase()
+        val modeLabel = when (state) {
+            OrbState.SPEAKING -> "GAPIRMOQDA"
+            OrbState.LISTENING -> "ESHITMOQDA"
+            OrbState.THINKING -> "TAHLIL..."
+            else -> activeDomainTitle.uppercase()
+        }
 
-        // Auto-scale subText so it NEVER overflows the central core circle
         val maxSubWidth = coreRadius * 1.45f
         val measuredSub = subTextPaint.measureText(modeLabel)
         if (measuredSub > maxSubWidth && measuredSub > 0f) {

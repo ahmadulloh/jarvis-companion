@@ -54,6 +54,14 @@ import com.jarvis.companion.ui.LiveEvent
 import com.jarvis.companion.ui.LiveEventAdapter
 import com.jarvis.companion.ui.OrbState
 import com.jarvis.companion.util.PreferencesHelper
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.jarvis.companion.network.GeminiApiClient
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -180,7 +188,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rvLiveFeed: RecyclerView
     private lateinit var etCommandInput: EditText
     private lateinit var btnSendCommand: ImageButton
+    private lateinit var bottomBarContainer: View
+    private lateinit var layoutOrbContainer: View
     private lateinit var eventAdapter: LiveEventAdapter
+
+    // Mobile Speech & TTS (Standalone / Hybrid AI)
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var isVoiceListening = false
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
 
     // In-App WebView
     private lateinit var webViewDashboard: WebView
@@ -267,6 +283,8 @@ class MainActivity : AppCompatActivity() {
 
         initViews()
         initAutoTheme()
+        initSpeechRecognizer()
+        initTextToSpeech()
         setupOrbInteractions()
         setupWorkspaces()
         setupSecretaryCard()
@@ -394,12 +412,16 @@ class MainActivity : AppCompatActivity() {
         tvGenericTitle3 = findViewById(R.id.tvGenericTitle3)
         tvGenericTitle4 = findViewById(R.id.tvGenericTitle4)
 
-        // HUD & Input
         cardLiveHud = findViewById(R.id.cardLiveHud)
         tvLiveHudTitle = findViewById(R.id.tvLiveHudTitle)
         rvLiveFeed = findViewById(R.id.rvLiveFeed)
+        layoutOrbContainer = findViewById(R.id.layoutOrbContainer)
+        bottomBarContainer = findViewById(R.id.bottomBarContainer)
         etCommandInput = findViewById(R.id.etCommandInput)
         btnSendCommand = findViewById(R.id.btnSendCommand)
+
+        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+        tvStatusBadge.text = if (prefs.connectionMode == "GEMINI_DIRECT") "● GEMINI AI" else "● PC BRIDGE"
 
         // In-App WebView
         webViewDashboard = findViewById(R.id.webViewDashboard)
@@ -614,7 +636,162 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupOrbInteractions() {
         jarvisOrb.setOnClickListener {
-            vibrateBrief(30)
+            handleOrbActivation()
+        }
+        if (::layoutOrbContainer.isInitialized) {
+            layoutOrbContainer.setOnClickListener {
+                handleOrbActivation()
+            }
+        }
+    }
+
+    private fun handleOrbActivation() {
+        if (tts?.isSpeaking == true) {
+            stopSpeaking()
+            tvOrbSubtitle.text = "Labbay, Axmadulloh sir..."
+            return
+        }
+        startMobileVoiceRecognition()
+    }
+
+    private fun initTextToSpeech() {
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                isTtsReady = true
+                val uzLocale = Locale("uz", "UZ")
+                val res = tts?.setLanguage(uzLocale)
+                if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    tts?.language = Locale.getDefault()
+                }
+                tts?.setSpeechRate(1.02f)
+                tts?.setPitch(0.96f)
+
+                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        runOnUiThread {
+                            updateOrbState("SPEAKING")
+                        }
+                    }
+                    override fun onDone(utteranceId: String?) {
+                        runOnUiThread {
+                            updateOrbState("IDLE")
+                        }
+                    }
+                    override fun onError(utteranceId: String?) {
+                        runOnUiThread {
+                            updateOrbState("IDLE")
+                        }
+                    }
+                })
+            }
+        }
+    }
+
+    private fun speakJarvis(text: String) {
+        if (!isTtsReady || text.isBlank()) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "jarvis_${System.currentTimeMillis()}")
+            } else {
+                @Suppress("DEPRECATION")
+                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "TTS error: ${e.message}")
+        }
+    }
+
+    private fun stopSpeaking() {
+        try {
+            tts?.stop()
+        } catch (_: Exception) {}
+        updateOrbState("IDLE")
+    }
+
+    private fun initSpeechRecognizer() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) return
+        try {
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+                setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        isVoiceListening = true
+                        updateOrbState("LISTENING")
+                        tvOrbSubtitle.text = "Eshitmoqdaman, Axmadulloh sir..."
+                    }
+                    override fun onBeginningOfSpeech() {}
+                    override fun onRmsChanged(rmsdB: Float) {
+                        val norm = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+                        jarvisOrb.audioLevel = norm
+                    }
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() {
+                        isVoiceListening = false
+                        jarvisOrb.audioLevel = 0f
+                        updateOrbState("THINKING")
+                    }
+                    override fun onError(error: Int) {
+                        isVoiceListening = false
+                        jarvisOrb.audioLevel = 0f
+                        updateOrbState("IDLE")
+                    }
+                    override fun onResults(results: Bundle?) {
+                        isVoiceListening = false
+                        jarvisOrb.audioLevel = 0f
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        if (!matches.isNullOrEmpty()) {
+                            val spoken = matches[0]
+                            sendJarvisCommand(spoken)
+                        } else {
+                            updateOrbState("IDLE")
+                        }
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        if (!matches.isNullOrEmpty()) {
+                            tvOrbSubtitle.text = matches[0]
+                        }
+                    }
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "SpeechRecognizer error: ${e.message}")
+        }
+    }
+
+    private fun startMobileVoiceRecognition() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+            return
+        }
+
+        if (tts?.isSpeaking == true) {
+            stopSpeaking()
+            tvOrbSubtitle.text = "Labbay, Axmadulloh sir..."
+            return
+        }
+
+        if (isVoiceListening) {
+            speechRecognizer?.stopListening()
+            isVoiceListening = false
+            updateOrbState("IDLE")
+            return
+        }
+
+        vibrateBrief(35)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uz-UZ")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "uz-UZ")
+            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, false)
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+
+        try {
+            speechRecognizer?.startListening(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "startListening error: ${e.message}")
             wakeJarvisVoice()
         }
     }
@@ -722,13 +899,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (speakAnnouncement) {
+            val announcement = "${domain.titleUz} rejimi faollashtirildi, Axmadulloh sir."
             addFeedEvent(LiveEvent(
                 EventType.SYSTEM,
                 "JARVIS",
-                "${domain.titleUz} rejimi faollashtirildi. ${domain.motto}",
+                "$announcement ${domain.motto}",
                 currentTime()
             ))
-            sendJarvisCommand("${domain.titleUz} rejimi faol. ${domain.motto}")
+            speakJarvis(announcement)
         }
     }
 
@@ -986,17 +1164,14 @@ class MainActivity : AppCompatActivity() {
                 sendJarvisCommand(txt)
                 etCommandInput.setText("")
             } else {
-                vibrateBrief(35)
-                wakeJarvisVoice()
+                startMobileVoiceRecognition()
             }
         }
 
         btnSendCommand.setOnLongClickListener {
             val txt = etCommandInput.text.toString().trim()
             if (txt.isEmpty()) {
-                vibrateBrief(60)
-                wakeJarvisVoice()
-                Toast.makeText(this, "🎤 Jarvis eshitmoqda...", Toast.LENGTH_SHORT).show()
+                startMobileVoiceRecognition()
                 true
             } else false
         }
@@ -1020,16 +1195,61 @@ class MainActivity : AppCompatActivity() {
             applyDomain(detected, speakAnnouncement = true)
         }
 
-        try {
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_SEND_TEXT
-                putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
-            }
-            startService(intent)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Failed to send command to service: ${e.message}")
-        }
         addFeedEvent(LiveEvent(EventType.USER, "Siz", cmd, currentTime()))
+
+        if (prefs.connectionMode == "GEMINI_DIRECT") {
+            executeGeminiPrompt(cmd)
+        } else {
+            // PC_BRIDGE mode: send command to local WebSocket bridge service
+            var sentToService = false
+            try {
+                val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                    action = JarvisForegroundService.ACTION_SEND_TEXT
+                    putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
+                }
+                startService(intent)
+                sentToService = true
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to send command to service: ${e.message}")
+            }
+            if (!sentToService) {
+                executeGeminiPrompt(cmd)
+            }
+        }
+    }
+
+    private fun executeGeminiPrompt(prompt: String) {
+        val apiKey = prefs.geminiApiKey
+        if (apiKey.isBlank()) {
+            val guidance = "Axmadulloh sir, to'g'ridan-to'g'ri telefonda ishlash uchun Sozlamalar bo'limidan bepul Google Gemini API kalitini kiriting."
+            tvOrbSubtitle.text = guidance
+            addFeedEvent(LiveEvent(EventType.JARVIS, "JARVIS", guidance, currentTime()))
+            speakJarvis(guidance)
+            return
+        }
+
+        updateOrbState("THINKING")
+        tvOrbSubtitle.text = "Tahlil qilinmoqda..."
+
+        lifecycleScope.launch {
+            val result = GeminiApiClient.generateReply(
+                apiKey = apiKey,
+                userPrompt = prompt,
+                activeDomain = "${currentDomain.id} (${currentDomain.titleUz})",
+                userName = prefs.userName
+            )
+            result.onSuccess { reply ->
+                tvOrbSubtitle.text = reply
+                addFeedEvent(LiveEvent(EventType.JARVIS, "JARVIS", reply, currentTime()))
+                speakJarvis(reply)
+            }.onFailure { err ->
+                val errorMsg = "Xatolik: ${err.message ?: "Aloqa uzildi"}"
+                tvOrbSubtitle.text = errorMsg
+                addFeedEvent(LiveEvent(EventType.ACTION, "Xatolik", errorMsg, currentTime()))
+                speakJarvis("Kechirasiz, ser. API so'rovida xatolik yuz berdi.")
+                updateOrbState("IDLE")
+            }
+        }
     }
 
     private fun setupProfileAndAuth() {
@@ -1106,16 +1326,65 @@ class MainActivity : AppCompatActivity() {
             }
             rvDomains.adapter = domainAdapter
 
+            val btnModeGemini = dialog.findViewById<TextView>(R.id.btnModeGemini)
+            val btnModePcBridge = dialog.findViewById<TextView>(R.id.btnModePcBridge)
+            val layoutGemini = dialog.findViewById<View>(R.id.layoutGeminiSettings)
+            val layoutPc = dialog.findViewById<View>(R.id.layoutPcSettings)
+            val etGeminiKey = dialog.findViewById<EditText>(R.id.etDialogGeminiKey)
+            val cbShowTextInput = dialog.findViewById<CheckBox>(R.id.cbDialogShowTextInput)
+
+            var selectedMode = prefs.connectionMode
+
+            fun updateModeUi(mode: String) {
+                val activeBg = R.drawable.bg_ios_pill_active
+                val normalBg = R.drawable.bg_ios_action_chip
+                val activeText = Color.parseColor("#070A12")
+                val normalText = Color.WHITE
+
+                val isGemini = mode == "GEMINI_DIRECT"
+                btnModeGemini?.setBackgroundResource(if (isGemini) activeBg else normalBg)
+                btnModeGemini?.setTextColor(if (isGemini) activeText else normalText)
+                btnModePcBridge?.setBackgroundResource(if (!isGemini) activeBg else normalBg)
+                btnModePcBridge?.setTextColor(if (!isGemini) activeText else normalText)
+
+                layoutGemini?.visibility = if (isGemini) View.VISIBLE else View.GONE
+                layoutPc?.visibility = if (!isGemini) View.VISIBLE else View.GONE
+            }
+
+            updateModeUi(selectedMode)
+
+            btnModeGemini?.setOnClickListener {
+                selectedMode = "GEMINI_DIRECT"
+                updateModeUi(selectedMode)
+            }
+
+            btnModePcBridge?.setOnClickListener {
+                selectedMode = "PC_BRIDGE"
+                updateModeUi(selectedMode)
+            }
+
+            etGeminiKey?.setText(prefs.geminiApiKey)
+            cbShowTextInput?.isChecked = prefs.showTextInputBar
+
             val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
             val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
             val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
             val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
+            val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
             val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
 
-            etServer.setText(prefs.serverAddress)
-            etToken.setText(prefs.authToken)
-            cbBoot.isChecked = prefs.autoStartOnBoot
-            cbQuron.isChecked = prefs.quronCardVisible
+            etServer?.setText(prefs.serverAddress)
+            etToken?.setText(prefs.authToken)
+            cbBoot?.isChecked = prefs.autoStartOnBoot
+            cbQuron?.isChecked = prefs.quronCardVisible
+
+            btnGrantNotif?.setOnClickListener {
+                try {
+                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Sozlamalarni ochishda xatolik", Toast.LENGTH_SHORT).show()
+                }
+            }
 
             fun updateRouteUi(route: AudioRoute) {
                 val activeBg = R.drawable.bg_ios_pill_active
@@ -1152,10 +1421,17 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnSave.setOnClickListener {
-                prefs.serverAddress = etServer.text.toString().trim()
-                prefs.authToken = etToken.text.toString().trim()
-                prefs.autoStartOnBoot = cbBoot.isChecked
-                prefs.quronCardVisible = cbQuron.isChecked
+                prefs.connectionMode = selectedMode
+                prefs.geminiApiKey = etGeminiKey?.text?.toString()?.trim() ?: ""
+                prefs.showTextInputBar = cbShowTextInput?.isChecked == true
+                bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+
+                prefs.serverAddress = etServer?.text?.toString()?.trim() ?: ""
+                prefs.authToken = etToken?.text?.toString()?.trim() ?: ""
+                prefs.autoStartOnBoot = cbBoot?.isChecked == true
+                prefs.quronCardVisible = cbQuron?.isChecked == true
+
+                tvStatusBadge.text = if (prefs.connectionMode == "GEMINI_DIRECT") "● GEMINI AI" else "● PC BRIDGE"
                 Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
             }
@@ -1260,6 +1536,17 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "startJarvisService error: ${e.message}")
         }
+    }
+
+    override fun onDestroy() {
+        try {
+            speechRecognizer?.destroy()
+        } catch (_: Exception) {}
+        try {
+            tts?.stop()
+            tts?.shutdown()
+        } catch (_: Exception) {}
+        super.onDestroy()
     }
 
     override fun onBackPressed() {

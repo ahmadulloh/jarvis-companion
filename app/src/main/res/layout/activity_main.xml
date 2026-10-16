@@ -7,19 +7,21 @@
     android:background="@color/night_bg">
 
     <!-- Top iOS-style Minimal Header Bar -->
-    <LinearLayout
+    <!-- Top iOS-style Minimal Header Bar (Padded, Unclipped Settings Cog) -->
+    <RelativeLayout
         android:id="@+id/headerBar"
         android:layout_width="match_parent"
-        android:layout_height="58dp"
+        android:layout_height="56dp"
         android:layout_alignParentTop="true"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp">
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
 
         <LinearLayout
+            android:id="@+id/headerLeftGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
             android:orientation="vertical">
 
             <TextView
@@ -30,7 +32,7 @@
                 android:letterSpacing="0.10"
                 android:text="J.A.R.V.I.S"
                 android:textColor="@color/night_text_primary"
-                android:textSize="18sp" />
+                android:textSize="17sp" />
 
             <TextView
                 android:id="@+id/tvStatusBadge"
@@ -38,79 +40,88 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="1dp"
                 android:fontFamily="sans-serif-bold"
-                android:text="● ALOQADA"
+                android:text="● GIBRID AI"
                 android:textColor="@color/jarvis_accent"
                 android:textSize="9sp" />
         </LinearLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+        <!-- Right Button Group (Always pinned on screen right edge) -->
+        <LinearLayout
+            android:id="@+id/headerRightGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <!-- Theme Toggle -->
+            <ImageButton
+                android:id="@+id/btnThemeToggle"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Mavzu"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_moon"
+                app:tint="@color/night_text_secondary" />
+
+            <!-- User Profile Avatar -->
+            <FrameLayout
+                android:id="@+id/layoutProfileAvatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="4dp">
+
+                <ImageView
+                    android:id="@+id/ivUserProfile"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_circle_avatar"
+                    android:contentDescription="Profil"
+                    android:padding="2dp"
+                    android:scaleType="centerCrop"
+                    app:srcCompat="@drawable/ic_profile_default" />
+            </FrameLayout>
+
+            <!-- Settings Cog Button (Always completely visible!) -->
+            <ImageButton
+                android:id="@+id/btnOpenSettings"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Sozlamalar"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_settings"
+                app:tint="@color/night_text_secondary" />
+        </LinearLayout>
 
         <!-- Dynamic Domain Badge (Click opens 31 Domains) -->
         <TextView
             android:id="@+id/tvHeaderDomainBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="130dp"
-            android:maxLines="1"
-            android:ellipsize="end"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_toEndOf="@id/headerLeftGroup"
+            android:layout_toStartOf="@id/headerRightGroup"
             android:background="@drawable/bg_ios_pill_active"
             android:clickable="true"
+            android:ellipsize="end"
             android:focusable="true"
             android:fontFamily="sans-serif-bold"
-            android:paddingStart="10dp"
+            android:maxLines="1"
+            android:paddingStart="8dp"
             android:paddingTop="5dp"
-            android:paddingEnd="10dp"
+            android:paddingEnd="8dp"
             android:paddingBottom="5dp"
             android:singleLine="true"
             android:text="⚡ ASOSIY"
             android:textColor="@color/night_pill_active_text"
             android:textSize="11sp" />
-
-        <!-- Theme Toggle -->
-        <ImageButton
-            android:id="@+id/btnThemeToggle"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginStart="6dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Mavzu"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_moon"
-            app:tint="@color/night_text_secondary" />
-
-        <!-- User Profile Avatar -->
-        <FrameLayout
-            android:id="@+id/layoutProfileAvatar"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginStart="6dp">
-
-            <ImageView
-                android:id="@+id/ivUserProfile"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/bg_circle_avatar"
-                android:contentDescription="Profil"
-                android:padding="2dp"
-                android:scaleType="centerCrop"
-                app:srcCompat="@drawable/ic_profile_default" />
-        </FrameLayout>
-
-        <!-- Settings Cog Button -->
-        <ImageButton
-            android:id="@+id/btnOpenSettings"
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Sozlamalar"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_settings"
-            app:tint="@color/night_text_secondary" />
-    </LinearLayout>
+    </RelativeLayout>
 
     <!-- Scrollable Center Body -->
     <ScrollView
@@ -135,9 +146,12 @@
 
             <!-- Center AI Orb Arena (Full Width with Soundwave Bars) -->
             <FrameLayout
+                android:id="@+id/layoutOrbContainer"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:layout_marginTop="2dp">
+                android:layout_height="270dp"
+                android:layout_marginTop="2dp"
+                android:clickable="true"
+                android:focusable="true">
 
                 <com.jarvis.companion.ui.JarvisOrbView
                     android:id="@+id/jarvisOrb"
