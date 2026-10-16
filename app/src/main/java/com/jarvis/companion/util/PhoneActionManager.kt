@@ -371,6 +371,38 @@ class PhoneActionManager(private val context: Context) {
     }
 
     /**
+     * Search contact display name by incoming phone number.
+     */
+    @SuppressLint("Range")
+    fun searchContactByNumber(number: String): String? {
+        val cleanNumber = number.replace("+", "").replace(" ", "").replace("-", "").trim()
+        if (cleanNumber.isEmpty()) return null
+
+        val hasReadContacts = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasReadContacts) return null
+
+        try {
+            val uri = Uri.withAppendedPath(
+                ContactsContract.PhoneLookup.CONTENT_FILTER_URI,
+                Uri.encode(number)
+            )
+            val projection = arrayOf(ContactsContract.PhoneLookup.DISPLAY_NAME)
+            val cursor = context.contentResolver.query(uri, projection, null, null, null)
+            cursor?.use { c ->
+                if (c.moveToFirst()) {
+                    return c.getString(c.getColumnIndex(ContactsContract.PhoneLookup.DISPLAY_NAME))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "searchContactByNumber error: ${e.message}")
+        }
+        return null
+    }
+
+    /**
      * Detailed contact search returned as JSON for PC backend confirmation.
      */
     fun searchContactDetailed(query: String): String {

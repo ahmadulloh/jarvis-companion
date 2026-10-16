@@ -213,7 +213,7 @@ class MainActivity : AppCompatActivity() {
         if (missing.isNotEmpty()) {
             val warn = "Axmadulloh sir, to'liq ishlashi uchun ruxsatlar kerak: ${missing.joinToString(", ")}. Sozlamalardan ruxsat berishingiz mumkin."
             Toast.makeText(this, warn, Toast.LENGTH_LONG).show()
-            speakResponse("Diqqat, telefon qo'ng'iroqlari va kontaktlar ruxsati berilmadi. Iltimos, sozlamalardan ruxsat bering.")
+            speakJarvis("Diqqat, telefon qo'ng'iroqlari va kontaktlar ruxsati berilmadi. Iltimos, sozlamalardan ruxsat bering.")
         }
     }
 
