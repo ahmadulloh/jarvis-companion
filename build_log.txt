@@ -31,22 +31,46 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:mergeDebugAssets
 > Task :app:compressDebugAssets
 > Task :app:desugarDebugFileDependencies
-> Task :app:mergeDebugStartupProfile
-> Task :app:mergeDebugJniLibFolders
-> Task :app:checkDebugDuplicateClasses
-> Task :app:mergeDebugNativeLibs NO-SOURCE
 > Task :app:processDebugManifestForPackage
-> Task :app:stripDebugDebugSymbols NO-SOURCE
-> Task :app:mergeLibDexDebug
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugStartupProfile
 > Task :app:processDebugResources
-> Task :app:validateSigningDebug
 > Task :app:mergeExtDexDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebug
 > Task :app:writeDebugAppMetadata
 > Task :app:writeDebugSigningConfigVersions
 
+> Task :app:compileDebugKotlin
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1047:64 Unresolved reference: tvDialogTitle
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1048:61 Unresolved reference: etUserName
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1049:62 Unresolved reference: etUserEmail
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1050:61 Unresolved reference: btnGoogleLogin
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1051:71 Unresolved reference: btnSaveProfile
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1052:72 Unresolved reference: btnCloseAuthDialog
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1060:19 Unresolved reference: userAuthType
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1098:59 Unresolved reference: etServerAddress
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1099:64 Unresolved reference: btnSaveSettings
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1100:62 Unresolved reference: btnCloseSettings
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1101:64 Unresolved reference: rvDomains
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1103:64 Unresolved reference: chipRouteComputer
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1104:61 Unresolved reference: chipRoutePhone
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1105:63 Unresolved reference: chipRouteEarbuds
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1107:56 Unresolved reference: cbAutoStartMic
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1108:62 Unresolved reference: cbAiSecretaryDefault
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1111:33 Unresolved reference: autoStartMic
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1120:73 Unresolved reference: COMPUTER
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1121:64 Unresolved reference: COMPUTER
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1133:38 Unresolved reference: COMPUTER
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1150:44 Unresolved reference: allDomains
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1151:13 Cannot find a parameter with this name: selectedDomainId
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1152:13 No value passed for parameter 'activeDomainId'
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1162:19 Unresolved reference: autoStartMic
+
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:410:37 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Intent?
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:411:36 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type Intent?
 
 FAILURE: Build failed with an exception.
 
@@ -92,6 +116,36 @@ org.gradle.api.tasks.TaskExecutionException: Execution failed for task ':app:com
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:116)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:200)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:195)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:264)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionException: A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
@@ -219,6 +273,36 @@ Caused by: org.gradle.workers.internal.DefaultWorkerExecutor$WorkExecutionExcept
 	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph$BuildOperationAwareExecutionAction.execute(DefaultTaskExecutionGraph.java:303)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.execute(DefaultPlanExecutor.java:463)
 	at org.gradle.execution.plan.DefaultPlanExecutor$ExecutorWorker.run(DefaultPlanExecutor.java:380)
+	at org.gradle.execution.plan.DefaultPlanExecutor.process(DefaultPlanExecutor.java:116)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.executeWithServices(DefaultTaskExecutionGraph.java:138)
+	at org.gradle.execution.taskgraph.DefaultTaskExecutionGraph.execute(DefaultTaskExecutionGraph.java:123)
+	at org.gradle.execution.SelectedTaskExecutionAction.execute(SelectedTaskExecutionAction.java:35)
+	at org.gradle.execution.DryRunBuildExecutionAction.execute(DryRunBuildExecutionAction.java:51)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:54)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor$ExecuteTasks.call(BuildOperationFiringBuildWorkerExecutor.java:43)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:200)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:195)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:66)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:157)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:59)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:53)
+	at org.gradle.internal.operations.DefaultBuildOperationExecutor.call(DefaultBuildOperationExecutor.java:73)
+	at org.gradle.execution.BuildOperationFiringBuildWorkerExecutor.execute(BuildOperationFiringBuildWorkerExecutor.java:40)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.lambda$executeTasks$10(DefaultBuildLifecycleController.java:313)
+	at org.gradle.internal.model.StateTransitionController.doTransition(StateTransitionController.java:266)
+	at org.gradle.internal.model.StateTransitionController.lambda$tryTransition$8(StateTransitionController.java:177)
+	at org.gradle.internal.work.DefaultSynchronizer.withLock(DefaultSynchronizer.java:44)
+	at org.gradle.internal.model.StateTransitionController.tryTransition(StateTransitionController.java:177)
+	at org.gradle.internal.build.DefaultBuildLifecycleController.executeTasks(DefaultBuildLifecycleController.java:304)
+	at org.gradle.internal.build.DefaultBuildWorkGraphController$DefaultBuildWorkGraph.runWork(DefaultBuildWorkGraphController.java:220)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:264)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:128)
+	at org.gradle.composite.internal.DefaultBuildController.doRun(DefaultBuildController.java:181)
+	at org.gradle.composite.internal.DefaultBuildController.access$000(DefaultBuildController.java:50)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.lambda$run$0(DefaultBuildController.java:198)
+	at org.gradle.internal.operations.CurrentBuildOperationRef.with(CurrentBuildOperationRef.java:80)
+	at org.gradle.composite.internal.DefaultBuildController$BuildOpRunnable.run(DefaultBuildController.java:198)
 	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
 	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
 Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilation error. See log for more details
@@ -255,5 +339,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 2m
+BUILD FAILED in 1m 56s
 28 actionable tasks: 28 executed
