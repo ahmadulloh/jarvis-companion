@@ -212,6 +212,26 @@ class JarvisOrbView @JvmOverloads constructor(
         val dynamicScale = 1.0f + (activeAudio * 0.25f)
         val pulseWobble = sin(phase * 2 * PI).toFloat() * 0.08f
 
+        // High contrast colors in Day Mode so the orb pops and never looks washed out
+        val effPrimaryColor = if (!isNightMode) {
+            when (activeDomainTitle.uppercase()) {
+                "HAYDOVCHI" -> Color.parseColor("#D97706")
+                "DIN" -> Color.parseColor("#059669")
+                "TALABA" -> Color.parseColor("#4F46E5")
+                "DASTURCHI" -> Color.parseColor("#16A34A")
+                "MOLIYA" -> Color.parseColor("#0D9488")
+                else -> Color.parseColor("#0284C7")
+            }
+        } else {
+            currentPrimaryColor
+        }
+
+        val effGlowColor = if (!isNightMode) {
+            Color.parseColor("#0369A1")
+        } else {
+            currentGlowColor
+        }
+
         // ── 0. High-Energy Concentric Expanding Shockwaves ────────────────
         if (state == OrbState.SPEAKING || state == OrbState.LISTENING || activeAudio > 0.15f) {
             val shockCount = 3
@@ -223,9 +243,9 @@ class JarvisOrbView @JvmOverloads constructor(
 
                 shockwavePaint.color = Color.argb(
                     shockAlpha,
-                    Color.red(currentGlowColor),
-                    Color.green(currentGlowColor),
-                    Color.blue(currentGlowColor)
+                    Color.red(effGlowColor),
+                    Color.green(effGlowColor),
+                    Color.blue(effGlowColor)
                 )
                 shockwavePaint.pathEffect = DashPathEffect(floatArrayOf(16f, 12f), phase * 90f)
                 canvas.drawCircle(cx, cy, shockRadius, shockwavePaint)
@@ -234,19 +254,19 @@ class JarvisOrbView @JvmOverloads constructor(
 
         // ── 1. Deep Core Plasma & Aura (Radial Glow) ──────────────────────
         val glowRadius = coreRadius * 2.4f * dynamicScale
-        val auraAlpha = if (isNightMode) 95 else 65
+        val auraAlpha = if (isNightMode) 95 else 125
         val auraColor = Color.argb(
             (auraAlpha * (0.8f + activeAudio * 0.5f)).toInt().coerceIn(0, 255),
-            Color.red(currentGlowColor),
-            Color.green(currentGlowColor),
-            Color.blue(currentGlowColor)
+            Color.red(effGlowColor),
+            Color.green(effGlowColor),
+            Color.blue(effGlowColor)
         )
-        val centerAlpha = if (isNightMode) 235 else 250
+        val centerAlpha = if (isNightMode) 235 else 255
         val centerColor = Color.argb(
             centerAlpha,
-            Color.red(currentPrimaryColor),
-            Color.green(currentPrimaryColor),
-            Color.blue(currentPrimaryColor)
+            Color.red(effPrimaryColor),
+            Color.green(effPrimaryColor),
+            Color.blue(effPrimaryColor)
         )
 
         plasmaPaint.shader = RadialGradient(
@@ -259,20 +279,20 @@ class JarvisOrbView @JvmOverloads constructor(
 
         // ── 2. Quantum Cybernetic Rotating HUD Rings ───────────────────────
         val ring1Radius = coreRadius * 1.55f * dynamicScale
-        ringPaint.color = Color.argb(85, Color.red(currentPrimaryColor), Color.green(currentPrimaryColor), Color.blue(currentPrimaryColor))
+        ringPaint.color = Color.argb(if (isNightMode) 85 else 160, Color.red(effPrimaryColor), Color.green(effPrimaryColor), Color.blue(effPrimaryColor))
         ringPaint.strokeWidth = 2.2f
         ringPaint.pathEffect = DashPathEffect(floatArrayOf(30f, 15f, 10f, 15f), phase * 220f)
         canvas.drawCircle(cx, cy, ring1Radius, ringPaint)
 
         val ring2Radius = coreRadius * 1.85f * (1f + pulseWobble)
-        ringPaint.color = Color.argb(55, Color.red(currentGlowColor), Color.green(currentGlowColor), Color.blue(currentGlowColor))
+        ringPaint.color = Color.argb(if (isNightMode) 55 else 120, Color.red(effGlowColor), Color.green(effGlowColor), Color.blue(effGlowColor))
         ringPaint.strokeWidth = 1.5f
         ringPaint.pathEffect = DashPathEffect(floatArrayOf(14f, 26f), -phase * 300f)
         canvas.drawCircle(cx, cy, ring2Radius, ringPaint)
 
         // Outer HUD Track Ring
         val ring3Radius = coreRadius * 2.15f
-        ringPaint.color = Color.argb(40, Color.red(currentPrimaryColor), Color.green(currentPrimaryColor), Color.blue(currentPrimaryColor))
+        ringPaint.color = Color.argb(if (isNightMode) 40 else 90, Color.red(effPrimaryColor), Color.green(effPrimaryColor), Color.blue(effPrimaryColor))
         ringPaint.strokeWidth = 1.0f
         ringPaint.pathEffect = DashPathEffect(floatArrayOf(4f, 32f), phase * 120f)
         canvas.drawCircle(cx, cy, ring3Radius, ringPaint)
@@ -313,13 +333,13 @@ class JarvisOrbView @JvmOverloads constructor(
                 if (distSq < maxDistSq) {
                     val normDist = 1.0f - (distSq / maxDistSq)
                     val depthAlpha = ((n1.pz + n2.pz + 2.0f) / 4.0f).coerceIn(0.18f, 1.0f)
-                    val alpha = (normDist * depthAlpha * (80 + activeAudio * 155)).toInt().coerceIn(15, 255)
+                    val alpha = (normDist * depthAlpha * (if (isNightMode) 80 else 140 + activeAudio * 115)).toInt().coerceIn(20, 255)
 
                     synapseLinePaint.color = Color.argb(
                         alpha,
-                        Color.red(currentPrimaryColor),
-                        Color.green(currentPrimaryColor),
-                        Color.blue(currentPrimaryColor)
+                        Color.red(effPrimaryColor),
+                        Color.green(effPrimaryColor),
+                        Color.blue(effPrimaryColor)
                     )
                     synapseLinePaint.strokeWidth = (1.2f + normDist * 1.8f + activeAudio * 1.5f)
                     canvas.drawLine(n1.px, n1.py, n2.px, n2.py, synapseLinePaint)
@@ -338,7 +358,7 @@ class JarvisOrbView @JvmOverloads constructor(
 
         // ── 3b. High-Voltage Electric Lightning Arcs (Alive Neural Sparks!) ─
         if (state == OrbState.SPEAKING || (state == OrbState.LISTENING && activeAudio > 0.2f)) {
-            lightningPaint.color = Color.WHITE
+            lightningPaint.color = if (isNightMode) Color.WHITE else Color.parseColor("#0284C7")
             lightningPaint.strokeWidth = 2.4f
             val rand = Random(SystemClock.uptimeMillis() / 70)
             val arcCount = if (state == OrbState.SPEAKING) 3 else 1
@@ -363,13 +383,13 @@ class JarvisOrbView @JvmOverloads constructor(
         for (node in nodes) {
             val depthScale = ((node.pz + 1.2f) / 2.4f).coerceIn(0.4f, 1.3f)
             val nodeRadius = (2.8f + node.pulse * 2.5f + activeAudio * 4.2f) * depthScale
-            val nodeAlpha = (150 * depthScale + activeAudio * 105).toInt().coerceIn(50, 255)
+            val nodeAlpha = (if (isNightMode) 150 else 200 * depthScale + activeAudio * 55).toInt().coerceIn(50, 255)
 
             nodePaint.color = Color.argb(
                 nodeAlpha,
-                Color.red(currentPrimaryColor),
-                Color.green(currentPrimaryColor),
-                Color.blue(currentPrimaryColor)
+                Color.red(effPrimaryColor),
+                Color.green(effPrimaryColor),
+                Color.blue(effPrimaryColor)
             )
             canvas.drawCircle(node.px, node.py, nodeRadius, nodePaint)
 
@@ -394,13 +414,13 @@ class JarvisOrbView @JvmOverloads constructor(
             if (abs(bx - cx) > coreRadius * 0.72f) {
                 val waveVal = sin(phase * 14.0f + i * 0.60f)
                 val barHeight = (5f + activeAudio * 65f * centerFalloff * abs(waveVal).toFloat())
-                val barAlpha = (95 + activeAudio * 150).toInt().coerceIn(35, 255)
+                val barAlpha = (if (isNightMode) 95 else 150 + activeAudio * 105).toInt().coerceIn(35, 255)
 
                 soundwavePaint.color = Color.argb(
                     barAlpha,
-                    Color.red(currentPrimaryColor),
-                    Color.green(currentPrimaryColor),
-                    Color.blue(currentPrimaryColor)
+                    Color.red(effPrimaryColor),
+                    Color.green(effPrimaryColor),
+                    Color.blue(effPrimaryColor)
                 )
                 canvas.drawLine(bx, waveBaseY - barHeight / 2f, bx, waveBaseY + barHeight / 2f, soundwavePaint)
             }
@@ -413,7 +433,7 @@ class JarvisOrbView @JvmOverloads constructor(
         textPaint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)
         canvas.drawText("J.A.R.V.I.S", cx, cy - 2f, textPaint)
 
-        subTextPaint.color = currentPrimaryColor
+        subTextPaint.color = effPrimaryColor
         var subSize = coreRadius * 0.17f
         subTextPaint.textSize = subSize
         subTextPaint.typeface = android.graphics.Typeface.create(android.graphics.Typeface.SANS_SERIF, android.graphics.Typeface.BOLD)

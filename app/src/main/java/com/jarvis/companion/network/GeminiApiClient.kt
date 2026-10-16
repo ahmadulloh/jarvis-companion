@@ -14,13 +14,21 @@ import java.util.concurrent.TimeUnit
 object GeminiApiClient {
 
     private const val TAG = "GeminiApiClient"
-    private const val PRIMARY_MODEL = "gemini-2.0-flash"
-    private const val FALLBACK_MODEL = "gemini-1.5-flash"
+
+    // Verified model ladder supported by Google Generative AI v1beta
+    private val MODEL_LADDER = listOf(
+        "gemini-flash-lite-latest",
+        "gemini-3.1-flash-lite-preview",
+        "gemini-flash-latest",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash"
+    )
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(12, TimeUnit.SECONDS)
-        .readTimeout(25, TimeUnit.SECONDS)
-        .writeTimeout(15, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(20, TimeUnit.SECONDS)
+        .writeTimeout(12, TimeUnit.SECONDS)
         .build()
 
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
@@ -33,19 +41,31 @@ object GeminiApiClient {
     ): Result<String> = withContext(Dispatchers.IO) {
         val trimmedKey = apiKey.trim()
         if (trimmedKey.isEmpty()) {
-            return@withContext Result.failure(
-                IllegalStateException("Gemini API kaliti kiritilmagan. Sozlamalar bo'limidan Google AI Studio kalitingizni kiriting.")
-            )
+            return@withContext Result.failure(Exception("Gemini API kaliti kiritilmagan. Sozlamalardan API kalitingizni kiriting."))
         }
 
-        // Try primary model first, fallback if unavailable
-        val primaryResult = queryModel(PRIMARY_MODEL, trimmedKey, userPrompt, activeDomain, userName)
-        if (primaryResult.isSuccess) {
-            return@withContext primaryResult
+        var lastError: Exception? = null
+        for (model in MODEL_LADDER) {
+            val res = queryModel(model, trimmedKey, userPrompt, activeDomain, userName)
+            if (res.isSuccess) {
+                Log.d(TAG, "Successfully generated reply using model: $model")
+                return@withContext res
+            } else {
+                val err = res.exceptionOrNull()
+                val msg = err?.message ?: ""
+                Log.w(TAG, "Model $model failed: $msg")
+                lastError = err as? Exception ?: Exception(msg)
+                // Stop early on fatal auth or quota errors
+                if (msg.contains("API_KEY_INVALID", ignoreCase = true) ||
+                    msg.contains("API key not valid", ignoreCase = true) ||
+                    msg.contains("PERMISSION_DENIED", ignoreCase = true)
+                ) {
+                    break
+                }
+            }
         }
 
-        Log.w(TAG, "Primary model $PRIMARY_MODEL failed, trying fallback $FALLBACK_MODEL...")
-        queryModel(FALLBACK_MODEL, trimmedKey, userPrompt, activeDomain, userName)
+        Result.failure(lastError ?: Exception("Barcha Gemini modellari javob bermadi."))
     }
 
     private fun queryModel(
@@ -67,14 +87,12 @@ object GeminiApiClient {
         }
 
         val requestPayload = JSONObject().apply {
-            // System instruction
             put("systemInstruction", JSONObject().apply {
                 put("parts", JSONArray().apply {
                     put(JSONObject().apply { put("text", systemInstructionText) })
                 })
             })
 
-            // User prompt contents
             put("contents", JSONArray().apply {
                 put(JSONObject().apply {
                     put("role", "user")
@@ -84,10 +102,9 @@ object GeminiApiClient {
                 })
             })
 
-            // Generation config
             put("generationConfig", JSONObject().apply {
                 put("temperature", 0.7)
-                put("maxOutputTokens", 600)
+                put("maxOutputTokens", 500)
             })
         }
 
@@ -102,7 +119,7 @@ object GeminiApiClient {
             val responseString = response.body?.string() ?: ""
 
             if (!response.isSuccessful) {
-                Log.e(TAG, "Gemini API error ${response.code}: $responseString")
+                Log.e(TAG, "Gemini API error ${response.code} on model $model: $responseString")
                 val errMsg = try {
                     val errJson = JSONObject(responseString)
                     errJson.optJSONObject("error")?.optString("message", "API xatoligi: ${response.code}")
@@ -129,7 +146,7 @@ object GeminiApiClient {
 
             Result.failure(Exception("Gemini javob qaytarmadi."))
         } catch (e: Exception) {
-            Log.e(TAG, "Request execution error: ${e.message}", e)
+            Log.e(TAG, "Request execution error on model $model: ${e.message}", e)
             Result.failure(e)
         }
     }
