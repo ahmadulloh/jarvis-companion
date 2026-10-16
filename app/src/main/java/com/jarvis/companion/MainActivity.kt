@@ -60,6 +60,7 @@ import com.jarvis.companion.network.GeminiApiClient
 import com.jarvis.companion.service.JarvisForegroundService
 import com.jarvis.companion.ui.JarvisParticleState
 import com.jarvis.companion.ui.JarvisParticleView
+import com.jarvis.companion.util.PhoneActionManager
 import com.jarvis.companion.util.PreferencesHelper
 import kotlinx.coroutines.launch
 import java.util.Locale
