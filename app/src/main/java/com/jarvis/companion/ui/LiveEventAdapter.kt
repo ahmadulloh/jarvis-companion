@@ -29,29 +29,32 @@ class LiveEventAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.tvTime.text = item.time
+        holder.tvTime.setTextColor(Color.parseColor("#94A3B8"))
         holder.tvContent.text = item.content
+        holder.tvContent.setTextColor(Color.parseColor("#F8FAFC"))
 
         when (item.type) {
             EventType.USER -> {
-                holder.tvTitle.text = "[Siz] 👤"
+                holder.tvTitle.text = "Siz 👤"
                 holder.tvTitle.setTextColor(Color.parseColor("#00E5FF"))
                 holder.card.setStrokeColor(Color.parseColor("#00838F"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#102A43"))
             }
             EventType.JARVIS -> {
-                holder.tvTitle.text = "[JARVIS] 🤖"
+                holder.tvTitle.text = "JARVIS 🤖"
                 holder.tvTitle.setTextColor(Color.parseColor("#00E676"))
-                holder.card.setStrokeColor(Color.parseColor("#00E5FF"))
-                holder.card.setCardBackgroundColor(Color.parseColor("#131B2A"))
+                holder.card.setStrokeColor(Color.parseColor("#10B981"))
+                holder.card.setCardBackgroundColor(Color.parseColor("#0F2231"))
             }
             EventType.ACTION -> {
-                holder.tvTitle.text = "⚡ [AMAL / PLAGIN] " + item.title
-                holder.tvTitle.setTextColor(Color.parseColor("#FFB300"))
-                holder.card.setStrokeColor(Color.parseColor("#FFB300"))
-                holder.card.setCardBackgroundColor(Color.parseColor("#2A2410"))
+                val cleanTitle = item.title.replace("_", " ").uppercase()
+                holder.tvTitle.text = "⚡ $cleanTitle"
+                holder.tvTitle.setTextColor(Color.parseColor("#F59E0B"))
+                holder.card.setStrokeColor(Color.parseColor("#B45309"))
+                holder.card.setCardBackgroundColor(Color.parseColor("#261E10"))
             }
             EventType.SYSTEM -> {
-                holder.tvTitle.text = "ℹ️ [TIZIM]"
+                holder.tvTitle.text = "TIZIM"
                 holder.tvTitle.setTextColor(Color.parseColor("#80DEEA"))
                 holder.card.setStrokeColor(Color.parseColor("#00838F"))
                 holder.card.setCardBackgroundColor(Color.parseColor("#131B2A"))

@@ -281,17 +281,6 @@ class JarvisForegroundService : Service() {
                         val sura = json.optString("sura", "")
                         val oyat = json.optInt("oyat", 0)
                         broadcastQuronUpdate(url, sura, oyat)
-                        broadcastActionLog("quron", "Qur'on darsi: $sura $oyat-oyat")
-                        if (url.isNotEmpty()) {
-                            try {
-                                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                startActivity(browserIntent)
-                            } catch (e: Exception) {
-                                Log.e("JarvisService", "Failed to open lesson URL: ${e.message}")
-                            }
-                        }
                     }
                     "set_secretary_reason" -> {
                         val reason = json.optString("reason", "Darsdaman")

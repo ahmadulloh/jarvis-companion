@@ -4,9 +4,9 @@
     android:id="@+id/rootContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/day_bg">
+    android:background="@color/night_bg">
 
-    <!-- Top iOS-style Responsive Minimal Header Bar -->
+    <!-- Top iOS-style Minimal Header Bar -->
     <LinearLayout
         android:id="@+id/headerBar"
         android:layout_width="match_parent"
@@ -17,7 +17,6 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp">
 
-        <!-- Title + Live Status Badge Stacked (Saves massive horizontal space!) -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -30,7 +29,7 @@
                 android:fontFamily="sans-serif-black"
                 android:letterSpacing="0.10"
                 android:text="J.A.R.V.I.S"
-                android:textColor="@color/day_text_primary"
+                android:textColor="@color/night_text_primary"
                 android:textSize="18sp" />
 
             <TextView
@@ -54,21 +53,21 @@
             android:id="@+id/tvHeaderDomainBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:maxWidth="115dp"
+            android:maxWidth="130dp"
             android:maxLines="1"
             android:ellipsize="end"
             android:background="@drawable/bg_ios_pill_active"
             android:clickable="true"
             android:focusable="true"
             android:fontFamily="sans-serif-bold"
-            android:paddingStart="8dp"
-            android:paddingTop="4dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="4dp"
+            android:paddingStart="10dp"
+            android:paddingTop="5dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="5dp"
             android:singleLine="true"
             android:text="⚡ ASOSIY"
             android:textColor="@color/night_pill_active_text"
-            android:textSize="10sp" />
+            android:textSize="11sp" />
 
         <!-- Theme Toggle -->
         <ImageButton
@@ -79,10 +78,10 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Mavzu"
             android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_sun"
-            app:tint="@color/day_text_secondary" />
+            app:srcCompat="@drawable/ic_moon"
+            app:tint="@color/night_text_secondary" />
 
-        <!-- User Profile Avatar (Click to Login / Edit Profile) -->
+        <!-- User Profile Avatar -->
         <FrameLayout
             android:id="@+id/layoutProfileAvatar"
             android:layout_width="34dp"
@@ -110,7 +109,7 @@
             android:contentDescription="Sozlamalar"
             android:scaleType="centerInside"
             app:srcCompat="@drawable/ic_settings"
-            app:tint="@color/day_text_secondary" />
+            app:tint="@color/night_text_secondary" />
     </LinearLayout>
 
     <!-- Scrollable Center Body -->
@@ -130,14 +129,14 @@
             android:gravity="center_horizontal"
             android:orientation="vertical"
             android:paddingStart="16dp"
-            android:paddingTop="6dp"
+            android:paddingTop="4dp"
             android:paddingEnd="16dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="20dp">
 
             <!-- Center AI Orb Arena (Full Width with Soundwave Bars) -->
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
+                android:layout_height="220dp"
                 android:layout_marginTop="2dp">
 
                 <com.jarvis.companion.ui.JarvisOrbView
@@ -151,7 +150,7 @@
                 android:id="@+id/tvOrbStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="4dp"
                 android:gravity="center"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -165,7 +164,7 @@
                 android:id="@+id/tvOrbSubtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="2dp"
                 android:gravity="center"
                 android:maxLines="2"
                 android:ellipsize="end"
@@ -173,412 +172,1510 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:text="Labbay, Axmadulloh sir, eshitaman..."
-                android:textColor="@color/day_text_secondary"
+                android:textColor="@color/night_text_secondary"
                 android:textSize="11sp" />
 
-            <!-- Qur'on Ustozi AI Card (Matches Screenshot! Gone by default, appears when requested) -->
-            <LinearLayout
-                android:id="@+id/cardQuronLesson"
+            <!-- ========================================================= -->
+            <!-- DYNAMIC DOMAIN WORKSPACES (Changes entire layout per mode!) -->
+            <!-- ========================================================= -->
+            <FrameLayout
+                android:id="@+id/layoutDomainWorkspaceContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_day_card"
-                android:elevation="3dp"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:visibility="gone">
+                android:layout_marginTop="12dp">
 
-                <!-- Header with Title & Close button -->
+                <!-- 1. TALABA WORKSPACE -->
                 <LinearLayout
+                    android:id="@+id/workspaceTalaba"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical"
+                    android:visibility="gone">
 
-                    <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="Quron"
-                        app:srcCompat="@drawable/ic_quron" />
-
+                    <!-- Hero Action: Record Lecture -->
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:id="@+id/btnTalabaRecordLecture"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="14dp"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
+                        android:background="@drawable/bg_hero_action_card"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
 
                         <TextView
-                            android:id="@+id/tvQuronTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:fontFamily="sans-serif-black"
-                            android:letterSpacing="0.06"
-                            android:text="QUR'ON USTOZI AI"
-                            android:textColor="@color/day_text_primary"
-                            android:textSize="16sp" />
+                            android:text="🎙️"
+                            android:textSize="24sp" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:text="Ma'ruzani Yozib Olish"
+                                android:textColor="#FFFFFF"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Audioni konspektga aylantirish va AI xulosa"
+                                android:textColor="#94A3B8"
+                                android:textSize="11sp" />
+                        </LinearLayout>
 
                         <TextView
-                            android:id="@+id/tvQuronInfo"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="Tajvid va qiroat o'rganish"
-                            android:textColor="@color/day_text_secondary"
+                            android:fontFamily="sans-serif-bold"
+                            android:text="BOSHLASH ›"
+                            android:textColor="@color/jarvis_cyan"
                             android:textSize="11sp" />
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/btnCloseQuronCard"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:gravity="center"
-                        android:text="✕"
-                        android:textColor="@color/day_text_secondary"
-                        android:textSize="14sp" />
-                </LinearLayout>
-
-                <!-- Action Buttons: DARSNI BOSHLASH and KUNLIK REJA -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnStartQuron"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_weight="1.2"
-                        android:backgroundTint="@null"
-                        android:background="@drawable/bg_cyan_button_gradient"
-                        android:fontFamily="sans-serif-bold"
-                        android:letterSpacing="0.04"
-                        android:text="DARSNI BOSHLASH"
-                        android:textAllCaps="true"
-                        android:textColor="#FFFFFF"
-                        android:textSize="11sp"
-                        app:cornerRadius="16dp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnOpenQuronWeb"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginStart="10dp"
-                        android:layout_weight="1"
-                        android:backgroundTint="@color/day_segment_bg"
-                        android:fontFamily="sans-serif-bold"
-                        android:letterSpacing="0.04"
-                        android:text="KUNLIK REJA"
-                        android:textAllCaps="true"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp"
-                        app:cornerRadius="16dp"
-                        app:strokeColor="@color/day_card_border"
-                        app:strokeWidth="1dp" />
-                </LinearLayout>
-
-                <!-- Progress Bar: Bugungi dars: Fotiha -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tvQuronLessonName"
-                        android:layout_width="0dp"
+                    <!-- 2x2 Grid of Student Tools -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-medium"
-                        android:text="Bugungi dars: Fotiha surasi"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="12sp" />
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔥 2h"
-                        android:textColor="@color/day_text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                        <LinearLayout
+                            android:id="@+id/btnTalabaSchedule"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
 
-                <ProgressBar
-                    android:id="@+id/pbQuronProgress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="6dp"
-                    android:layout_marginTop="6dp"
-                    android:max="100"
-                    android:progress="45"
-                    android:progressTint="@color/jarvis_cyan" />
-            </LinearLayout>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📅"
+                                android:textSize="20sp" />
 
-            <!-- Dynamic Domain Quick Action Dock (Changes for every domain!) -->
-            <HorizontalScrollView
-                android:id="@+id/layoutDomainDockScroll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:overScrollMode="never"
-                android:scrollbars="none">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Dars Jadvali"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
 
-                <LinearLayout
-                    android:id="@+id/layoutDomainDock"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Bugungi darslar"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/chipDomainAction1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="📞 Onamga telefon"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                        <LinearLayout
+                            android:id="@+id/btnTalabaQuiz"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
 
-                    <TextView
-                        android:id="@+id/chipDomainAction2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="💬 Telegram"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📝"
+                                android:textSize="20sp" />
 
-                    <TextView
-                        android:id="@+id/chipDomainAction3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="⏰ Eslatma"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Quiz &amp; Flashcard"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
 
-                    <TextView
-                        android:id="@+id/chipDomainAction4"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="⚡ Tizim holati"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="11sp" />
-
-                    <TextView
-                        android:id="@+id/chipInterrupt"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="12dp"
-                        android:paddingTop="8dp"
-                        android:paddingEnd="12dp"
-                        android:paddingBottom="8dp"
-                        android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="⏹ To'xtatish"
-                        android:textColor="@color/jarvis_red"
-                        android:textSize="11sp" />
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <!-- AI Kotib (Call Secretary) iOS Modern Card (Hidden by default to keep screen uncluttered) -->
-            <LinearLayout
-                android:id="@+id/cardAiSecretary"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_day_card"
-                android:elevation="2dp"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🤖"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/tvSecretaryTitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:fontFamily="sans-serif-bold"
-                        android:text="AI Kotib (Qo'ng'iroq Yordamchisi)"
-                        android:textColor="@color/day_text_primary"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/tvSecretaryToggle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_ios_action_chip"
-                        android:fontFamily="sans-serif-bold"
-                        android:paddingStart="8dp"
-                        android:paddingTop="3dp"
-                        android:paddingEnd="8dp"
-                        android:paddingBottom="3dp"
-                        android:text="YOQILGAN"
-                        android:textColor="@color/jarvis_accent"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvSecretarySubtitle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Siz band bo'lganingizda o'rningizga odob bilan javob beradi."
-                    android:textColor="@color/day_text_secondary"
-                    android:textSize="11sp" />
-
-                <!-- Reason pills -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:overScrollMode="never"
-                    android:scrollbars="none">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Mavzudan testlar"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
 
                     <LinearLayout
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnTalabaSummary"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📺"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="PDF / Dars Xulosa"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Qisqa xulosa olish"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnTalabaExam"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🎯"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Imtihon Rejam"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Kunlik o'qish rejasi"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 2. HAYDOVCHI WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceHaydovchi"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
+                        <LinearLayout
+                            android:id="@+id/btnHaydovchiTraffic"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_hero_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🗺️"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-black"
+                                android:text="Marshrut &amp; Tirbandlik"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Yo'l holati va eng tezkor yo'l"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnHaydovchiFuel"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⛽"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-black"
+                                android:text="Yoqilg'i &amp; Xarajat"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Sarflangan mablag'ni yozish"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnHaydovchiCall"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📞"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Ovozda Qo'ng'iroq"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Qo'lsiz tezkor aloqa"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnHaydovchiMaintenance"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="14dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🔧"
+                                android:textSize="24sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="6dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Moy &amp; Sug'urta"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Muddatlarni eslatish"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 3. DIN & QUR'ON WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceDin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <!-- Hero Quran Learning Button (Direct in-app trigger!) -->
+                    <LinearLayout
+                        android:id="@+id/btnDinStartQuran"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_hero_action_card"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="14dp">
+
+                        <ImageView
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:contentDescription="Quron"
+                            app:srcCompat="@drawable/ic_quron" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="sans-serif-black"
+                                android:text="Qur'on Ustozi AI"
+                                android:textColor="#FFFFFF"
+                                android:textSize="15sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Jonli tajvid, qori tilovati va qiroat mashqi"
+                                android:textColor="#94A3B8"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
                         <TextView
-                            android:id="@+id/chipReasonDars"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="@drawable/bg_ios_pill_active"
-                            android:fontFamily="sans-serif-bold"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp"
-                            android:text="📚 Darsdaman"
-                            android:textColor="@color/night_pill_active_text"
+                            android:fontFamily="sans-serif-black"
+                            android:paddingStart="12dp"
+                            android:paddingTop="6dp"
+                            android:paddingEnd="12dp"
+                            android:paddingBottom="6dp"
+                            android:text="DARSNI BOSHLASH"
+                            android:textColor="#070A12"
+                            android:textSize="10sp" />
+                    </LinearLayout>
+
+                    <!-- Interactive Digital Tasbeh / Zikr Card -->
+                    <LinearLayout
+                        android:id="@+id/cardTasbeh"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_domain_action_card"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <TextView
+                            android:id="@+id/tvTasbehPhrase"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="Subhanalloh"
+                            android:textColor="@color/jarvis_cyan"
+                            android:textSize="18sp" />
+
+                        <TextView
+                            android:id="@+id/tvTasbehCount"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:fontFamily="sans-serif-black"
+                            android:text="0 / 33"
+                            android:textColor="#FFFFFF"
+                            android:textSize="26sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/btnTasbehTap"
+                                android:layout_width="0dp"
+                                android:layout_height="44dp"
+                                android:layout_weight="1"
+                                android:background="@drawable/bg_ios_pill_active"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:fontFamily="sans-serif-black"
+                                android:text="📿 SANASH (+1)"
+                                android:textColor="#070A12"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/btnTasbehReset"
+                                android:layout_width="wrap_content"
+                                android:layout_height="44dp"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_ios_action_chip"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center"
+                                android:paddingStart="14dp"
+                                android:paddingEnd="14dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="↺"
+                                android:textColor="#94A3B8"
+                                android:textSize="16sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Quick Namoz & Duolar Row -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/btnDinNamoz"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:paddingTop="10dp"
+                            android:paddingBottom="10dp"
+                            android:text="🕌 Namoz Vaqtlari"
+                            android:textColor="#FFFFFF"
                             android:textSize="11sp" />
 
                         <TextView
-                            android:id="@+id/chipReasonMashina"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/btnDinDua"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_ios_action_chip"
-                            android:fontFamily="sans-serif-medium"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp"
-                            android:text="🚗 Mashinadaman"
-                            android:textColor="@color/day_text_primary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chipReasonBand"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_ios_action_chip"
-                            android:fontFamily="sans-serif-medium"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp"
-                            android:text="💼 Bandman"
-                            android:textColor="@color/day_text_primary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chipReasonNamoz"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_ios_action_chip"
-                            android:fontFamily="sans-serif-medium"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp"
-                            android:text="🕌 Namozdaman"
-                            android:textColor="@color/day_text_primary"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chipReasonCustom"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:background="@drawable/bg_ios_action_chip"
-                            android:fontFamily="sans-serif-medium"
-                            android:paddingStart="10dp"
-                            android:paddingTop="5dp"
-                            android:paddingEnd="10dp"
-                            android:paddingBottom="5dp"
-                            android:text="✍️ Boshqa..."
-                            android:textColor="@color/day_text_primary"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:gravity="center"
+                            android:paddingTop="10dp"
+                            android:paddingBottom="10dp"
+                            android:text="🤲 Kundalik Duolar"
+                            android:textColor="#FFFFFF"
                             android:textSize="11sp" />
                     </LinearLayout>
-                </HorizontalScrollView>
+                </LinearLayout>
 
-                <TextView
-                    android:id="@+id/tvSecretaryPreview"
+                <!-- 4. DO'KON WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceDokon"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/bg_ios_action_chip"
-                    android:paddingStart="10dp"
-                    android:paddingTop="6dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="6dp"
-                    android:text="💬 Assalomu alaykum. Axmadulloh sir hozir darsdalar, shuning uchun gaplasha olmadilar..."
-                    android:textColor="@color/day_text_secondary"
-                    android:textSize="11sp" />
-            </LinearLayout>
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnDokonSale"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_hero_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="💰"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Tezkor Savdo"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="«5 ta non sotildi»"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnDokonStock"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📦"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Ombor Qoldig'i"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Tugayotgan mahsulotlar"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnDokonDebt"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📋"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Qarzdorlar Daftari"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Avtomatik eslatma"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnDokonRevenue"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📊"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Kunlik Tushum"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Sof foyda hisoboti"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 5. DASTURCHI WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceDasturchi"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnDevDebug"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_hero_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🐞"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Kod Xatosi Tahlili"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Xatoni topish &amp; fix"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnDevGit"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🌿"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Git Holati &amp; PR"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Commit &amp; PR xulosasi"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnDevServer"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🖥️"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Server Holati"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Monitoring &amp; loglar"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnDevTerminal"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Terminal"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Ovozli buyruqlar"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 6. MOLIYA WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceMoliya"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnFinanceExpense"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_hero_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="💸"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Tezkor Xarajat"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="«Taksiga 20 ming»"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnFinanceBudget"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📊"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Oylik Byudjet"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Limit ogohlantirishi"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnFinanceDebt"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🤝"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Qarzlar Daftari"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Avtomatik eslatma"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnFinanceReport"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="📈"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Moliyaviy Hisobot"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="Haftalik grafik"
+                                android:textColor="#94A3B8"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 7. ASOSIY & DEFAULT WORKSPACE -->
+                <LinearLayout
+                    android:id="@+id/workspaceAsosiy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="visible">
+
+                    <!-- Horizontal scroll for 4 quick chips -->
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:overScrollMode="never"
+                        android:scrollbars="none">
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/chipDomainAction1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_domain_action_card"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="14dp"
+                                android:paddingTop="9dp"
+                                android:paddingEnd="14dp"
+                                android:paddingBottom="9dp"
+                                android:singleLine="true"
+                                android:text="📞 Onamga telefon"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipDomainAction2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_domain_action_card"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="14dp"
+                                android:paddingTop="9dp"
+                                android:paddingEnd="14dp"
+                                android:paddingBottom="9dp"
+                                android:singleLine="true"
+                                android:text="💬 Telegram"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipDomainAction3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_domain_action_card"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="14dp"
+                                android:paddingTop="9dp"
+                                android:paddingEnd="14dp"
+                                android:paddingBottom="9dp"
+                                android:singleLine="true"
+                                android:text="⏰ Eslatma"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipDomainAction4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_domain_action_card"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="14dp"
+                                android:paddingTop="9dp"
+                                android:paddingEnd="14dp"
+                                android:paddingBottom="9dp"
+                                android:singleLine="true"
+                                android:text="⚡ Tizim holati"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/chipInterrupt"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:background="@drawable/bg_domain_action_card"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="14dp"
+                                android:paddingTop="9dp"
+                                android:paddingEnd="14dp"
+                                android:paddingBottom="9dp"
+                                android:singleLine="true"
+                                android:text="⏹ To'xtat"
+                                android:textColor="@color/jarvis_red"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </HorizontalScrollView>
+
+                    <!-- AI Kotib (Call Secretary) iOS Modern Card -->
+                    <LinearLayout
+                        android:id="@+id/cardAiSecretary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_ios_card"
+                        android:elevation="2dp"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="🤖"
+                                android:textSize="18sp" />
+
+                            <TextView
+                                android:id="@+id/tvSecretaryTitle"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_weight="1"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="AI Kotib (Qo'ng'iroq Yordamchisi)"
+                                android:textColor="#FFFFFF"
+                                android:textSize="13sp" />
+
+                            <TextView
+                                android:id="@+id/tvSecretaryToggle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_ios_action_chip"
+                                android:fontFamily="sans-serif-bold"
+                                android:paddingStart="8dp"
+                                android:paddingTop="3dp"
+                                android:paddingEnd="8dp"
+                                android:paddingBottom="3dp"
+                                android:text="YOQILGAN"
+                                android:textColor="@color/jarvis_accent"
+                                android:textSize="10sp" />
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/tvSecretarySubtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Siz band bo'lganingizda o'rningizga odob bilan javob beradi."
+                            android:textColor="#94A3B8"
+                            android:textSize="11sp" />
+
+                        <!-- Reason pills -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:overScrollMode="never"
+                            android:scrollbars="none">
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <TextView
+                                    android:id="@+id/chipReasonDars"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@drawable/bg_ios_pill_active"
+                                    android:fontFamily="sans-serif-bold"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="5dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="📚 Darsdaman"
+                                    android:textColor="@color/night_pill_active_text"
+                                    android:textSize="11sp" />
+
+                                <TextView
+                                    android:id="@+id/chipReasonMashina"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:background="@drawable/bg_ios_action_chip"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="5dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="🚗 Mashinadaman"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="11sp" />
+
+                                <TextView
+                                    android:id="@+id/chipReasonBand"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:background="@drawable/bg_ios_action_chip"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="5dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="💼 Majlisdaman"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="11sp" />
+
+                                <TextView
+                                    android:id="@+id/chipReasonNamoz"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:background="@drawable/bg_ios_action_chip"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="5dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="🕌 Namozdaman"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="11sp" />
+
+                                <TextView
+                                    android:id="@+id/chipReasonCustom"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="6dp"
+                                    android:background="@drawable/bg_ios_action_chip"
+                                    android:fontFamily="sans-serif-medium"
+                                    android:paddingStart="10dp"
+                                    android:paddingTop="5dp"
+                                    android:paddingEnd="10dp"
+                                    android:paddingBottom="5dp"
+                                    android:text="✍️ Boshqa..."
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <TextView
+                            android:id="@+id/tvSecretaryPreview"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:background="@drawable/bg_ios_action_chip"
+                            android:paddingStart="10dp"
+                            android:paddingTop="6dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="6dp"
+                            android:text="💬 Assalomu alaykum. Axmadulloh sir hozir darsdalar, shuning uchun gaplasha olmadilar..."
+                            android:textColor="#CBD5E1"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- 8. GENERIC WORKSPACE (For all other 25+ domains) -->
+                <LinearLayout
+                    android:id="@+id/workspaceGeneric"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnGenericAction1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:id="@+id/tvGenericIcon1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/tvGenericTitle1"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Amal 1"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnGenericAction2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:id="@+id/tvGenericIcon2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/tvGenericTitle2"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Amal 2"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/btnGenericAction3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:id="@+id/tvGenericIcon3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/tvGenericTitle3"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Amal 3"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/btnGenericAction4"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_domain_action_card"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:foreground="?attr/selectableItemBackground"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <TextView
+                                android:id="@+id/tvGenericIcon4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⚡"
+                                android:textSize="20sp" />
+
+                            <TextView
+                                android:id="@+id/tvGenericTitle4"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="sans-serif-bold"
+                                android:text="Amal 4"
+                                android:textColor="#FFFFFF"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+
+            </FrameLayout>
 
             <!-- Collapsible Live Activity HUD Card -->
             <LinearLayout
@@ -586,23 +1683,24 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:background="@drawable/bg_day_card"
+                android:background="@drawable/bg_ios_card"
                 android:elevation="2dp"
                 android:orientation="vertical"
                 android:padding="14dp">
 
                 <TextView
+                    android:id="@+id/tvLiveHudTitle"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-bold"
                     android:text="Jonli Muloqot va Xabarlar"
-                    android:textColor="@color/day_text_primary"
+                    android:textColor="#FFFFFF"
                     android:textSize="12sp" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvLiveFeed"
                     android:layout_width="match_parent"
-                    android:layout_height="110dp"
+                    android:layout_height="115dp"
                     android:layout_marginTop="6dp"
                     android:nestedScrollingEnabled="false"
                     android:scrollbars="vertical" />
@@ -641,19 +1739,19 @@
                 android:hint="Buyruq yozing..."
                 android:imeOptions="actionSend"
                 android:inputType="text"
-                android:textColor="@color/day_text_primary"
-                android:textColorHint="@color/day_text_secondary"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#94A3B8"
                 android:textSize="14sp" />
         </FrameLayout>
 
-        <!-- Floating Circular Cyan Mic Button (Matches Screenshot!) -->
+        <!-- Floating Circular Cyan Mic / Send Button (Dynamic morphing!) -->
         <ImageButton
             android:id="@+id/btnSendCommand"
             android:layout_width="52dp"
             android:layout_height="52dp"
             android:layout_marginStart="12dp"
             android:background="@drawable/bg_circle_mic_cyan"
-            android:contentDescription="Mikrofon"
+            android:contentDescription="Mikrofon va Jo'natish"
             android:elevation="4dp"
             android:scaleType="centerInside"
             app:srcCompat="@drawable/ic_mic"
@@ -666,17 +1764,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/headerBar"
-        android:background="@color/day_bg"
-        android:elevation="6dp"
+        android:background="@color/night_bg"
+        android:elevation="10dp"
         android:visibility="gone">
 
         <!-- Top Control Bar -->
         <LinearLayout
             android:id="@+id/webTopBar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="48dp"
             android:layout_alignParentTop="true"
-            android:background="@drawable/bg_ios_action_chip"
+            android:background="@drawable/bg_ios_card"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="14dp"
@@ -691,8 +1789,8 @@
                 android:singleLine="true"
                 android:ellipsize="end"
                 android:text="📖 Qur'on Ustozi AI"
-                android:textColor="@color/day_text_primary"
-                android:textSize="12sp" />
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
 
             <TextView
                 android:id="@+id/btnOpenExternalBrowser"
@@ -702,13 +1800,13 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:fontFamily="sans-serif-medium"
-                android:paddingStart="8dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="4dp"
+                android:paddingStart="10dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="5dp"
                 android:text="🌐 Brauzer"
-                android:textColor="@color/day_text_primary"
-                android:textSize="10sp" />
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
 
             <TextView
                 android:id="@+id/btnCloseWebView"
@@ -719,13 +1817,13 @@
                 android:clickable="true"
                 android:focusable="true"
                 android:fontFamily="sans-serif-bold"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
+                android:paddingStart="12dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="5dp"
                 android:text="✕ Yopish"
-                android:textColor="@color/night_pill_active_text"
-                android:textSize="10sp" />
+                android:textColor="#070A12"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <WebView
