@@ -27,6 +27,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.Window
+import android.view.inputmethod.EditorInfo
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -82,15 +83,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rootContainer: View
     private lateinit var topBar: View
     private lateinit var tvBrandTitle: TextView
+    private lateinit var tvMicStatus: TextView
     private lateinit var chipDomainSelector: LinearLayout
     private lateinit var viewChipDot: View
     private lateinit var tvChipTitle: TextView
+
+    // Captions & Input Transcript
     private lateinit var cardCaptionContainer: View
+    private lateinit var tvInputTranscript: TextView
     private lateinit var tvJarvisCaption: TextView
     private var captionDismissRunnable: Runnable? = null
     private val captionHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var lastShownCaption: String = ""
+    private var lastShownInput: String = ""
 
-    // Optional bottom text input
+    // Mini Chat History (Last 2-3 exchanges)
+    private lateinit var layoutChatHistory: LinearLayout
+    private lateinit var tvHistoryItem1: TextView
+    private lateinit var tvHistoryItem2: TextView
+    private val chatHistoryList = mutableListOf<Pair<String, String>>()
+
+    // Always-Visible Bottom Text Input Bar
     private lateinit var bottomBarContainer: View
     private lateinit var etCommandInput: EditText
     private lateinit var btnSendCommand: ImageButton
@@ -122,12 +135,30 @@ class MainActivity : AppCompatActivity() {
                 JarvisForegroundService.BROADCAST_STATE_CHANGE -> {
                     val state = intent.getStringExtra(JarvisForegroundService.EXTRA_STATE) ?: return
                     updateOrbState(state)
+                    updateMicStatusBadge(state)
+                }
+                JarvisForegroundService.BROADCAST_RMS -> {
+                    val rmsNorm = intent.getFloatExtra(JarvisForegroundService.EXTRA_RMS, 0f)
+                    jarvisParticleView.setMicLevel(rmsNorm)
+                    try {
+                        webViewLivingParticle.evaluateJavascript("window.jarvisSetMicLevel($rmsNorm);", null)
+                    } catch (_: Exception) {}
+                }
+                JarvisForegroundService.BROADCAST_INPUT_TRANSCRIPT -> {
+                    val transcript = intent.getStringExtra(JarvisForegroundService.EXTRA_TRANSCRIPT) ?: ""
+                    if (transcript.isNotBlank()) {
+                        showInputTranscript(transcript)
+                    }
                 }
                 JarvisForegroundService.BROADCAST_CHAT_LOG -> {
                     val speaker = intent.getStringExtra(JarvisForegroundService.EXTRA_SPEAKER) ?: ""
                     val text = intent.getStringExtra(JarvisForegroundService.EXTRA_TEXT) ?: ""
                     if (text.isNotBlank()) {
-                        showCaption(text)
+                        if (speaker.equals("user", ignoreCase = true)) {
+                            showInputTranscript(text)
+                        } else {
+                            showCaption(text)
+                        }
                         if (!speaker.equals("JARVIS", ignoreCase = true)) {
                             val detectedDomain = JarvisDomainRegistry.findDomainByVoice(text)
                             if (detectedDomain != null && detectedDomain.id != currentDomain.id) {
@@ -164,10 +195,25 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { results ->
         val recordAudioGranted = results[Manifest.permission.RECORD_AUDIO] == true
+        val callPhoneGranted = results[Manifest.permission.CALL_PHONE] == true
+        val readContactsGranted = results[Manifest.permission.READ_CONTACTS] == true
+        val readPhoneStateGranted = results[Manifest.permission.READ_PHONE_STATE] == true
+
         if (recordAudioGranted) {
             startJarvisService()
         } else {
             Toast.makeText(this, "JARVIS ishlashi uchun mikrofon ruxsati zarur", Toast.LENGTH_LONG).show()
+        }
+
+        val missing = mutableListOf<String>()
+        if (!callPhoneGranted) missing.add("Telefon qo'ng'iroqlari (CALL_PHONE)")
+        if (!readContactsGranted) missing.add("Kontaktlar (READ_CONTACTS)")
+        if (!readPhoneStateGranted) missing.add("Telefon holati (READ_PHONE_STATE)")
+
+        if (missing.isNotEmpty()) {
+            val warn = "Axmadulloh sir, to'liq ishlashi uchun ruxsatlar kerak: ${missing.joinToString(", ")}. Sozlamalardan ruxsat berishingiz mumkin."
+            Toast.makeText(this, warn, Toast.LENGTH_LONG).show()
+            speakResponse("Diqqat, telefon qo'ng'iroqlari va kontaktlar ruxsati berilmadi. Iltimos, sozlamalardan ruxsat bering.")
         }
     }
 
@@ -222,11 +268,20 @@ class MainActivity : AppCompatActivity() {
         setupLivingParticleWebView()
 
         tvBrandTitle = findViewById(R.id.tvBrandTitle)
+        tvMicStatus = findViewById(R.id.tvMicStatus)
         chipDomainSelector = findViewById(R.id.chipDomainSelector)
         viewChipDot = findViewById(R.id.viewChipDot)
         tvChipTitle = findViewById(R.id.tvChipTitle)
         cardCaptionContainer = findViewById(R.id.cardCaptionContainer)
+        tvInputTranscript = findViewById(R.id.tvInputTranscript)
         tvJarvisCaption = findViewById(R.id.tvJarvisCaption)
+        layoutChatHistory = findViewById(R.id.layoutChatHistory)
+        tvHistoryItem1 = findViewById(R.id.tvHistoryItem1)
+        tvHistoryItem2 = findViewById(R.id.tvHistoryItem2)
+
+        tvMicStatus.setOnClickListener {
+            toggleMicFromUi()
+        }
 
         cardCaptionContainer.setOnClickListener {
             vibrateBrief(15)
@@ -255,17 +310,27 @@ class MainActivity : AppCompatActivity() {
         btnOpenExternalBrowser = findViewById(R.id.btnOpenExternalBrowser)
         btnCloseWebView = findViewById(R.id.btnCloseWebView)
 
-        // Matn kiritish satri (Settings'da yoqilgan bo'lsa)
-        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+        // Matn kiritish satri har doim ochiq
+        bottomBarContainer.visibility = View.VISIBLE
 
-        // Ekran va Zarralar bilan interaktiv aloqa
-        jarvisParticleView.setOnClickListener {
-            vibrateBrief()
-            if (isVoiceListening) {
-                stopMobileVoiceRecognition()
+        // Enter bosilganda ham buyruqni yuborish
+        etCommandInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEND) {
+                val txt = etCommandInput.text.toString().trim()
+                if (txt.isNotEmpty()) {
+                    vibrateBrief()
+                    etCommandInput.setText("")
+                    sendJarvisCommand(txt)
+                }
+                true
             } else {
-                startMobileVoiceRecognition()
+                false
             }
+        }
+
+        // Ekran va Zarralar bilan interaktiv aloqa — mikrofonni boshqaradi
+        jarvisParticleView.setOnClickListener {
+            toggleMicFromUi()
         }
 
         // Yuqori o'ngdagi Chip bosilganda pastdan Sheet ochiladi
@@ -308,6 +373,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun toggleMicFromUi() {
+        vibrateBrief(25)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
+            return
+        }
+        try {
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_TOGGLE_MIC
+            }
+            startService(intent)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "toggleMicFromUi error: ${e.message}")
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupLivingParticleWebView() {
         webViewLivingParticle.settings.apply {
@@ -333,12 +414,7 @@ class MainActivity : AppCompatActivity() {
         @android.webkit.JavascriptInterface
         fun onCanvasTap() {
             runOnUiThread {
-                vibrateBrief(20)
-                if (isVoiceListening) {
-                    stopMobileVoiceRecognition()
-                } else {
-                    startMobileVoiceRecognition()
-                }
+                toggleMicFromUi()
             }
         }
 
@@ -417,38 +493,135 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Matnli Status / Subtitle ko'rsatish (Floating Glass Capsule & Auto Fade) ──
-    fun showCaption(text: String, durationMs: Long = 5000L) {
+    fun showInputTranscript(text: String) {
+        val clean = text.trim()
+        if (clean.isBlank() || clean == lastShownInput) return
+        lastShownInput = clean
+
+        runOnUiThread {
+            tvInputTranscript.text = "Eshitdim: «$clean»"
+            tvInputTranscript.visibility = View.VISIBLE
+            cardCaptionContainer.visibility = View.VISIBLE
+            cardCaptionContainer.alpha = 1f
+            cardCaptionContainer.translationY = 0f
+            addToChatHistory("user", clean)
+        }
+    }
+
+    fun showCaption(text: String, durationMs: Long = 4500L) {
+        val clean = text.trim()
         runOnUiThread {
             captionDismissRunnable?.let { captionHandler.removeCallbacks(it) }
-            val clean = text.trim()
             if (clean.isBlank()) {
                 cardCaptionContainer.animate()
                     .alpha(0f)
                     .translationY(16f)
                     .setDuration(250)
-                    .withEndAction { cardCaptionContainer.visibility = View.GONE }
+                    .withEndAction {
+                        cardCaptionContainer.visibility = View.GONE
+                        tvInputTranscript.visibility = View.GONE
+                    }
                     .start()
             } else {
+                // Deduplicate consecutive identical messages
+                if (clean == lastShownCaption && cardCaptionContainer.visibility == View.VISIBLE) {
+                    return@runOnUiThread
+                }
+                lastShownCaption = clean
+
                 tvJarvisCaption.text = clean
                 cardCaptionContainer.visibility = View.VISIBLE
                 cardCaptionContainer.translationY = 16f
                 cardCaptionContainer.animate()
                     .alpha(1f)
                     .translationY(0f)
-                    .setDuration(300)
+                    .setDuration(250)
                     .start()
 
-                // 5 soniyadan so'ng avtomatik mayin yo'qoladi (ekran yana toza galaktikaga aylanadi)
+                addToChatHistory("jarvis", clean)
+
+                // 4.5 soniyadan so'ng avtomatik mayin yo'qoladi (ekran yana toza galaktikaga aylanadi)
                 val runnable = Runnable {
                     cardCaptionContainer.animate()
                         .alpha(0f)
                         .translationY(16f)
-                        .setDuration(350)
-                        .withEndAction { cardCaptionContainer.visibility = View.GONE }
+                        .setDuration(300)
+                        .withEndAction {
+                            cardCaptionContainer.visibility = View.GONE
+                            tvInputTranscript.visibility = View.GONE
+                        }
                         .start()
                 }
                 captionDismissRunnable = runnable
                 captionHandler.postDelayed(runnable, durationMs)
+            }
+        }
+    }
+
+    fun updateMicStatusBadge(state: String) {
+        runOnUiThread {
+            when (state.uppercase()) {
+                "MIC_ON", "LISTENING" -> {
+                    tvMicStatus.text = "● Eshitmoqdaman"
+                    tvMicStatus.setTextColor(Color.parseColor("#12A550"))
+                }
+                "SPEAKING" -> {
+                    tvMicStatus.text = "🔊 Gapirmoqda"
+                    tvMicStatus.setTextColor(Color.parseColor("#2563EB"))
+                }
+                "MIC_OFF", "IDLE" -> {
+                    tvMicStatus.text = "○ Mikrofon o'chiq"
+                    tvMicStatus.setTextColor(Color.parseColor("#64748B"))
+                }
+                "DISCONNECTED" -> {
+                    tvMicStatus.text = "○ Ulanmagan"
+                    tvMicStatus.setTextColor(Color.parseColor("#94A3B8"))
+                }
+                "PERMISSION_DENIED" -> {
+                    tvMicStatus.text = "⚠ Ruxsat yo'q"
+                    tvMicStatus.setTextColor(Color.parseColor("#DC2626"))
+                }
+                "CONNECTED" -> {
+                    tvMicStatus.text = "● Aloqada"
+                    tvMicStatus.setTextColor(Color.parseColor("#12A550"))
+                }
+            }
+        }
+    }
+
+    private fun addToChatHistory(speaker: String, text: String) {
+        if (chatHistoryList.isNotEmpty() && chatHistoryList.last().second == text) return
+        chatHistoryList.add(Pair(speaker, text))
+        if (chatHistoryList.size > 8) {
+            chatHistoryList.removeAt(0)
+        }
+        updateChatHistoryUi()
+    }
+
+    private fun updateChatHistoryUi() {
+        runOnUiThread {
+            val count = chatHistoryList.size
+            if (count >= 2) {
+                val item1 = chatHistoryList[count - 2]
+                val prefix1 = if (item1.first == "user") "👤 Siz: " else "🤖 JARVIS: "
+                tvHistoryItem1.text = "$prefix1${item1.second}"
+                tvHistoryItem1.visibility = View.VISIBLE
+
+                val item2 = chatHistoryList[count - 1]
+                val prefix2 = if (item2.first == "user") "👤 Siz: " else "🤖 JARVIS: "
+                tvHistoryItem2.text = "$prefix2${item2.second}"
+                tvHistoryItem2.visibility = View.VISIBLE
+
+                layoutChatHistory.visibility = View.VISIBLE
+            } else if (count == 1) {
+                val item1 = chatHistoryList[0]
+                val prefix1 = if (item1.first == "user") "👤 Siz: " else "🤖 JARVIS: "
+                tvHistoryItem1.text = "$prefix1${item1.second}"
+                tvHistoryItem1.visibility = View.VISIBLE
+                tvHistoryItem2.visibility = View.GONE
+                layoutChatHistory.visibility = View.VISIBLE
+            } else {
+                layoutChatHistory.visibility = View.GONE
             }
         }
     }
@@ -1083,23 +1256,19 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (prefs.connectionMode == "GEMINI_DIRECT") {
+        var sentToService = false
+        try {
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_SEND_TEXT
+                putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
+            }
+            startService(intent)
+            sentToService = true
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to send command to service: ${e.message}")
+        }
+        if (!sentToService && prefs.connectionMode == "GEMINI_DIRECT") {
             executeGeminiPrompt(cmd, shapeEmoji)
-        } else {
-            var sentToService = false
-            try {
-                val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                    action = JarvisForegroundService.ACTION_SEND_TEXT
-                    putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, cmd)
-                }
-                startService(intent)
-                sentToService = true
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to send command to service: ${e.message}")
-            }
-            if (!sentToService) {
-                executeGeminiPrompt(cmd, shapeEmoji)
-            }
         }
     }
 
@@ -1413,6 +1582,18 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             perms.add(Manifest.permission.RECORD_AUDIO)
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.CALL_PHONE)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.READ_PHONE_STATE)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.READ_CONTACTS)
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.SEND_SMS)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 perms.add(Manifest.permission.POST_NOTIFICATIONS)
@@ -1448,6 +1629,8 @@ class MainActivity : AppCompatActivity() {
             addAction(JarvisForegroundService.BROADCAST_ACTION_LOG)
             addAction(JarvisForegroundService.BROADCAST_ROUTE_CHANGE)
             addAction(JarvisForegroundService.BROADCAST_QURON_UPDATE)
+            addAction(JarvisForegroundService.BROADCAST_RMS)
+            addAction(JarvisForegroundService.BROADCAST_INPUT_TRANSCRIPT)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)

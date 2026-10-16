@@ -77,9 +77,9 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getString("gemini_api_key", "") ?: ""
         set(value) = prefs.edit().putString("gemini_api_key", value.trim()).apply()
 
-    // Show Text Input Bar (default false = clean, futuristic voice-first mode)
+    // Show Text Input Bar (default true = input bar always visible above keyboard)
     var showTextInputBar: Boolean
-        get() = prefs.getBoolean("show_text_input_bar", false)
+        get() = prefs.getBoolean("show_text_input_bar", true)
         set(value) = prefs.edit().putBoolean("show_text_input_bar", value).apply()
 
     // TTS Voice Engine: "UZBEKVOICE_AI", "ELEVENLABS", "DEVICE_TTS"

@@ -34,6 +34,7 @@ import com.jarvis.companion.audio.AudioRecordManager
 import com.jarvis.companion.audio.AudioRoute
 import com.jarvis.companion.audio.AudioTrackPlayer
 import com.jarvis.companion.audio.BluetoothScoManager
+import com.jarvis.companion.network.GeminiLiveWebSocketClient
 import com.jarvis.companion.network.JarvisWebSocketClient
 import com.jarvis.companion.util.CallSecretaryManager
 import com.jarvis.companion.util.PhoneActionManager
@@ -52,6 +53,12 @@ class JarvisForegroundService : Service() {
         const val ACTION_EARBUD_TAP = "com.jarvis.companion.ACTION_EARBUD_TAP"
         const val BROADCAST_STATE_CHANGE = "com.jarvis.companion.STATE_CHANGE"
         const val EXTRA_STATE = "extra_state"
+
+        const val BROADCAST_RMS = "com.jarvis.companion.BROADCAST_RMS"
+        const val EXTRA_RMS = "extra_rms"
+
+        const val BROADCAST_INPUT_TRANSCRIPT = "com.jarvis.companion.INPUT_TRANSCRIPT"
+        const val EXTRA_TRANSCRIPT = "extra_transcript"
 
         const val BROADCAST_CHAT_LOG = "com.jarvis.companion.CHAT_LOG"
         const val EXTRA_SPEAKER = "extra_speaker"
@@ -78,6 +85,7 @@ class JarvisForegroundService : Service() {
         const val ACTION_SET_SECRETARY = "com.jarvis.companion.ACTION_SET_SECRETARY"
     }
 
+    private val mainHandler = Handler(Looper.getMainLooper())
     private lateinit var prefs: PreferencesHelper
     private lateinit var phoneActionManager: PhoneActionManager
     private var wakeLock: PowerManager.WakeLock? = null
@@ -88,6 +96,7 @@ class JarvisForegroundService : Service() {
     private lateinit var audioRecorder: AudioRecordManager
     private lateinit var audioPlayer: AudioTrackPlayer
     private lateinit var wsClient: JarvisWebSocketClient
+    private lateinit var geminiLiveClient: GeminiLiveWebSocketClient
     private lateinit var callSecretary: CallSecretaryManager
 
     private var currentAudioRoute: AudioRoute = AudioRoute.EARBUDS
@@ -114,12 +123,71 @@ class JarvisForegroundService : Service() {
 
         audioPlayer = AudioTrackPlayer(sampleRate = 24000)
 
+        geminiLiveClient = GeminiLiveWebSocketClient(
+            onSetupComplete = {
+                Log.d("JarvisService", "Gemini Live setupComplete")
+                broadcastState("CONNECTED")
+                updateNotification()
+            },
+            onInputTranscription = { transcript ->
+                Log.d("JarvisService", "Gemini Live Input: $transcript")
+                broadcastInputTranscript(transcript)
+                broadcastChatLog("user", transcript)
+            },
+            onOutputTranscription = { text ->
+                Log.d("JarvisService", "Gemini Live Output: $text")
+                broadcastChatLog("jarvis", text)
+            },
+            onAudioChunkReceived = { pcmChunk ->
+                audioPlayer.write(pcmChunk)
+            },
+            onTurnComplete = {
+                Log.d("JarvisService", "Gemini Live turnComplete")
+                if (isMicStreaming) broadcastState("LISTENING")
+            },
+            onInterrupted = {
+                Log.d("JarvisService", "Gemini Live interrupted")
+                audioPlayer.flush()
+                if (isMicStreaming) broadcastState("LISTENING")
+            },
+            onError = { err ->
+                Log.e("JarvisService", "Gemini Live error: $err")
+                broadcastActionLog("gemini_live", "Xatolik: $err")
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    broadcastState("DISCONNECTED")
+                    updateNotification()
+                }
+            },
+            onConnectionStateChanged = { connected ->
+                Log.d("JarvisService", "Gemini Live state changed: connected=$connected")
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    isConnected = connected
+                    broadcastState(if (connected) "CONNECTED" else "DISCONNECTED")
+                    updateNotification()
+                }
+            }
+        )
+
         audioRecorder = AudioRecordManager(this, sampleRate = 16000) { pcmChunk ->
-            if (isMicStreaming && isConnected) {
-                wsClient.sendAudio(pcmChunk)
+            if (isMicStreaming) {
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    geminiLiveClient.sendAudio(pcmChunk)
+                } else {
+                    if (isConnected) {
+                        wsClient.sendAudio(pcmChunk)
+                    }
+                }
             }
         }
-        audioRecorder.vadEnabled = false
+        audioRecorder.onRmsListener = { rms, norm ->
+            broadcastRms(norm)
+        }
+        audioRecorder.onRouteFallback = { message ->
+            mainHandler.post {
+                setAudioRoute(AudioRoute.PHONE)
+                broadcastActionLog("audio_route", "⚠️ $message")
+            }
+        }
 
         var lastScoState: Boolean? = null
         scoManager = BluetoothScoManager(this) { scoConnected ->
@@ -256,6 +324,7 @@ class JarvisForegroundService : Service() {
 
                         val resText = when (act) {
                             "call" -> phoneActionManager.makeCall(query)
+                            "search_contact" -> phoneActionManager.searchContactDetailed(query)
                             "sms" -> phoneActionManager.sendSms(query, message)
                             "reminder" -> phoneActionManager.setReminder(query, time)
                             "telegram_messages" -> phoneActionManager.getTelegramMessages(limit)
@@ -305,6 +374,48 @@ class JarvisForegroundService : Service() {
             prefs
         ) { title, msg ->
             broadcastActionLog(title, msg)
+        }
+
+        callSecretary.onCallStateListener = { state, inCall ->
+            if (inCall) {
+                Log.d("JarvisService", "Qo'ng'iroq faol: mikrofon va audio to'xtatildi")
+                try {
+                    audioRecorder.stop()
+                    audioPlayer.flush()
+                    mediaPlayer?.pause()
+                    if (isConnected) {
+                        wsClient.sendControl(org.json.JSONObject().apply {
+                            put("type", "phone_call_state")
+                            put("in_call", true)
+                        })
+                    }
+                    broadcastState("MIC_OFF")
+                    broadcastActionLog("phone_call", "Qo'ng'iroq boshlandi: Jarvis mikrofoni to'xtatildi")
+                } catch (e: Exception) {
+                    Log.e("JarvisService", "Error pausing recorder for call: ${e.message}")
+                }
+            } else {
+                Log.d("JarvisService", "Qo'ng'iroq yakunlandi: mikrofon qayta yoqilmoqda")
+                mainHandler.postDelayed({
+                    try {
+                        if (isMicStreaming) {
+                            audioRecorder.start()
+                            broadcastState("MIC_ON")
+                        } else {
+                            broadcastState("IDLE")
+                        }
+                        if (isConnected) {
+                            wsClient.sendControl(org.json.JSONObject().apply {
+                                put("type", "phone_call_state")
+                                put("in_call", false)
+                            })
+                        }
+                        broadcastActionLog("phone_call", "Qo'ng'iroq yakunlandi: Jarvis mikrofoni qayta yoqildi")
+                    } catch (e: Exception) {
+                        Log.e("JarvisService", "Error restarting recorder after call: ${e.message}")
+                    }
+                }, 1200)
+            }
         }
         callSecretary.startMonitoring()
     }
@@ -399,7 +510,19 @@ class JarvisForegroundService : Service() {
                 prefs.isServiceRunning = true
                 try { scoManager.start() } catch (e: Exception) { Log.e("JarvisService", "scoManager.start error: ${e.message}") }
                 try { audioPlayer.start() } catch (e: Exception) { Log.e("JarvisService", "audioPlayer.start error: ${e.message}") }
-                try { wsClient.connect(prefs.serverAddress, prefs.authToken) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
+
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    val key = prefs.geminiApiKey
+                    if (key.isNotBlank()) {
+                        Log.i("JarvisService", "Starting Gemini Live direct mode...")
+                        geminiLiveClient.connect(key)
+                    } else {
+                        Log.w("JarvisService", "Gemini API key is missing!")
+                        broadcastActionLog("gemini_live", "Gemini API kaliti kiritilmagan. Sozlamalardan kiriting.")
+                    }
+                } else {
+                    try { wsClient.connect(prefs.serverAddress, prefs.authToken) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
+                }
 
                 // Only start audio recording if RECORD_AUDIO permission is granted
                 if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
@@ -414,7 +537,7 @@ class JarvisForegroundService : Service() {
                 } else {
                     isMicStreaming = false
                     Log.w("JarvisService", "RECORD_AUDIO not granted yet, mic recording paused")
-                    broadcastState("IDLE")
+                    broadcastState("PERMISSION_DENIED")
                 }
             }
             ACTION_SET_ROUTE -> {
@@ -426,7 +549,13 @@ class JarvisForegroundService : Service() {
                 toggleMicStreaming()
             }
             ACTION_WAKE -> {
-                try { wsClient.sendWake() } catch (_: Exception) {}
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    if (!geminiLiveClient.isConnected.get()) {
+                        geminiLiveClient.connect(prefs.geminiApiKey)
+                    }
+                } else {
+                    try { wsClient.sendWake() } catch (_: Exception) {}
+                }
                 playBeep()
                 if (!isMicStreaming) {
                     toggleMicStreaming()
@@ -438,16 +567,25 @@ class JarvisForegroundService : Service() {
             ACTION_SEND_TEXT -> {
                 val cmd = intent?.getStringExtra(EXTRA_COMMAND_TEXT) ?: ""
                 if (cmd.isNotBlank()) {
-                    try { wsClient.sendText(cmd) } catch (_: Exception) {}
                     broadcastChatLog("user", cmd)
+                    if (prefs.connectionMode == "GEMINI_DIRECT") {
+                        if (!geminiLiveClient.isConnected.get()) {
+                            geminiLiveClient.connect(prefs.geminiApiKey)
+                        }
+                        geminiLiveClient.sendText(cmd)
+                    } else {
+                        try { wsClient.sendText(cmd) } catch (_: Exception) {}
+                    }
                 }
             }
             ACTION_INTERRUPT -> {
                 try {
                     audioPlayer.flush()
-                    wsClient.sendControl(org.json.JSONObject().apply {
-                        put("type", "interrupt")
-                    })
+                    if (prefs.connectionMode != "GEMINI_DIRECT") {
+                        wsClient.sendControl(org.json.JSONObject().apply {
+                            put("type", "interrupt")
+                        })
+                    }
                 } catch (_: Exception) {}
             }
             ACTION_SET_SECRETARY -> {
@@ -524,8 +662,15 @@ class JarvisForegroundService : Service() {
         broadcastChatLog("jarvis", "Labbay, Axmadulloh sir, eshitaman!")
         broadcastState("LISTENING")
 
-        wsClient.sendWake()
-        wsClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
+        if (prefs.connectionMode == "GEMINI_DIRECT") {
+            if (!geminiLiveClient.isConnected.get()) {
+                geminiLiveClient.connect(prefs.geminiApiKey)
+            }
+            geminiLiveClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
+        } else {
+            wsClient.sendWake()
+            wsClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
+        }
 
         if (!isMicStreaming) {
             isMicStreaming = true
@@ -543,7 +688,11 @@ class JarvisForegroundService : Service() {
             mediaPlayer?.pause()
         } catch (_: Exception) {}
 
-        wsClient.sendInterrupt()
+        if (prefs.connectionMode == "GEMINI_DIRECT") {
+            // AudioTrack flushed
+        } else {
+            wsClient.sendInterrupt()
+        }
 
         broadcastChatLog("jarvis", "⚡ Interrupted — listening...")
         broadcastState("LISTENING")
@@ -558,13 +707,22 @@ class JarvisForegroundService : Service() {
         isMicStreaming = !isMicStreaming
         playBeep()
         if (isMicStreaming) {
-            audioRecorder.start()
-            wsClient.sendWake()
-            broadcastState("MIC_ON")
-        } else {
-            if (!prefs.continuousMode) {
-                audioRecorder.stop()
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                audioRecorder.start()
+                if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    if (!geminiLiveClient.isConnected.get()) {
+                        geminiLiveClient.connect(prefs.geminiApiKey)
+                    }
+                } else {
+                    wsClient.sendWake()
+                }
+                broadcastState("MIC_ON")
+            } else {
+                isMicStreaming = false
+                broadcastState("PERMISSION_DENIED")
             }
+        } else {
+            audioRecorder.stop()
             broadcastState("MIC_OFF")
         }
         updateNotification()
@@ -673,6 +831,14 @@ class JarvisForegroundService : Service() {
         }
 
         val statusText = when {
+            prefs.connectionMode == "GEMINI_DIRECT" -> {
+                when {
+                    !geminiLiveClient.isConnected.get() -> "Gemini Live-ga ulanmoqda..."
+                    isSpeaking -> "🔊 JARVIS gapirmoqda"
+                    isMicStreaming -> "🎤 Sizni eshitmoqda (Gemini Live)"
+                    else -> "🟢 Aloqada (Kutish rejimida)"
+                }
+            }
             !isConnected -> "Kompyuterga ulanmoqda..."
             isSpeaking -> "🔊 JARVIS gapirmoqda"
             currentMediaTitle.isNotEmpty() -> "🎵 $currentMediaTitle"
@@ -752,6 +918,23 @@ class JarvisForegroundService : Service() {
     private fun broadcastState(state: String) {
         val intent = Intent(BROADCAST_STATE_CHANGE).apply {
             putExtra(EXTRA_STATE, state)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastRms(rmsNorm: Float) {
+        val intent = Intent(BROADCAST_RMS).apply {
+            putExtra(EXTRA_RMS, rmsNorm)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastInputTranscript(transcript: String) {
+        val intent = Intent(BROADCAST_INPUT_TRANSCRIPT).apply {
+            putExtra(EXTRA_TRANSCRIPT, transcript)
+            setPackage(packageName)
         }
         sendBroadcast(intent)
     }
@@ -760,6 +943,7 @@ class JarvisForegroundService : Service() {
         val intent = Intent(BROADCAST_CHAT_LOG).apply {
             putExtra(EXTRA_SPEAKER, speaker)
             putExtra(EXTRA_TEXT, text)
+            setPackage(packageName)
         }
         sendBroadcast(intent)
     }
@@ -768,6 +952,7 @@ class JarvisForegroundService : Service() {
         val intent = Intent(BROADCAST_ACTION_LOG).apply {
             putExtra(EXTRA_ACTION_NAME, name)
             putExtra(EXTRA_ACTION_RESULT, result)
+            setPackage(packageName)
         }
         sendBroadcast(intent)
     }
@@ -780,6 +965,7 @@ class JarvisForegroundService : Service() {
         audioPlayer.stop()
         scoManager.stop()
         wsClient.disconnect()
+        try { geminiLiveClient.disconnect() } catch (_: Exception) {}
         try { callSecretary.release() } catch (_: Exception) {}
 
         mediaSession?.release()

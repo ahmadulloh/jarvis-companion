@@ -98,9 +98,14 @@ class CallSecretaryManager(
         }
     }
 
+    var onCallStateListener: ((state: Int, inCall: Boolean) -> Unit)? = null
+
     private fun handleCallStateChange(state: Int, incomingNumber: String?) {
         if (state == currentCallState) return
         currentCallState = state
+
+        val inCall = (state == TelephonyManager.CALL_STATE_OFFHOOK || state == TelephonyManager.CALL_STATE_RINGING)
+        onCallStateListener?.invoke(state, inCall)
 
         when (state) {
             TelephonyManager.CALL_STATE_RINGING -> {

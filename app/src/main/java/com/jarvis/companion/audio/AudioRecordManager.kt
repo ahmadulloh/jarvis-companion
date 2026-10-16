@@ -14,22 +14,57 @@ import android.os.Build
 import android.util.Log
 import kotlin.math.sqrt
 
+/**
+ * AudioRecordManager — Low-latency 16kHz PCM Audio Recorder
+ * with hardware AEC/NS/AGC, dynamic gain boost, Bluetooth SCO routing,
+ * real-time RMS monitoring, and automated fallback when earbuds are disconnected.
+ */
 class AudioRecordManager(
     private val context: Context,
-    private val sampleRate: Int = 16000,
+    val sampleRate: Int = 16000,
     private val onAudioChunk: (ByteArray) -> Unit
 ) {
+    companion object {
+        private const val TAG = "AudioRecordManager"
+    }
+
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     private var audioRecord: AudioRecord? = null
-    private var isRecording = false
+    var isRecording = false
+        private set
     private var recordingThread: Thread? = null
 
-    // VAD threshold
-    var vadEnabled: Boolean = false
-    var vadThreshold: Double = 90.0
+    // Callbacks for live UI reaction & fallback
+    var onRmsListener: ((rms: Double, normalized: Float) -> Unit)? = null
+    var onRouteFallback: ((message: String) -> Unit)? = null
 
-    // Software digital gain boost (2.5x = ~8dB) to compensate for low Bluetooth earbud mic gain
+    // Software digital gain boost (2.5x = ~8dB) for Bluetooth SCO earbuds
     var gainBoost: Float = 2.5f
+
+    var currentRoute: AudioRoute = AudioRoute.EARBUDS
+        private set
+
+    fun isBluetoothHeadsetConnected(): Boolean {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val devices = audioManager.availableCommunicationDevices
+                if (devices.any {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                }) return true
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                return inputDevices.any {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                }
+            }
+            return audioManager.isBluetoothScoAvailableOffCall || audioManager.isBluetoothA2dpOn
+        } catch (_: Exception) {
+            return false
+        }
+    }
 
     private fun getBluetoothInputDevice(): AudioDeviceInfo? {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -44,7 +79,10 @@ class AudioRecordManager(
 
     @SuppressLint("MissingPermission")
     fun start() {
-        if (isRecording) return
+        if (isRecording) {
+            Log.d(TAG, "AudioRecord already recording, skipping start")
+            return
+        }
 
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
@@ -52,7 +90,15 @@ class AudioRecordManager(
         val bufferSize = minBufferSize.coerceAtLeast(sampleRate / 10 * 2) // ~100ms slices
 
         try {
-            // Priority 1: VOICE_COMMUNICATION is strictly required for Bluetooth SCO & echo cancellation
+            // Check earbud connectivity before starting
+            if (currentRoute == AudioRoute.EARBUDS && !isBluetoothHeadsetConnected()) {
+                Log.w(TAG, "⚠️ Quloqchin tanlangan, lekin ulanmagan! Avtomatik telefon mikrofoniga o'tilmoqda.")
+                currentRoute = AudioRoute.PHONE
+                gainBoost = 1.2f
+                onRouteFallback?.invoke("Quloqchin ulanmagan, telefon mikrofoniga o'tildi")
+            }
+
+            // Priority: VOICE_COMMUNICATION for SCO & hardware echo canceler, fallback to MIC
             val sources = listOf(
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 MediaRecorder.AudioSource.MIC,
@@ -60,23 +106,25 @@ class AudioRecordManager(
             )
 
             var record: AudioRecord? = null
+            var chosenSource = -1
             for (src in sources) {
                 try {
                     val candidate = AudioRecord(src, sampleRate, channelConfig, audioFormat, bufferSize)
                     if (candidate.state == AudioRecord.STATE_INITIALIZED) {
                         record = candidate
-                        Log.d("AudioRecordManager", "AudioRecord initialized with source $src")
+                        chosenSource = src
+                        Log.i(TAG, "✅ AudioRecord STATE_INITIALIZED: source=$src, sampleRate=$sampleRate Hz, channel=MONO, format=PCM_16BIT, bufferSize=$bufferSize, sessionId=${candidate.audioSessionId}")
                         break
                     } else {
                         candidate.release()
                     }
                 } catch (e: Exception) {
-                    Log.w("AudioRecordManager", "Source $src init failed: ${e.message}")
+                    Log.w(TAG, "AudioRecord candidate source=$src failed: ${e.message}")
                 }
             }
 
             if (record == null) {
-                Log.e("AudioRecordManager", "Failed to initialize AudioRecord with any source")
+                Log.e(TAG, "❌ AudioRecord FAILED to initialize with any source! sampleRate=$sampleRate, bufferSize=$bufferSize")
                 return
             }
             audioRecord = record
@@ -86,18 +134,18 @@ class AudioRecordManager(
                 val sessionId = record.audioSessionId
                 if (AutomaticGainControl.isAvailable()) {
                     AutomaticGainControl.create(sessionId)?.apply { enabled = true }
-                    Log.d("AudioRecordManager", "Hardware AutomaticGainControl enabled")
+                    Log.d(TAG, "Hardware AutomaticGainControl enabled")
                 }
                 if (NoiseSuppressor.isAvailable()) {
                     NoiseSuppressor.create(sessionId)?.apply { enabled = true }
-                    Log.d("AudioRecordManager", "Hardware NoiseSuppressor enabled")
+                    Log.d(TAG, "Hardware NoiseSuppressor enabled")
                 }
                 if (AcousticEchoCanceler.isAvailable()) {
                     AcousticEchoCanceler.create(sessionId)?.apply { enabled = true }
-                    Log.d("AudioRecordManager", "Hardware AcousticEchoCanceler enabled")
+                    Log.d(TAG, "Hardware AcousticEchoCanceler enabled")
                 }
             } catch (e: Exception) {
-                Log.w("AudioRecordManager", "AudioFX init: ${e.message}")
+                Log.w(TAG, "AudioFX init: ${e.message}")
             }
 
             // Route to Bluetooth headset microphone if available
@@ -108,13 +156,33 @@ class AudioRecordManager(
 
             recordingThread = Thread {
                 val buffer = ByteArray(3200) // 100 ms at 16000 Hz, 16-bit mono
+                var secBytes = 0
+                var lastLogTime = System.currentTimeMillis()
+                var totalBytesRead = 0L
+
                 while (isRecording) {
                     val readBytes = audioRecord?.read(buffer, 0, buffer.size) ?: -1
                     if (readBytes > 0) {
+                        val rms = calculateRms(buffer, readBytes)
+                        // Normalize RMS (typical speech: 200 - 4000)
+                        val norm = ((rms - 40.0) / 4500.0).toFloat().coerceIn(0f, 1f)
+                        onRmsListener?.invoke(rms, norm)
+
+                        secBytes += readBytes
+                        totalBytesRead += readBytes
+
+                        val now = System.currentTimeMillis()
+                        if (now - lastLogTime >= 1000L) {
+                            Log.i(TAG, "🎙️ [AudioRecord] RMS: ${String.format("%.1f", rms)} | Oqim: $secBytes bayt/sek (Jami: $totalBytesRead bayt)")
+                            secBytes = 0
+                            lastLogTime = now
+                        }
+
                         if (currentRoute == AudioRoute.PC) {
                             // In PC mode, PC uses its own microphone - phone companion mic is silent
                             continue
                         }
+
                         applyGain(buffer, readBytes)
                         val chunk = buffer.copyOf(readBytes)
                         onAudioChunk(chunk)
@@ -125,17 +193,22 @@ class AudioRecordManager(
                 priority = Thread.MAX_PRIORITY
                 start()
             }
-            Log.d("AudioRecordManager", "Recording started at $sampleRate Hz")
+            Log.i(TAG, "🚀 Audio recording successfully started at $sampleRate Hz (Route: $currentRoute)")
         } catch (e: Exception) {
-            Log.e("AudioRecordManager", "Error starting AudioRecord: ${e.message}")
+            Log.e(TAG, "Error starting AudioRecord: ${e.message}", e)
         }
     }
 
-    var currentRoute: AudioRoute = AudioRoute.EARBUDS
-
     fun setAudioRoute(route: AudioRoute) {
-        currentRoute = route
-        gainBoost = if (route == AudioRoute.EARBUDS) 2.5f else 1.2f
+        if (route == AudioRoute.EARBUDS && !isBluetoothHeadsetConnected()) {
+            Log.w(TAG, "⚠️ Quloqchin rejimi tanlangan, lekin quloqchin ulanmagan! Avtomatik telefon mikrofoniga o'tilmoqda.")
+            currentRoute = AudioRoute.PHONE
+            gainBoost = 1.2f
+            onRouteFallback?.invoke("Quloqchin ulanmagan, telefon mikrofoniga o'tildi")
+        } else {
+            currentRoute = route
+            gainBoost = if (route == AudioRoute.EARBUDS) 2.5f else 1.2f
+        }
         updateRouting()
     }
 
@@ -144,7 +217,7 @@ class AudioRecordManager(
             val btInput = getBluetoothInputDevice()
             if (btInput != null) {
                 val prefSet = record.setPreferredDevice(btInput)
-                Log.d("AudioRecordManager", "setPreferredDevice Bluetooth: $prefSet (${btInput.productName ?: "BT"})")
+                Log.d(TAG, "setPreferredDevice Bluetooth: $prefSet (${btInput.productName ?: "BT"})")
                 return prefSet
             }
         }
@@ -153,7 +226,7 @@ class AudioRecordManager(
 
     fun updateRouting() {
         if (!isRecording) return
-        Log.d("AudioRecordManager", "updateRouting called for route $currentRoute")
+        Log.d(TAG, "updateRouting called for route $currentRoute")
         val record = audioRecord ?: return
         if (currentRoute == AudioRoute.EARBUDS) {
             bindBluetoothInputDevice(record)
@@ -181,9 +254,9 @@ class AudioRecordManager(
             audioRecord?.stop()
             audioRecord?.release()
             audioRecord = null
-            Log.d("AudioRecordManager", "Recording stopped")
+            Log.i(TAG, "🛑 AudioRecord stopped and released")
         } catch (e: Exception) {
-            Log.e("AudioRecordManager", "Error stopping AudioRecord: ${e.message}")
+            Log.e(TAG, "Error stopping AudioRecord: ${e.message}")
         }
     }
 

@@ -7,12 +7,18 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.AlarmClock
 import android.provider.ContactsContract
+import android.telecom.TelecomManager
+import android.telephony.PhoneStateListener
 import android.telephony.SmsManager
+import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.jarvis.companion.service.JarvisNotificationListener
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Calendar
 import java.util.regex.Pattern
 
@@ -271,10 +277,10 @@ class PhoneActionManager(private val context: Context) {
                 Triple(contact, bestScore, name)
             }
 
-            val best = candidates.filter { it.second > 0 }.maxByOrNull { it.second }
-            if (best != null) {
-                Log.d(TAG, "Found contact: ${best.third} (score=${best.second})")
-                return best.first
+            val matched = candidates.filter { it.second >= 65 }.sortedByDescending { it.second }
+            if (matched.isNotEmpty()) {
+                Log.d(TAG, "Found ${matched.size} contacts, top: ${matched.first().third} (score=${matched.first().second})")
+                return matched.first().first
             }
 
         } catch (e: Exception) {
@@ -285,18 +291,18 @@ class PhoneActionManager(private val context: Context) {
     }
 
     /**
-     * Resolve contact name by incoming phone number.
+     * Search contacts and return all ranked candidate matches.
      */
     @SuppressLint("Range")
-    fun searchContactByNumber(rawNumber: String): String? {
-        val digits = rawNumber.replace("+", "").replace(" ", "").replace("-", "")
-        if (digits.length < 7) return null
+    fun searchContactsList(query: String): List<Pair<String, String>> {
+        val qClean = query.trim().lowercase()
+        if (qClean.isEmpty()) return emptyList()
 
         val hasReadContacts = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CONTACTS
         ) == PackageManager.PERMISSION_GRANTED
-        if (!hasReadContacts) return null
+        if (!hasReadContacts) return emptyList()
 
         try {
             val projection = arrayOf(
@@ -308,31 +314,127 @@ class PhoneActionManager(private val context: Context) {
                 projection,
                 null,
                 null,
-                null
-            ) ?: return null
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC"
+            ) ?: return emptyList()
 
+            val allContacts = mutableListOf<Pair<String, String>>()
             cursor.use { c ->
                 while (c.moveToNext()) {
                     val name = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)) ?: ""
                     val num = c.getString(c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)) ?: ""
-                    val numDigits = num.replace("+", "").replace(" ", "").replace("-", "")
-                    if (numDigits.isNotEmpty() && (numDigits.endsWith(digits.takeLast(7)) || digits.endsWith(numDigits.takeLast(7)))) {
-                        return name
+                    if (name.isNotBlank() && num.isNotBlank()) {
+                        allContacts.add(Pair(name, num.replace(" ", "").replace("-", "")))
                     }
                 }
             }
+
+            val variants = generateSearchVariants(qClean)
+            val candidates = allContacts.map { contact ->
+                val name = contact.first.trim()
+                val normName = normalizeForSearch(name)
+                var bestScore = 0
+                for (v in variants) {
+                    val vClean = v.trim().lowercase()
+                    val normV = normalizeForSearch(vClean)
+                    if (name.equals(vClean, ignoreCase = true)) {
+                        bestScore = maxOf(bestScore, 100)
+                    } else if (normName.isNotEmpty() && normName == normV) {
+                        bestScore = maxOf(bestScore, 95)
+                    } else if (name.split(Regex("[\\s()_\\-.]+")).any { it.equals(vClean, ignoreCase = true) }) {
+                        bestScore = maxOf(bestScore, 90)
+                    } else if (name.split(Regex("[\\s()_\\-.]+")).any { normalizeForSearch(it) == normV }) {
+                        bestScore = maxOf(bestScore, 85)
+                    } else if (name.contains(vClean, ignoreCase = true)) {
+                        bestScore = maxOf(bestScore, 75)
+                    } else if (normName.contains(normV) && normV.length >= 3) {
+                        bestScore = maxOf(bestScore, 65)
+                    }
+                }
+                Triple(contact, bestScore, name)
+            }
+
+            val matched = candidates.filter { it.second >= 70 }.sortedByDescending { it.second }
+            val distinctResults = mutableListOf<Pair<String, String>>()
+            val seenNumbers = mutableSetOf<String>()
+            for (m in matched) {
+                val num = m.first.second
+                if (num !in seenNumbers) {
+                    seenNumbers.add(num)
+                    distinctResults.add(m.first)
+                }
+            }
+            return distinctResults
         } catch (e: Exception) {
-            Log.e(TAG, "searchContactByNumber error: ${e.message}")
+            Log.e(TAG, "searchContactsList exception: ${e.message}", e)
+            return emptyList()
         }
-        return null
+    }
+
+    /**
+     * Detailed contact search returned as JSON for PC backend confirmation.
+     */
+    fun searchContactDetailed(query: String): String {
+        val q = query.trim()
+        val hasReadContacts = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasReadContacts) {
+            return JSONObject().apply {
+                put("status", "permission_denied")
+                put("error", "READ_CONTACTS ruxsati berilmagan")
+            }.toString()
+        }
+
+        val matches = searchContactsList(q)
+        if (matches.isEmpty()) {
+            return JSONObject().apply {
+                put("status", "not_found")
+                put("query", q)
+            }.toString()
+        }
+
+        if (matches.size == 1) {
+            return JSONObject().apply {
+                put("status", "single")
+                put("name", matches[0].first)
+                put("number", matches[0].second)
+            }.toString()
+        }
+
+        // Multiple matches
+        val arr = JSONArray()
+        for (m in matches.take(4)) {
+            arr.put(JSONObject().apply {
+                put("name", m.first)
+                put("number", m.second)
+            })
+        }
+        return JSONObject().apply {
+            put("status", "multiple")
+            put("count", matches.size)
+            put("matches", arr)
+        }.toString()
     }
 
     /**
      * Call contact or phone number.
+     * Enforces CALL_PHONE permission and TelecomManager.placeCall() without ACTION_DIAL.
+     * Verifies OFFHOOK state within 5 seconds before reporting success.
      */
     fun makeCall(queryOrNumber: String): String {
         val q = queryOrNumber.trim()
         val digitsOnly = q.replace("+", "").replace(" ", "").replace("-", "")
+
+        val hasCallPermission = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.CALL_PHONE
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasCallPermission) {
+            return "Axmadulloh sir, qo'ng'iroq boshlanmadi: Ilovaga 'Telefon' (CALL_PHONE) ruxsati berilmagan. Iltimos, telefon sozlamalaridan ruxsatni yoqing."
+        }
 
         val hasReadContacts = ContextCompat.checkSelfPermission(
             context,
@@ -343,36 +445,70 @@ class PhoneActionManager(private val context: Context) {
             Pair(q, q)
         } else {
             if (!hasReadContacts) {
-                return "Kechirasiz, Axmadulloh sir, kontaktlaringizni o'qish uchun ilovaga 'Kontaktlar' (Contacts) ruxsatini berishingiz kerak."
+                return "Axmadulloh sir, qo'ng'iroq boshlanmadi: Kontaktlarni o'qish uchun ilovaga 'Kontaktlar' (READ_CONTACTS) ruxsati berilmagan."
             }
-            val contact = searchContact(q)
-            if (contact != null) {
-                contact
+            val matches = searchContactsList(q)
+            if (matches.isEmpty()) {
+                return "Kechirasiz, Axmadulloh sir, kontaktlaringiz orasidan '$q' topilmadi. Qaysi raqamga qo'ng'iroq qilay?"
+            } else if (matches.size > 1 && matches[0].first != matches[1].first) {
+                val names = matches.take(3).map { "${it.first} (${it.second})" }.joinToString(", ")
+                return "Kontaktlarda bir nechta mos keldi: $names. Qaysi biriga qo'ng'iroq qilay?"
             } else {
-                return "Kechirasiz, Axmadulloh sir, kontaktlaringiz orasidan '$q' (lotin, kirill yoki ruscha shakllarida) topilmadi."
+                matches[0]
             }
         }
 
-        val hasCallPermission = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.CALL_PHONE
-        ) == PackageManager.PERMISSION_GRANTED
+        var callStarted = false
+        val uri = Uri.fromParts("tel", targetNumber, null)
 
-        val intent = if (hasCallPermission) {
-            Intent(Intent.ACTION_CALL, Uri.parse("tel:${Uri.encode(targetNumber)}")).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        } else {
-            Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(targetNumber)}")).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-        }
-
+        // 1. Try TelecomManager.placeCall (Official non-activity background launcher)
         try {
-            context.startActivity(intent)
-            return "Axmadulloh sir, $targetName ($targetNumber) raqamiga qo'ng'iroq qilinmoqda..."
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val telecomManager = context.getSystemService(Context.TELECOM_SERVICE) as? TelecomManager
+                if (telecomManager != null) {
+                    val extras = Bundle()
+                    telecomManager.placeCall(uri, extras)
+                    callStarted = true
+                    Log.d(TAG, "Call placed via TelecomManager.placeCall to $targetNumber")
+                }
+            }
         } catch (e: Exception) {
-            return "Qo'ng'iroqni amalga oshirib bo'lmadi: ${e.message}"
+            Log.w(TAG, "TelecomManager.placeCall error: ${e.message}, falling back to ACTION_CALL")
+        }
+
+        // 2. Fallback to Intent.ACTION_CALL (NEVER ACTION_DIAL)
+        if (!callStarted) {
+            try {
+                val callIntent = Intent(Intent.ACTION_CALL, Uri.parse("tel:${Uri.encode(targetNumber)}")).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(callIntent)
+                callStarted = true
+                Log.d(TAG, "Call placed via Intent.ACTION_CALL to $targetNumber")
+            } catch (e: Exception) {
+                Log.e(TAG, "Intent.ACTION_CALL failed: ${e.message}")
+                return "Axmadulloh sir, qo'ng'iroq boshlanmadi, sababi: ${e.message}"
+            }
+        }
+
+        // 3. Verification Loop: Wait up to 5 seconds for CALL_STATE_OFFHOOK
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+        var offhookDetected = false
+        for (i in 0 until 25) { // 25 * 200ms = 5000ms
+            try {
+                Thread.sleep(200)
+            } catch (_: InterruptedException) {}
+            val state = telephonyManager?.callState ?: TelephonyManager.CALL_STATE_IDLE
+            if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                offhookDetected = true
+                break
+            }
+        }
+
+        return if (offhookDetected) {
+            "Axmadulloh sir, $targetName ($targetNumber) raqamiga qo'ng'iroq boshlandi."
+        } else {
+            "Axmadulloh sir, $targetName raqamiga qo'ng'iroq boshlanmadi. Sababi: telefon tizimi qo'ng'iroqni ishga tushira olmadi yoki tarmoq band."
         }
     }
 
