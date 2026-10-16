@@ -20,16 +20,9 @@
 html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"SF Pro Display","Segoe UI",Roboto,sans-serif}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
 
-/* Top Minimalist Cyber Bar */
+/* Top Minimalist Cyber Bar - Hidden in WebView (Native Android renders the single top bar) */
 .top{
-  position:absolute;
-  top:calc(env(safe-area-inset-top, 0px) + 22px);
-  left:22px;
-  right:22px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  z-index:10;
+  display:none !important;
 }
 .brand{
   font-weight:900;
@@ -211,13 +204,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-acti
 
 <canvas id="c"></canvas>
 
-<!-- Top Bar -->
-<div class="top">
-  <div class="brand" id="btnBrand">J · A · R · V · I · S</div>
-  <div class="chip" id="chip">
-    <i></i><span id="chipT">Asosiy</span>
-  </div>
-</div>
+<!-- Top Bar rendered natively by Android Activity Layout -->
 
 <!-- Floating Subtitle -->
 <div class="cap" id="cap"></div>
@@ -592,39 +579,49 @@ $('grid').onclick = ev => {
   if (m) setMode(+m.dataset.i);
 };
 
-$('chip').onclick = () => {
-  $('sheet').classList.add('show');
-  $('searchBox').value = '';
-  buildGrid();
-};
+if ($('chip')) {
+  $('chip').onclick = () => {
+    $('sheet').classList.add('show');
+    $('searchBox').value = '';
+    buildGrid();
+  };
+}
 
-$('btnCloseSheet').onclick = () => $('sheet').classList.remove('show');
-$('sheet').onclick = ev => { if (ev.target.id === 'sheet') $('sheet').classList.remove('show'); };
+if ($('btnCloseSheet')) $('btnCloseSheet').onclick = () => $('sheet').classList.remove('show');
+if ($('sheet')) $('sheet').onclick = ev => { if (ev.target.id === 'sheet') $('sheet').classList.remove('show'); };
 
-$('searchBox').oninput = e => {
-  buildGrid(e.target.value);
-};
+if ($('searchBox')) {
+  $('searchBox').oninput = e => {
+    buildGrid(e.target.value);
+  };
+}
 
 // Quick action buttons
-$('btnQuickCmd').onclick = () => {
-  triggerCommand(modes[cur].cmd, modes[cur].sh);
-};
+if ($('btnQuickCmd')) {
+  $('btnQuickCmd').onclick = () => {
+    triggerCommand(modes[cur].cmd, modes[cur].sh);
+  };
+}
 
-$('btnQuickReminder').onclick = () => {
-  const m = modes[cur];
-  const remText = m.rem || "Eslatma";
-  if (window.AndroidBridge && window.AndroidBridge.onSetReminderClicked) {
-    window.AndroidBridge.onSetReminderClicked(remText);
-  } else {
-    triggerCommand(remText, "⏰");
-  }
-};
+if ($('btnQuickReminder')) {
+  $('btnQuickReminder').onclick = () => {
+    const m = modes[cur];
+    const remText = m.rem || "Eslatma";
+    if (window.AndroidBridge && window.AndroidBridge.onSetReminderClicked) {
+      window.AndroidBridge.onSetReminderClicked(remText);
+    } else {
+      triggerCommand(remText, "⏰");
+    }
+  };
+}
 
-$('btnBrand').onclick = () => {
-  if (window.AndroidBridge && window.AndroidBridge.openSettings) {
-    window.AndroidBridge.openSettings();
-  }
-};
+if ($('btnBrand')) {
+  $('btnBrand').onclick = () => {
+    if (window.AndroidBridge && window.AndroidBridge.openSettings) {
+      window.AndroidBridge.openSettings();
+    }
+  };
+}
 
 // Public JS API callable from Kotlin
 window.jarvisSetModeById = function(domainId) {

@@ -28,7 +28,7 @@ class PreferencesHelper(context: Context) {
         set(value) = prefs.edit().putBoolean("service_running", value).apply()
 
     var audioRoute: String
-        get() = prefs.getString("audio_route", "EARBUDS") ?: "EARBUDS"
+        get() = prefs.getString("audio_route", "PHONE") ?: "PHONE"
         set(value) = prefs.edit().putString("audio_route", value).apply()
 
     var aiSecretaryEnabled: Boolean

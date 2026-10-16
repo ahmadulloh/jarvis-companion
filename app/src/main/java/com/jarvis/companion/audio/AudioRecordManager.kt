@@ -98,12 +98,22 @@ class AudioRecordManager(
                 onRouteFallback?.invoke("Quloqchin ulanmagan, telefon mikrofoniga o'tildi")
             }
 
-            // Priority: VOICE_COMMUNICATION for SCO & hardware echo canceler, fallback to MIC
-            val sources = listOf(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                MediaRecorder.AudioSource.MIC,
-                MediaRecorder.AudioSource.VOICE_RECOGNITION
-            )
+            // Priority based on route:
+            // PHONE: VOICE_RECOGNITION / MIC (avoids telecom echo cancellation muting normal mic)
+            // EARBUDS: VOICE_COMMUNICATION (for Bluetooth SCO AEC)
+            val sources = if (currentRoute == AudioRoute.PHONE) {
+                listOf(
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                    MediaRecorder.AudioSource.MIC,
+                    MediaRecorder.AudioSource.VOICE_COMMUNICATION
+                )
+            } else {
+                listOf(
+                    MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                    MediaRecorder.AudioSource.MIC
+                )
+            }
 
             var record: AudioRecord? = null
             var chosenSource = -1
@@ -214,11 +224,15 @@ class AudioRecordManager(
 
     private fun bindBluetoothInputDevice(record: AudioRecord): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val btInput = getBluetoothInputDevice()
-            if (btInput != null) {
-                val prefSet = record.setPreferredDevice(btInput)
-                Log.d(TAG, "setPreferredDevice Bluetooth: $prefSet (${btInput.productName ?: "BT"})")
-                return prefSet
+            if (currentRoute == AudioRoute.EARBUDS) {
+                val btInput = getBluetoothInputDevice()
+                if (btInput != null) {
+                    val prefSet = record.setPreferredDevice(btInput)
+                    Log.d(TAG, "setPreferredDevice Bluetooth: $prefSet (${btInput.productName ?: "BT"})")
+                    return prefSet
+                }
+            } else {
+                record.preferredDevice = null
             }
         }
         return false

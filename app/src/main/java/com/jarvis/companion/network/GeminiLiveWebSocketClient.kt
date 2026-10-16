@@ -40,7 +40,13 @@ class GeminiLiveWebSocketClient(
         private const val TAG = "GeminiLiveClient"
         private const val LIVE_ENDPOINT =
             "wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent"
-        const val DEFAULT_MODEL = "models/gemini-2.0-flash-exp"
+        const val DEFAULT_MODEL = "models/gemini-2.5-flash-native-audio-latest"
+
+        val LIVE_MODEL_LADDER = listOf(
+            "models/gemini-2.5-flash-native-audio-latest",
+            "models/gemini-2.5-flash-native-audio-preview-12-2025",
+            "models/gemini-3.8-live"
+        )
     }
 
     private val httpClient = OkHttpClient.Builder()
@@ -58,8 +64,10 @@ class GeminiLiveWebSocketClient(
     val totalBytesSent = AtomicLong(0L)
     val bytesLastSec = AtomicLong(0L)
     private var lastLogTime = System.currentTimeMillis()
+    private var currentModelIndex = 0
+    private var activeApiKey: String = ""
 
-    fun connect(apiKey: String, modelName: String = DEFAULT_MODEL) {
+    fun connect(apiKey: String, modelIndex: Int = 0) {
         val trimmedKey = apiKey.trim()
         if (trimmedKey.isEmpty()) {
             val err = "Gemini API kaliti bo'sh. Sozlamalardan kalitni kiriting."
@@ -68,9 +76,13 @@ class GeminiLiveWebSocketClient(
             return
         }
 
+        activeApiKey = trimmedKey
+        currentModelIndex = modelIndex.coerceIn(0, LIVE_MODEL_LADDER.size - 1)
+        val selectedModel = LIVE_MODEL_LADDER[currentModelIndex]
+
         disconnect()
         val url = "$LIVE_ENDPOINT?key=$trimmedKey"
-        Log.i(TAG, "Connecting to Gemini Live WebSocket: $modelName")
+        Log.i(TAG, "Connecting to Gemini Live WebSocket: $selectedModel (index $currentModelIndex)")
 
         val request = Request.Builder()
             .url(url)
@@ -78,10 +90,10 @@ class GeminiLiveWebSocketClient(
 
         webSocket = httpClient.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(ws: WebSocket, response: Response) {
-                Log.i(TAG, "WebSocket handshake opened! Sending setup message...")
+                Log.i(TAG, "WebSocket handshake opened! Sending setup message for $selectedModel...")
                 isConnected.set(true)
                 onConnectionStateChanged(true)
-                sendSetup(modelName)
+                sendSetup(selectedModel)
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
@@ -101,6 +113,13 @@ class GeminiLiveWebSocketClient(
                 isConnected.set(false)
                 isSetupComplete.set(false)
                 onConnectionStateChanged(false)
+
+                // If closed with policy violation or unsupported model (1008), fallback to next model
+                if ((code == 1008 || code == 1002) && currentModelIndex + 1 < LIVE_MODEL_LADDER.size) {
+                    val nextIdx = currentModelIndex + 1
+                    Log.w(TAG, "Model $selectedModel closed with $code. Falling back to ${LIVE_MODEL_LADDER[nextIdx]}")
+                    connect(activeApiKey, nextIdx)
+                }
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
@@ -109,7 +128,13 @@ class GeminiLiveWebSocketClient(
                 isConnected.set(false)
                 isSetupComplete.set(false)
                 onConnectionStateChanged(false)
-                onError("Gemini Live ulanish xatosi: $err")
+                if (currentModelIndex + 1 < LIVE_MODEL_LADDER.size) {
+                    val nextIdx = currentModelIndex + 1
+                    Log.w(TAG, "Model $selectedModel failed. Falling back to ${LIVE_MODEL_LADDER[nextIdx]}")
+                    connect(activeApiKey, nextIdx)
+                } else {
+                    onError("Gemini Live ulanish xatosi: $err")
+                }
             }
         })
     }
