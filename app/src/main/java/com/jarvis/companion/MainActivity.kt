@@ -878,7 +878,7 @@ class MainActivity : AppCompatActivity() {
         val spokenText = prepareTextForSpeech(text)
 
         activeSpeechJob = lifecycleScope.launch {
-            jarvisParticleView.setState(JarvisParticleState.THINKING)
+            jarvisParticleView.setState(JarvisParticleState.SEARCHING)
             val result = UzbekVoiceApiClient.synthesizeSpeech(
                 apiKey = apiKey,
                 text = spokenText,
@@ -905,7 +905,7 @@ class MainActivity : AppCompatActivity() {
         val spokenText = prepareTextForSpeech(text)
 
         activeSpeechJob = lifecycleScope.launch {
-            jarvisParticleView.setState(JarvisParticleState.THINKING)
+            jarvisParticleView.setState(JarvisParticleState.SEARCHING)
             val tempFile = File(cacheDir, "elevenlabs_temp_${System.currentTimeMillis()}.mp3")
             val result = ElevenLabsApiClient.synthesizeSpeechToFile(
                 apiKey = apiKey,
