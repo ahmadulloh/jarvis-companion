@@ -8,63 +8,55 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.net.Uri
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.Settings
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
 import android.view.Window
-import android.view.inputmethod.EditorInfo
-import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.jarvis.companion.audio.AudioRoute
 import com.jarvis.companion.domain.DomainAdapter
+import com.jarvis.companion.domain.DomainGridAdapter
 import com.jarvis.companion.domain.JarvisDomain
 import com.jarvis.companion.domain.JarvisDomainRegistry
-import com.jarvis.companion.service.JarvisForegroundService
-import com.jarvis.companion.service.JarvisNotificationListener
-import com.jarvis.companion.ui.EventType
-import com.jarvis.companion.ui.JarvisOrbView
-import com.jarvis.companion.ui.LiveEvent
-import com.jarvis.companion.ui.LiveEventAdapter
-import com.jarvis.companion.ui.OrbState
-import com.jarvis.companion.util.PreferencesHelper
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
 import com.jarvis.companion.network.GeminiApiClient
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
+import com.jarvis.companion.service.JarvisForegroundService
+import com.jarvis.companion.ui.JarvisParticleState
+import com.jarvis.companion.ui.JarvisParticleView
+import com.jarvis.companion.util.PreferencesHelper
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -72,142 +64,39 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: PreferencesHelper
     private var vibrator: Vibrator? = null
 
-    // Root & Theme
+    // ── Living Particle Intelligence View ──────────────────────────────────
+    private lateinit var jarvisParticleView: JarvisParticleView
     private lateinit var rootContainer: View
-    private lateinit var tvHeaderTitle: TextView
-    private lateinit var tvStatusBadge: TextView
-    private lateinit var tvHeaderDomainBadge: TextView
-    private lateinit var btnThemeToggle: ImageButton
-    private lateinit var btnOpenSettings: ImageButton
-    private lateinit var layoutProfileAvatar: View
-    private lateinit var ivUserProfile: ImageView
-    private var isNightMode = true // Default dark cyberpunk theme
+    private lateinit var tvBrandTitle: TextView
+    private lateinit var chipDomainSelector: LinearLayout
+    private lateinit var viewChipDot: View
+    private lateinit var tvChipTitle: TextView
+    private lateinit var tvJarvisCaption: TextView
 
-    // Active Device Route
-    private var activeRoute: AudioRoute = AudioRoute.EARBUDS
-
-    // Active Domain (31 Soha)
-    private var currentDomain: JarvisDomain = JarvisDomainRegistry.ASOSIY
-
-    // AI Orb & Status
-    private lateinit var jarvisOrb: JarvisOrbView
-    private lateinit var tvOrbStatus: TextView
-    private lateinit var tvOrbSubtitle: TextView
-
-    // =========================================================================
-    // DYNAMIC WORKSPACE CONTAINERS
-    // =========================================================================
-    private lateinit var workspaceAsosiy: View
-    private lateinit var workspaceTalaba: View
-    private lateinit var workspaceHaydovchi: View
-    private lateinit var workspaceDin: View
-    private lateinit var workspaceDokon: View
-    private lateinit var workspaceDasturchi: View
-    private lateinit var workspaceMoliya: View
-    private lateinit var workspaceGeneric: View
-
-    // 1. Asosiy Views
-    private lateinit var chipDomainAction1: TextView
-    private lateinit var chipDomainAction2: TextView
-    private lateinit var chipDomainAction3: TextView
-    private lateinit var chipDomainAction4: TextView
-    private lateinit var chipInterrupt: TextView
-
-    // AI Kotib (Call Secretary)
-    private lateinit var cardAiSecretary: View
-    private lateinit var tvSecretaryTitle: TextView
-    private lateinit var tvSecretaryToggle: TextView
-    private lateinit var tvSecretarySubtitle: TextView
-    private lateinit var chipReasonDars: TextView
-    private lateinit var chipReasonMashina: TextView
-    private lateinit var chipReasonBand: TextView
-    private lateinit var chipReasonNamoz: TextView
-    private lateinit var chipReasonCustom: TextView
-    private lateinit var tvSecretaryPreview: TextView
-
-    // 2. Talaba Views
-    private lateinit var btnTalabaRecordLecture: View
-    private lateinit var btnTalabaSchedule: View
-    private lateinit var btnTalabaQuiz: View
-    private lateinit var btnTalabaSummary: View
-    private lateinit var btnTalabaExam: View
-
-    // 3. Haydovchi Views
-    private lateinit var btnHaydovchiTraffic: View
-    private lateinit var btnHaydovchiFuel: View
-    private lateinit var btnHaydovchiCall: View
-    private lateinit var btnHaydovchiMaintenance: View
-
-    // 4. Din Views & Digital Tasbeh
-    private lateinit var btnDinStartQuran: View
-    private lateinit var tvTasbehPhrase: TextView
-    private lateinit var tvTasbehCount: TextView
-    private lateinit var btnTasbehTap: TextView
-    private lateinit var btnTasbehReset: TextView
-    private lateinit var btnDinNamoz: View
-    private lateinit var btnDinDua: View
-    private var tasbehCount = 0
-    private var tasbehPhase = 0
-    private val tasbehPhrases = listOf("Subhanalloh", "Alhamdulillah", "Allohu Akbar")
-
-    // 5. Dokon Views
-    private lateinit var btnDokonSale: View
-    private lateinit var btnDokonStock: View
-    private lateinit var btnDokonDebt: View
-    private lateinit var btnDokonRevenue: View
-
-    // 6. Dasturchi Views
-    private lateinit var btnDevDebug: View
-    private lateinit var btnDevGit: View
-    private lateinit var btnDevServer: View
-    private lateinit var btnDevTerminal: View
-
-    // 7. Moliya Views
-    private lateinit var btnFinanceExpense: View
-    private lateinit var btnFinanceBudget: View
-    private lateinit var btnFinanceDebt: View
-    private lateinit var btnFinanceReport: View
-
-    // 8. Generic Views
-    private lateinit var btnGenericAction1: View
-    private lateinit var btnGenericAction2: View
-    private lateinit var btnGenericAction3: View
-    private lateinit var btnGenericAction4: View
-    private lateinit var tvGenericIcon1: TextView
-    private lateinit var tvGenericIcon2: TextView
-    private lateinit var tvGenericIcon3: TextView
-    private lateinit var tvGenericIcon4: TextView
-    private lateinit var tvGenericTitle1: TextView
-    private lateinit var tvGenericTitle2: TextView
-    private lateinit var tvGenericTitle3: TextView
-    private lateinit var tvGenericTitle4: TextView
-
-    // HUD & Input
-    private lateinit var cardLiveHud: View
-    private lateinit var tvLiveHudTitle: TextView
-    private lateinit var rvLiveFeed: RecyclerView
+    // Optional bottom text input
+    private lateinit var bottomBarContainer: View
     private lateinit var etCommandInput: EditText
     private lateinit var btnSendCommand: ImageButton
-    private lateinit var bottomBarContainer: View
-    private lateinit var layoutOrbContainer: View
-    private lateinit var eventAdapter: LiveEventAdapter
-
-    // Mobile Speech & TTS (Standalone / Hybrid AI)
-    private var speechRecognizer: SpeechRecognizer? = null
-    private var isVoiceListening = false
-    private var tts: TextToSpeech? = null
-    private var isTtsReady = false
 
     // In-App WebView
-    private lateinit var webViewDashboard: WebView
     private lateinit var containerWebView: View
+    private lateinit var webViewDashboard: WebView
     private lateinit var tvWebTitle: TextView
     private lateinit var btnOpenExternalBrowser: TextView
     private lateinit var btnCloseWebView: TextView
     private var quronWebUrl: String = ""
 
-    private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    // Active Domain & Route
+    private var currentDomain: JarvisDomain = JarvisDomainRegistry.ASOSIY
+    private var activeRoute: AudioRoute = AudioRoute.EARBUDS
 
+    // Mobile Speech & TTS
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var isVoiceListening = false
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
+
+    // Broadcast Receiver for Foreground Service
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
@@ -219,11 +108,8 @@ class MainActivity : AppCompatActivity() {
                     val speaker = intent.getStringExtra(JarvisForegroundService.EXTRA_SPEAKER) ?: ""
                     val text = intent.getStringExtra(JarvisForegroundService.EXTRA_TEXT) ?: ""
                     if (text.isNotBlank()) {
-                        val type = if (speaker.equals("JARVIS", ignoreCase = true)) EventType.JARVIS else EventType.USER
-                        addFeedEvent(LiveEvent(type, speaker, text, currentTime()))
-
-                        // Automatic Voice Domain Detection
-                        if (type == EventType.USER) {
+                        showCaption(text)
+                        if (!speaker.equals("JARVIS", ignoreCase = true)) {
                             val detectedDomain = JarvisDomainRegistry.findDomainByVoice(text)
                             if (detectedDomain != null && detectedDomain.id != currentDomain.id) {
                                 runOnUiThread {
@@ -231,13 +117,6 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                         }
-                    }
-                }
-                JarvisForegroundService.BROADCAST_ACTION_LOG -> {
-                    val name = intent.getStringExtra(JarvisForegroundService.EXTRA_ACTION_NAME) ?: ""
-                    val result = intent.getStringExtra(JarvisForegroundService.EXTRA_ACTION_RESULT) ?: ""
-                    if (name.isNotBlank()) {
-                        addFeedEvent(LiveEvent(EventType.ACTION, name, result, currentTime()))
                     }
                 }
                 JarvisForegroundService.BROADCAST_ROUTE_CHANGE -> {
@@ -251,7 +130,6 @@ class MainActivity : AppCompatActivity() {
                     if (url.isNotEmpty()) {
                         quronWebUrl = url
                         runOnUiThread {
-                            // Ensure Din domain is active
                             if (currentDomain.id != "DIN") {
                                 applyDomain(JarvisDomainRegistry.DIN, speakAnnouncement = false)
                             }
@@ -280,17 +158,13 @@ class MainActivity : AppCompatActivity() {
 
         prefs = PreferencesHelper(this)
         initVibrator()
-
         initViews()
-        initAutoTheme()
         initSpeechRecognizer()
         initTextToSpeech()
-        setupOrbInteractions()
-        setupWorkspaces()
-        setupSecretaryCard()
-        setupFeedAndInput()
-        setupProfileAndAuth()
-        setupSettingsDialog()
+
+        // Faol sohani yuklash
+        val savedDomain = JarvisDomainRegistry.findDomainById(prefs.activeDomainId) ?: JarvisDomainRegistry.ASOSIY
+        applyDomain(savedDomain, speakAnnouncement = false)
 
         checkPermissionsAndStart()
     }
@@ -305,7 +179,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun vibrateBrief(millis: Long = 35) {
+    private fun vibrateBrief(millis: Long = 30) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createOneShot(millis, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -318,437 +192,233 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         rootContainer = findViewById(R.id.rootContainer)
-        tvHeaderTitle = findViewById(R.id.tvHeaderTitle)
-        tvStatusBadge = findViewById(R.id.tvStatusBadge)
-        btnThemeToggle = findViewById(R.id.btnThemeToggle)
-        btnOpenSettings = findViewById(R.id.btnOpenSettings)
-        layoutProfileAvatar = findViewById(R.id.layoutProfileAvatar)
-        ivUserProfile = findViewById(R.id.ivUserProfile)
+        jarvisParticleView = findViewById(R.id.jarvisParticleView)
+        tvBrandTitle = findViewById(R.id.tvBrandTitle)
+        chipDomainSelector = findViewById(R.id.chipDomainSelector)
+        viewChipDot = findViewById(R.id.viewChipDot)
+        tvChipTitle = findViewById(R.id.tvChipTitle)
+        tvJarvisCaption = findViewById(R.id.tvJarvisCaption)
 
-        jarvisOrb = findViewById(R.id.jarvisOrb)
-        tvOrbStatus = findViewById(R.id.tvOrbStatus)
-        tvOrbSubtitle = findViewById(R.id.tvOrbSubtitle)
-        tvHeaderDomainBadge = findViewById(R.id.tvHeaderDomainBadge)
-
-        // Workspaces
-        workspaceAsosiy = findViewById(R.id.workspaceAsosiy)
-        workspaceTalaba = findViewById(R.id.workspaceTalaba)
-        workspaceHaydovchi = findViewById(R.id.workspaceHaydovchi)
-        workspaceDin = findViewById(R.id.workspaceDin)
-        workspaceDokon = findViewById(R.id.workspaceDokon)
-        workspaceDasturchi = findViewById(R.id.workspaceDasturchi)
-        workspaceMoliya = findViewById(R.id.workspaceMoliya)
-        workspaceGeneric = findViewById(R.id.workspaceGeneric)
-
-        // Asosiy
-        chipDomainAction1 = findViewById(R.id.chipDomainAction1)
-        chipDomainAction2 = findViewById(R.id.chipDomainAction2)
-        chipDomainAction3 = findViewById(R.id.chipDomainAction3)
-        chipDomainAction4 = findViewById(R.id.chipDomainAction4)
-        chipInterrupt = findViewById(R.id.chipInterrupt)
-
-        cardAiSecretary = findViewById(R.id.cardAiSecretary)
-        tvSecretaryTitle = findViewById(R.id.tvSecretaryTitle)
-        tvSecretaryToggle = findViewById(R.id.tvSecretaryToggle)
-        tvSecretarySubtitle = findViewById(R.id.tvSecretarySubtitle)
-        chipReasonDars = findViewById(R.id.chipReasonDars)
-        chipReasonMashina = findViewById(R.id.chipReasonMashina)
-        chipReasonBand = findViewById(R.id.chipReasonBand)
-        chipReasonNamoz = findViewById(R.id.chipReasonNamoz)
-        chipReasonCustom = findViewById(R.id.chipReasonCustom)
-        tvSecretaryPreview = findViewById(R.id.tvSecretaryPreview)
-
-        // Talaba
-        btnTalabaRecordLecture = findViewById(R.id.btnTalabaRecordLecture)
-        btnTalabaSchedule = findViewById(R.id.btnTalabaSchedule)
-        btnTalabaQuiz = findViewById(R.id.btnTalabaQuiz)
-        btnTalabaSummary = findViewById(R.id.btnTalabaSummary)
-        btnTalabaExam = findViewById(R.id.btnTalabaExam)
-
-        // Haydovchi
-        btnHaydovchiTraffic = findViewById(R.id.btnHaydovchiTraffic)
-        btnHaydovchiFuel = findViewById(R.id.btnHaydovchiFuel)
-        btnHaydovchiCall = findViewById(R.id.btnHaydovchiCall)
-        btnHaydovchiMaintenance = findViewById(R.id.btnHaydovchiMaintenance)
-
-        // Din & Tasbeh
-        btnDinStartQuran = findViewById(R.id.btnDinStartQuran)
-        tvTasbehPhrase = findViewById(R.id.tvTasbehPhrase)
-        tvTasbehCount = findViewById(R.id.tvTasbehCount)
-        btnTasbehTap = findViewById(R.id.btnTasbehTap)
-        btnTasbehReset = findViewById(R.id.btnTasbehReset)
-        btnDinNamoz = findViewById(R.id.btnDinNamoz)
-        btnDinDua = findViewById(R.id.btnDinDua)
-
-        // Dokon
-        btnDokonSale = findViewById(R.id.btnDokonSale)
-        btnDokonStock = findViewById(R.id.btnDokonStock)
-        btnDokonDebt = findViewById(R.id.btnDokonDebt)
-        btnDokonRevenue = findViewById(R.id.btnDokonRevenue)
-
-        // Dasturchi
-        btnDevDebug = findViewById(R.id.btnDevDebug)
-        btnDevGit = findViewById(R.id.btnDevGit)
-        btnDevServer = findViewById(R.id.btnDevServer)
-        btnDevTerminal = findViewById(R.id.btnDevTerminal)
-
-        // Moliya
-        btnFinanceExpense = findViewById(R.id.btnFinanceExpense)
-        btnFinanceBudget = findViewById(R.id.btnFinanceBudget)
-        btnFinanceDebt = findViewById(R.id.btnFinanceDebt)
-        btnFinanceReport = findViewById(R.id.btnFinanceReport)
-
-        // Generic
-        btnGenericAction1 = findViewById(R.id.btnGenericAction1)
-        btnGenericAction2 = findViewById(R.id.btnGenericAction2)
-        btnGenericAction3 = findViewById(R.id.btnGenericAction3)
-        btnGenericAction4 = findViewById(R.id.btnGenericAction4)
-        tvGenericIcon1 = findViewById(R.id.tvGenericIcon1)
-        tvGenericIcon2 = findViewById(R.id.tvGenericIcon2)
-        tvGenericIcon3 = findViewById(R.id.tvGenericIcon3)
-        tvGenericIcon4 = findViewById(R.id.tvGenericIcon4)
-        tvGenericTitle1 = findViewById(R.id.tvGenericTitle1)
-        tvGenericTitle2 = findViewById(R.id.tvGenericTitle2)
-        tvGenericTitle3 = findViewById(R.id.tvGenericTitle3)
-        tvGenericTitle4 = findViewById(R.id.tvGenericTitle4)
-
-        cardLiveHud = findViewById(R.id.cardLiveHud)
-        tvLiveHudTitle = findViewById(R.id.tvLiveHudTitle)
-        rvLiveFeed = findViewById(R.id.rvLiveFeed)
-        layoutOrbContainer = findViewById(R.id.layoutOrbContainer)
         bottomBarContainer = findViewById(R.id.bottomBarContainer)
         etCommandInput = findViewById(R.id.etCommandInput)
         btnSendCommand = findViewById(R.id.btnSendCommand)
 
-        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
-        tvStatusBadge.text = if (prefs.connectionMode == "GEMINI_DIRECT") "● GEMINI AI" else "● PC BRIDGE"
-
-        // In-App WebView
-        webViewDashboard = findViewById(R.id.webViewDashboard)
         containerWebView = findViewById(R.id.containerWebView)
+        webViewDashboard = findViewById(R.id.webViewDashboard)
         tvWebTitle = findViewById(R.id.tvWebTitle)
         btnOpenExternalBrowser = findViewById(R.id.btnOpenExternalBrowser)
         btnCloseWebView = findViewById(R.id.btnCloseWebView)
 
+        // Matn kiritish satri (Settings'da yoqilgan bo'lsa)
+        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+
+        // Ekran va Zarralar bilan interaktiv aloqa
+        jarvisParticleView.setOnClickListener {
+            vibrateBrief()
+            if (isVoiceListening) {
+                stopMobileVoiceRecognition()
+            } else {
+                startMobileVoiceRecognition()
+            }
+        }
+
+        // Yuqori o'ngdagi Chip bosilganda pastdan Sheet ochiladi
+        chipDomainSelector.setOnClickListener {
+            vibrateBrief()
+            showDomainBottomSheet()
+        }
+
+        // Brand nomi bosilganda yoki uzoq bosilganda Sozlamalar ochiladi
+        tvBrandTitle.setOnClickListener {
+            vibrateBrief()
+            showDomainBottomSheet()
+        }
+        tvBrandTitle.setOnLongClickListener {
+            vibrateBrief()
+            openSettingsDialog()
+            true
+        }
+
+        // Matnli buyruq yuborish
+        btnSendCommand.setOnClickListener {
+            val txt = etCommandInput.text.toString().trim()
+            if (txt.isNotEmpty()) {
+                vibrateBrief()
+                etCommandInput.setText("")
+                sendJarvisCommand(txt)
+            }
+        }
+
+        // WebView nazorati
         btnCloseWebView.setOnClickListener {
             containerWebView.visibility = View.GONE
             webViewDashboard.loadUrl("about:blank")
         }
-
-        activeRoute = try {
-            AudioRoute.valueOf(prefs.audioRoute)
-        } catch (_: Exception) {
-            AudioRoute.EARBUDS
-        }
-
-        currentDomain = JarvisDomainRegistry.getDomainById(prefs.activeDomain)
-        applyDomain(currentDomain, speakAnnouncement = false)
-
-        tvHeaderDomainBadge.setOnClickListener {
-            btnOpenSettings.performClick()
-        }
-
-        chipInterrupt.setOnClickListener {
-            sendJarvisCommand("To'xtat")
-            try {
-                val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                    action = JarvisForegroundService.ACTION_INTERRUPT
-                }
-                startService(intent)
-            } catch (e: Exception) {
-                Log.e("MainActivity", "chipInterrupt error: ${e.message}")
+        btnOpenExternalBrowser.setOnClickListener {
+            if (quronWebUrl.isNotBlank()) {
+                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(quronWebUrl))
+                startActivity(intent)
             }
         }
     }
 
-    private fun setupWorkspaces() {
-        // Talaba Actions
-        btnTalabaRecordLecture.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Ma'ruza yozishni boshla va asosiy konspekt qilib ber")
-        }
-        btnTalabaSchedule.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Bugungi dars jadvali va deadline'larimni ayt")
-        }
-        btnTalabaQuiz.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Oxirgi mavzu bo'yicha 5 ta test tuz")
-        }
-        btnTalabaSummary.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Ushbu darsning qisqa xulosasini tayyorla")
-        }
-        btnTalabaExam.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Imtihongacha kunlik o'qish rejamni ayt")
-        }
-
-        // Haydovchi Actions
-        btnHaydovchiTraffic.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Hozirgi yo'nalish bo'yicha tirbandlik va marshrut qanday?")
-        }
-        btnHaydovchiFuel.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Yoqilg'i quyish xarajatini qayd et")
-        }
-        btnHaydovchiCall.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Menga eng so'nggi qo'ng'iroq qilgan odamga qaytar")
-        }
-        btnHaydovchiMaintenance.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Moy almashtirish va sug'urta muddatini eslat")
-        }
-
-        // Din & Tasbeh Actions
-        btnDinStartQuran.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Qur'on ustozi darsini boshlaymiz")
-            if (quronWebUrl.isNotEmpty()) {
-                openQuronLesson(quronWebUrl)
-            }
-        }
-        btnDinNamoz.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Bugungi Toshkent namoz vaqtlarini ayt")
-        }
-        btnDinDua.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Ertalabki va kechki ma'sur duolarni ayt")
-        }
-
-        btnTasbehTap.setOnClickListener {
-            tasbehCount++
-            vibrateBrief(35)
-            if (tasbehCount >= 33) {
-                tasbehCount = 0
-                tasbehPhase = (tasbehPhase + 1) % tasbehPhrases.size
-                vibrateBrief(80)
-            }
-            tvTasbehPhrase.text = tasbehPhrases[tasbehPhase]
-            tvTasbehCount.text = "$tasbehCount / 33"
-        }
-        btnTasbehReset.setOnClickListener {
-            tasbehCount = 0
-            tasbehPhase = 0
-            tvTasbehPhrase.text = tasbehPhrases[0]
-            tvTasbehCount.text = "0 / 33"
-            vibrateBrief(50)
-        }
-
-        // Dokon Actions
-        btnDokonSale.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("5 ta non sotildi, omborni yangila")
-        }
-        btnDokonStock.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Ombor qoldig'ini va tugayotgan tovarlarni ayt")
-        }
-        btnDokonDebt.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Qarzdorlar ro'yxatini chiqar")
-        }
-        btnDokonRevenue.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Bugungi tushum va sof foyda hisobotini ber")
-        }
-
-        // Dasturchi Actions
-        btnDevDebug.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Bu kod xatosini tahlil qil va tuzatib ber")
-        }
-        btnDevGit.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Git status va oxirgi commitlarni tekshir")
-        }
-        btnDevServer.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Server holatini tekshiruvchi buyruq ber")
-        }
-        btnDevTerminal.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Terminal holatini tekshir")
-        }
-
-        // Moliya Actions
-        btnFinanceExpense.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Taksiga 20 ming to'ladim, xarajatga yoz")
-        }
-        btnFinanceBudget.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Oylik byudjetim qancha qoldi?")
-        }
-        btnFinanceDebt.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Qarz eslatmalarini ayt")
-        }
-        btnFinanceReport.setOnClickListener {
-            vibrateBrief()
-            sendJarvisCommand("Haftalik xarajatlarim hisobotini ber")
-        }
-    }
-
-    private fun initAutoTheme() {
-        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-        isNightMode = hour !in 7..19
-        applyTheme(isNightMode)
-
-        btnThemeToggle.setOnClickListener {
-            isNightMode = !isNightMode
-            applyTheme(isNightMode)
-        }
-    }
-
-    private fun applyTheme(night: Boolean) {
-        jarvisOrb.isNightMode = night
-        if (night) {
-            rootContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.night_bg))
-            tvHeaderTitle.setTextColor(ContextCompat.getColor(this, R.color.night_text_primary))
-            btnThemeToggle.setImageResource(R.drawable.ic_moon)
-            tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
-            tvOrbSubtitle.setTextColor(ContextCompat.getColor(this, R.color.night_text_secondary))
-            cardAiSecretary.setBackgroundResource(R.drawable.bg_ios_card)
-            cardLiveHud.setBackgroundResource(R.drawable.bg_ios_card)
-            tvLiveHudTitle.setTextColor(Color.WHITE)
-        } else {
-            rootContainer.setBackgroundColor(ContextCompat.getColor(this, R.color.day_bg))
-            tvHeaderTitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_primary))
-            btnThemeToggle.setImageResource(R.drawable.ic_sun)
-            tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_blue))
-            tvOrbSubtitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_secondary))
-            cardAiSecretary.setBackgroundResource(R.drawable.bg_day_card)
-            cardLiveHud.setBackgroundResource(R.drawable.bg_day_card)
-            tvLiveHudTitle.setTextColor(ContextCompat.getColor(this, R.color.day_text_primary))
-        }
-        if (::containerWebView.isInitialized) {
-            containerWebView.setBackgroundColor(ContextCompat.getColor(this, if (night) R.color.night_bg else R.color.day_bg))
-            tvWebTitle.setTextColor(ContextCompat.getColor(this, if (night) R.color.night_text_primary else R.color.day_text_primary))
-        }
-        if (::cardAiSecretary.isInitialized) {
-            updateSecretaryUi()
-        }
-    }
-
-    private fun setupOrbInteractions() {
-        jarvisOrb.setOnClickListener {
-            handleOrbActivation()
-        }
-        if (::layoutOrbContainer.isInitialized) {
-            layoutOrbContainer.setOnClickListener {
-                handleOrbActivation()
-            }
-        }
-    }
-
-    private fun handleOrbActivation() {
-        if (tts?.isSpeaking == true) {
-            stopSpeaking()
-            tvOrbSubtitle.text = "Labbay, Axmadulloh sir..."
-            return
-        }
-        startMobileVoiceRecognition()
-    }
-
-    private fun initTextToSpeech() {
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                isTtsReady = true
-                val uzLocale = Locale("uz", "UZ")
-                val res = tts?.setLanguage(uzLocale)
-                if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts?.language = Locale.getDefault()
-                }
-                tts?.setSpeechRate(1.02f)
-                tts?.setPitch(0.96f)
-
-                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                    override fun onStart(utteranceId: String?) {
-                        runOnUiThread {
-                            updateOrbState("SPEAKING")
-                        }
-                    }
-                    override fun onDone(utteranceId: String?) {
-                        runOnUiThread {
-                            updateOrbState("IDLE")
-                        }
-                    }
-                    override fun onError(utteranceId: String?) {
-                        runOnUiThread {
-                            updateOrbState("IDLE")
-                        }
-                    }
-                })
-            }
-        }
-    }
-
-    private fun speakJarvis(text: String) {
-        if (!isTtsReady || text.isBlank()) return
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "jarvis_${System.currentTimeMillis()}")
+    // ── Matnli Status / Subtitle ko'rsatish (Smooth Fade) ───────────────────
+    fun showCaption(text: String) {
+        runOnUiThread {
+            if (text.isBlank()) {
+                tvJarvisCaption.animate().alpha(0f).setDuration(300).start()
             } else {
-                @Suppress("DEPRECATION")
-                tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+                tvJarvisCaption.text = text
+                tvJarvisCaption.animate().alpha(1f).setDuration(300).start()
             }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "TTS error: ${e.message}")
         }
     }
 
-    private fun stopSpeaking() {
-        try {
-            tts?.stop()
-        } catch (_: Exception) {}
-        updateOrbState("IDLE")
+    // ── Soha almashtirish (Theme, Zarralar rangi, Top chip) ────────────────
+    private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
+        currentDomain = domain
+        prefs.activeDomainId = domain.id
+
+        // Zarralar tizimini yangi soha rangiga o'tkazish
+        jarvisParticleView.setMode(domain)
+
+        // Yuqori o'ngdagi Chip dizaynini yangilash
+        val density = resources.displayMetrics.density
+        tvChipTitle.text = domain.titleUz
+        tvChipTitle.setTextColor(domain.primaryColor)
+
+        val chipBg = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 999f * density
+            setColor(Color.WHITE)
+            setStroke((1.5f * density).toInt(), domain.primaryColor)
+        }
+        chipDomainSelector.background = chipBg
+
+        val dotBg = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(domain.primaryColor)
+        }
+        viewChipDot.background = dotBg
+
+        showCaption("«${domain.titleUz}» faol")
+
+        if (speakAnnouncement) {
+            speakJarvis(domain.motto)
+        }
     }
 
+    // ── Bottom Sheet (31 ta Soha Tanlash) ──────────────────────────────────
+    private fun showDomainBottomSheet() {
+        vibrateBrief(20)
+        val sheetDialog = BottomSheetDialog(this)
+        val sheetView = layoutInflater.inflate(R.layout.bottom_sheet_domain_picker, null)
+        sheetDialog.setContentView(sheetView)
+
+        val rv = sheetView.findViewById<RecyclerView>(R.id.rvDomainsGrid)
+        val btnExpand = sheetView.findViewById<TextView>(R.id.btnExpandAllDomains)
+        val etSearch = sheetView.findViewById<EditText>(R.id.etDomainSearch)
+        val btnSettings = sheetView.findViewById<ImageButton>(R.id.btnSheetSettings)
+
+        btnSettings?.setOnClickListener {
+            sheetDialog.dismiss()
+            openSettingsDialog()
+        }
+
+        val allDomains = JarvisDomainRegistry.getAllDomains()
+
+        // 5 ta asosiy soha: Asosiy, Taxi, O'quvchi, O'qituvchi, Usta
+        val top5 = listOfNotNull(
+            JarvisDomainRegistry.ASOSIY,
+            JarvisDomainRegistry.HAYDOVCHI,
+            JarvisDomainRegistry.TALABA,
+            allDomains.find { it.id.equals("OQITUVCHI", true) || it.titleUz.contains("O'qituvchi", true) } ?: allDomains.getOrNull(3),
+            allDomains.find { it.id.equals("USTA", true) || it.titleUz.contains("Usta", true) } ?: allDomains.getOrNull(4)
+        )
+
+        val adapter = DomainGridAdapter(top5, currentDomain.id) { selected ->
+            applyDomain(selected, speakAnnouncement = true)
+            sheetDialog.dismiss()
+        }
+
+        rv?.layoutManager = GridLayoutManager(this, 3)
+        rv?.adapter = adapter
+
+        btnExpand?.setOnClickListener {
+            btnExpand.visibility = View.GONE
+            etSearch?.visibility = View.VISIBLE
+            etSearch?.requestFocus()
+            adapter.updateData(allDomains, currentDomain.id)
+        }
+
+        etSearch?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val q = s?.toString()?.trim() ?: ""
+                val filtered = if (q.isEmpty()) {
+                    allDomains
+                } else {
+                    allDomains.filter {
+                        it.titleUz.contains(q, ignoreCase = true) ||
+                                it.description.contains(q, ignoreCase = true) ||
+                                it.keywords.any { kw -> kw.contains(q, ignoreCase = true) }
+                    }
+                }
+                adapter.updateData(filtered, currentDomain.id)
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        sheetDialog.show()
+    }
+
+    // ── Ovozli Qabul qilish (Speech Recognition) ───────────────────────────
     private fun initSpeechRecognizer() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) return
+
         try {
+            speechRecognizer?.destroy()
             speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
                 setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         isVoiceListening = true
-                        updateOrbState("LISTENING")
-                        tvOrbSubtitle.text = "Eshitmoqdaman, Axmadulloh sir..."
+                        jarvisParticleView.setState(JarvisParticleState.LISTENING)
+                        showCaption("Eshitmoqdaman, Axmadulloh sir...")
                     }
                     override fun onBeginningOfSpeech() {}
                     override fun onRmsChanged(rmsdB: Float) {
                         val norm = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
-                        jarvisOrb.audioLevel = norm
+                        jarvisParticleView.setMicLevel(norm)
                     }
                     override fun onBufferReceived(buffer: ByteArray?) {}
                     override fun onEndOfSpeech() {
                         isVoiceListening = false
-                        jarvisOrb.audioLevel = 0f
-                        updateOrbState("THINKING")
+                        jarvisParticleView.setMicLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+                        showCaption("Izlayapman…")
                     }
                     override fun onError(error: Int) {
                         isVoiceListening = false
-                        jarvisOrb.audioLevel = 0f
-                        updateOrbState("IDLE")
+                        jarvisParticleView.setMicLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        showCaption("")
                     }
                     override fun onResults(results: Bundle?) {
                         isVoiceListening = false
-                        jarvisOrb.audioLevel = 0f
+                        jarvisParticleView.setMicLevel(0f)
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         if (!matches.isNullOrEmpty()) {
                             val spoken = matches[0]
                             sendJarvisCommand(spoken)
                         } else {
-                            updateOrbState("IDLE")
+                            jarvisParticleView.setState(JarvisParticleState.IDLE)
+                            showCaption("")
                         }
                     }
                     override fun onPartialResults(partialResults: Bundle?) {
                         val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         if (!matches.isNullOrEmpty()) {
-                            tvOrbSubtitle.text = matches[0]
+                            showCaption("«${matches[0]}»")
                         }
                     }
                     override fun onEvent(eventType: Int, params: Bundle?) {}
@@ -760,447 +430,103 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startMobileVoiceRecognition() {
+        if (isVoiceListening) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             permissionLauncher.launch(arrayOf(Manifest.permission.RECORD_AUDIO))
             return
         }
 
-        if (tts?.isSpeaking == true) {
-            stopSpeaking()
-            tvOrbSubtitle.text = "Labbay, Axmadulloh sir..."
-            return
-        }
-
-        if (isVoiceListening) {
-            speechRecognizer?.stopListening()
-            isVoiceListening = false
-            updateOrbState("IDLE")
-            return
-        }
-
-        vibrateBrief(35)
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uz-UZ")
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "uz-UZ")
-            putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, false)
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        }
-
         try {
+            if (speechRecognizer == null) {
+                initSpeechRecognizer()
+            }
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "uz-UZ")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "uz-UZ")
+                putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "uz-UZ")
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            }
             speechRecognizer?.startListening(intent)
+            isVoiceListening = true
+            jarvisParticleView.setState(JarvisParticleState.LISTENING)
+            showCaption("Eshitmoqdaman, Axmadulloh sir...")
         } catch (e: Exception) {
-            Log.e("MainActivity", "startListening error: ${e.message}")
-            wakeJarvisVoice()
+            Log.e("MainActivity", "startMobileVoiceRecognition error: ${e.message}")
+            isVoiceListening = false
+            jarvisParticleView.setState(JarvisParticleState.IDLE)
         }
     }
 
-    private fun updateOrbState(state: String) {
-        when (state) {
-            "SPEAKING" -> {
-                jarvisOrb.state = OrbState.SPEAKING
-                tvOrbStatus.text = "JARVIS GAPIRMOQDA"
-                tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
-                tvStatusBadge.text = "● GAPIRMOQDA"
-                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_cyan))
-            }
-            "LISTENING" -> {
-                jarvisOrb.state = OrbState.LISTENING
-                tvOrbStatus.text = "JARVIS ESHITMOQDA..."
-                tvOrbStatus.setTextColor(Color.parseColor("#10B981"))
-                tvStatusBadge.text = "● ESHITMOQDA"
-                tvStatusBadge.setTextColor(Color.parseColor("#10B981"))
-            }
-            "THINKING" -> {
-                jarvisOrb.state = OrbState.THINKING
-                tvOrbStatus.text = "JARVIS O'YLAMOQDA..."
-                tvOrbStatus.setTextColor(ContextCompat.getColor(this, R.color.jarvis_amber))
-                tvStatusBadge.text = "● O'YLAMOQDA"
-                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_amber))
-            }
-            else -> {
-                jarvisOrb.state = OrbState.IDLE
-                tvOrbStatus.text = "JARVIS TAYYOR"
-                tvOrbStatus.setTextColor(if (isNightMode) ContextCompat.getColor(this, R.color.jarvis_cyan) else ContextCompat.getColor(this, R.color.jarvis_blue))
-                tvStatusBadge.text = "● ALOQADA"
-                tvStatusBadge.setTextColor(ContextCompat.getColor(this, R.color.jarvis_accent))
-            }
-        }
-    }
-
-    private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
-        currentDomain = domain
-        prefs.activeDomain = domain.id
-
-        // 1. Morph Neural Core Colors & Title
-        jarvisOrb.setDomainColors(domain.primaryColor, domain.glowColor, domain.titleUz)
-
-        // 2. Update Header Badge
-        tvHeaderDomainBadge.text = "${domain.icon} ${domain.titleUz.uppercase()}"
-        tvHeaderDomainBadge.backgroundTintList = ColorStateList.valueOf(domain.primaryColor)
-        tvHeaderDomainBadge.setTextColor(Color.parseColor("#0F172A"))
-
-        // 3. Update Status Subtitle
-        tvOrbStatus.text = "${domain.titleUz.uppercase()} REJIMI"
-        tvOrbStatus.setTextColor(domain.primaryColor)
-        tvOrbSubtitle.text = domain.motto
-
-        // 4. Switch Dynamic Workspace Layouts (Entire UI transforms!)
-        workspaceAsosiy.visibility = View.GONE
-        workspaceTalaba.visibility = View.GONE
-        workspaceHaydovchi.visibility = View.GONE
-        workspaceDin.visibility = View.GONE
-        workspaceDokon.visibility = View.GONE
-        workspaceDasturchi.visibility = View.GONE
-        workspaceMoliya.visibility = View.GONE
-        workspaceGeneric.visibility = View.GONE
-
-        when (domain.id) {
-            "TALABA" -> workspaceTalaba.visibility = View.VISIBLE
-            "HAYDOVCHI" -> workspaceHaydovchi.visibility = View.VISIBLE
-            "DIN" -> workspaceDin.visibility = View.VISIBLE
-            "DOKON" -> workspaceDokon.visibility = View.VISIBLE
-            "DASTURCHI" -> workspaceDasturchi.visibility = View.VISIBLE
-            "MOLIYA" -> workspaceMoliya.visibility = View.VISIBLE
-            "ASOSIY" -> workspaceAsosiy.visibility = View.VISIBLE
-            else -> {
-                workspaceGeneric.visibility = View.VISIBLE
-                setupGenericWorkspace(domain)
-            }
-        }
-
-        // 5. Update Quick Action Pills in Asosiy
-        if (domain.actions.size >= 4) {
-            chipDomainAction1.text = "${domain.actions[0].icon} ${domain.actions[0].title}"
-            chipDomainAction1.setOnClickListener { sendJarvisCommand(domain.actions[0].promptCommand) }
-
-            chipDomainAction2.text = "${domain.actions[1].icon} ${domain.actions[1].title}"
-            chipDomainAction2.setOnClickListener { sendJarvisCommand(domain.actions[1].promptCommand) }
-
-            chipDomainAction3.text = "${domain.actions[2].icon} ${domain.actions[2].title}"
-            chipDomainAction3.setOnClickListener { sendJarvisCommand(domain.actions[2].promptCommand) }
-
-            chipDomainAction4.text = "${domain.actions[3].icon} ${domain.actions[3].title}"
-            chipDomainAction4.setOnClickListener { sendJarvisCommand(domain.actions[3].promptCommand) }
-        }
-
-        // 6. Notify Backend about domain switch
-        if (prefs.isServiceRunning) {
-            try {
-                val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                    action = JarvisForegroundService.ACTION_SEND_TEXT
-                    putExtra(JarvisForegroundService.EXTRA_COMMAND_TEXT, "DOMAIN_SWITCH:${domain.id}")
-                }
-                startService(intent)
-            } catch (e: Exception) {
-                Log.w("MainActivity", "Failed to notify service: ${e.message}")
-            }
-        }
-
-        if (speakAnnouncement) {
-            val announcement = "${domain.titleUz} rejimi faollashtirildi, Axmadulloh sir."
-            addFeedEvent(LiveEvent(
-                EventType.SYSTEM,
-                "JARVIS",
-                "$announcement ${domain.motto}",
-                currentTime()
-            ))
-            speakJarvis(announcement)
-        }
-    }
-
-    private fun setupGenericWorkspace(domain: JarvisDomain) {
-        val actions = domain.actions
-        if (actions.isNotEmpty()) {
-            tvGenericIcon1.text = actions[0].icon
-            tvGenericTitle1.text = actions[0].title
-            btnGenericAction1.setOnClickListener { sendJarvisCommand(actions[0].promptCommand) }
-        }
-        if (actions.size > 1) {
-            tvGenericIcon2.text = actions[1].icon
-            tvGenericTitle2.text = actions[1].title
-            btnGenericAction2.setOnClickListener { sendJarvisCommand(actions[1].promptCommand) }
-        }
-        if (actions.size > 2) {
-            tvGenericIcon3.text = actions[2].icon
-            tvGenericTitle3.text = actions[2].title
-            btnGenericAction3.setOnClickListener { sendJarvisCommand(actions[2].promptCommand) }
-        }
-        if (actions.size > 3) {
-            tvGenericIcon4.text = actions[3].icon
-            tvGenericTitle4.text = actions[3].title
-            btnGenericAction4.setOnClickListener { sendJarvisCommand(actions[3].promptCommand) }
-        }
-    }
-
-    private fun setupSecretaryCard() {
-        updateSecretaryUi()
-
-        tvSecretaryToggle.setOnClickListener {
-            prefs.aiSecretaryEnabled = !prefs.aiSecretaryEnabled
-            updateSecretaryUi()
-            notifyServiceSecretaryChanged()
-        }
-
-        chipReasonDars.setOnClickListener { selectSecretaryReason("Darsdaman") }
-        chipReasonMashina.setOnClickListener { selectSecretaryReason("Mashinadaman") }
-        chipReasonBand.setOnClickListener { selectSecretaryReason("Bandman / Majlis") }
-        chipReasonNamoz.setOnClickListener { selectSecretaryReason("Namozdaman") }
-        chipReasonCustom.setOnClickListener { promptCustomReasonDialog() }
-    }
-
-    private fun updateSecretaryUi() {
-        val enabled = prefs.aiSecretaryEnabled
-        tvSecretaryToggle.text = if (enabled) "YOQILGAN" else "O'CHIRILGAN"
-        tvSecretaryToggle.setTextColor(
-            if (enabled) ContextCompat.getColor(this, R.color.jarvis_accent)
-            else ContextCompat.getColor(this, R.color.jarvis_red)
-        )
-        selectSecretaryReason(prefs.aiSecretaryReason)
-    }
-
-    private fun selectSecretaryReason(reason: String) {
-        prefs.aiSecretaryReason = reason
-
-        val activeBg = R.drawable.bg_ios_pill_active
-        val normalBg = R.drawable.bg_ios_action_chip
-        val activeText = Color.parseColor("#070A12")
-        val normalText = Color.WHITE
-
-        val chips = listOf(
-            chipReasonDars to "Darsdaman",
-            chipReasonMashina to "Mashinadaman",
-            chipReasonBand to "Bandman / Majlis",
-            chipReasonNamoz to "Namozdaman"
-        )
-
-        var matchedPreset = false
-        for ((chip, rName) in chips) {
-            if (reason.equals(rName, ignoreCase = true)) {
-                chip.setBackgroundResource(activeBg)
-                chip.setTextColor(activeText)
-                matchedPreset = true
-            } else {
-                chip.setBackgroundResource(normalBg)
-                chip.setTextColor(normalText)
-            }
-        }
-
-        if (!matchedPreset) {
-            chipReasonCustom.setBackgroundResource(activeBg)
-            chipReasonCustom.setTextColor(activeText)
-            chipReasonCustom.text = "✍️ $reason"
-        } else {
-            chipReasonCustom.setBackgroundResource(normalBg)
-            chipReasonCustom.setTextColor(normalText)
-            chipReasonCustom.text = "✍️ Boshqa..."
-        }
-
-        val r = reason.lowercase()
-        val reasonFormatted = when {
-            r.contains("dars") -> "darsdalar"
-            r.contains("mashina") || r.contains("hayda") -> "mashina haydamoqdalar"
-            r.contains("namoz") -> "namozdalar"
-            r.contains("majlis") || r.contains("band") -> "muhim majlisda bandlar"
-            r.contains("dam") -> "dam olmoqdalar"
-            else -> "$reason sababli hozir bandlar"
-        }
-
-        tvSecretaryPreview.text = "💬 Jarvis aytadi: «Assalomu alaykum. Axmadulloh sir hozir $reasonFormatted, shuning uchun go'shakni ko'tara olmadilar. Xabaringizni eshitaman...»"
-    }
-
-    private fun promptCustomReasonDialog() {
-        val et = EditText(this).apply {
-            hint = "Masalan: Sportdaman, Uydaman"
-            setText(prefs.aiSecretaryReason)
-            setPadding(40, 30, 40, 30)
-        }
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("AI Kotib uchun sabab kiriting")
-            .setView(et)
-            .setPositiveButton("Saqlash") { _, _ ->
-                val txt = et.text.toString().trim()
-                if (txt.isNotEmpty()) {
-                    selectSecretaryReason(txt)
-                    notifyServiceSecretaryChanged()
-                }
-            }
-            .setNegativeButton("Bekor qilish", null)
-            .show()
-    }
-
-    private fun notifyServiceSecretaryChanged() {
+    private fun stopMobileVoiceRecognition() {
         try {
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_SET_SECRETARY
-                putExtra("enabled", prefs.aiSecretaryEnabled)
-                putExtra("reason", prefs.aiSecretaryReason)
-            }
-            startService(intent)
+            speechRecognizer?.stopListening()
         } catch (_: Exception) {}
+        isVoiceListening = false
+        jarvisParticleView.setMicLevel(0f)
     }
 
-    private fun resolveLessonUrl(rawUrl: String): String {
-        if (rawUrl.isBlank()) return ""
-        try {
-            val uri = Uri.parse(rawUrl)
-            val configuredServer = prefs.serverAddress.trim()
-                .removePrefix("http://")
-                .removePrefix("https://")
-                .removePrefix("ws://")
-                .removePrefix("wss://")
+    // ── Ovozli Sintez (TextToSpeech) ───────────────────────────────────────
+    private fun initTextToSpeech() {
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                isTtsReady = true
+                tts?.language = Locale("uz")
+                tts?.setSpeechRate(1.02f)
+                tts?.setPitch(0.98f)
 
-            val configuredHost = if (configuredServer.contains(":")) {
-                configuredServer.substringBefore(":")
-            } else {
-                configuredServer
-            }
-
-            if (configuredHost.isNotBlank()) {
-                val originalPort = uri.port
-                val newPortPart = if (originalPort != -1) ":$originalPort" else ""
-                val scheme = uri.scheme ?: "http"
-                val path = uri.path ?: ""
-                val query = if (uri.query != null) "?${uri.query}" else ""
-                val fragment = if (uri.fragment != null) "#${uri.fragment}" else ""
-                return "$scheme://$configuredHost$newPortPart$path$query$fragment"
-            }
-        } catch (e: Exception) {
-            Log.w("MainActivity", "Error resolving lesson URL: ${e.message}")
-        }
-        return rawUrl
-    }
-
-    private fun openQuronLesson(url: String) {
-        val resolvedUrl = resolveLessonUrl(url)
-        quronWebUrl = resolvedUrl
-        runOnUiThread {
-            btnOpenExternalBrowser.setOnClickListener {
-                try {
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(resolvedUrl)).apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                    override fun onStart(utteranceId: String?) {
+                        runOnUiThread {
+                            jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                            jarvisParticleView.setSpeechLevel(0.85f)
+                        }
                     }
-                    startActivity(browserIntent)
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Brauzer ochishda xatolik", Toast.LENGTH_SHORT).show()
-                }
-            }
-            openWebUrl(resolvedUrl)
-        }
-    }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun openWebUrl(url: String) {
-        if (url.isBlank()) return
-        containerWebView.visibility = View.VISIBLE
-        tvWebTitle.text = "📖 Qur'on Ustozi AI"
-        webViewDashboard.settings.apply {
-            javaScriptEnabled = true
-            domStorageEnabled = true
-            mediaPlaybackRequiresUserGesture = false
-            cacheMode = WebSettings.LOAD_DEFAULT
-            allowFileAccess = true
-            databaseEnabled = true
-        }
-        webViewDashboard.webViewClient = object : WebViewClient() {
-            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                return false
-            }
-        }
-        webViewDashboard.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest?) {
-                runOnUiThread {
-                    try {
-                        request?.grant(request.resources)
-                    } catch (e: Exception) {
-                        Log.e("MainActivity", "WebRTC permission grant error: ${e.message}")
+                    override fun onDone(utteranceId: String?) {
+                        runOnUiThread {
+                            jarvisParticleView.setSpeechLevel(0f)
+                            jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                        }
                     }
-                }
+
+                    override fun onError(utteranceId: String?) {
+                        runOnUiThread {
+                            jarvisParticleView.setSpeechLevel(0f)
+                            jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        }
+                    }
+                })
             }
-        }
-        webViewDashboard.loadUrl(url)
-    }
-
-    private fun setupFeedAndInput() {
-        eventAdapter = LiveEventAdapter()
-        rvLiveFeed.layoutManager = LinearLayoutManager(this).apply {
-            stackFromEnd = true
-        }
-        rvLiveFeed.adapter = eventAdapter
-
-        addFeedEvent(LiveEvent(
-            EventType.SYSTEM,
-            "TIZIM",
-            "JARVIS Mark 57 tayyor. Xizmatingizdaman, Axmadulloh sir!",
-            currentTime()
-        ))
-
-        // Dynamic Send / Mic Icon Switcher
-        etCommandInput.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val hasText = !s.isNullOrBlank()
-                btnSendCommand.setImageResource(if (hasText) R.drawable.ic_send else R.drawable.ic_mic)
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        etCommandInput.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == EditorInfo.IME_ACTION_SEND) {
-                val txt = etCommandInput.text.toString().trim()
-                if (txt.isNotEmpty()) {
-                    sendJarvisCommand(txt)
-                    etCommandInput.setText("")
-                }
-                true
-            } else false
-        }
-
-        // Tap or Hold Mic / Send Button
-        btnSendCommand.setOnClickListener {
-            val txt = etCommandInput.text.toString().trim()
-            if (txt.isNotEmpty()) {
-                sendJarvisCommand(txt)
-                etCommandInput.setText("")
-            } else {
-                startMobileVoiceRecognition()
-            }
-        }
-
-        btnSendCommand.setOnLongClickListener {
-            val txt = etCommandInput.text.toString().trim()
-            if (txt.isEmpty()) {
-                startMobileVoiceRecognition()
-                true
-            } else false
         }
     }
 
-    private fun wakeJarvisVoice() {
-        try {
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_WAKE
-            }
-            startService(intent)
-            updateOrbState("LISTENING")
-        } catch (e: Exception) {
-            Log.e("MainActivity", "wakeJarvisVoice error: ${e.message}")
+    private fun speakJarvis(text: String) {
+        if (!isTtsReady || tts == null) {
+            showCaption(text)
+            return
         }
+
+        val params = Bundle().apply {
+            putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "JARVIS_REPLY_${System.currentTimeMillis()}")
+        }
+        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, params.getString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID))
     }
 
+    // ── Buyruqni Bajarish (Gemini AI yoki PC Bridge) ────────────────────────
     private fun sendJarvisCommand(cmd: String) {
         val detected = JarvisDomainRegistry.findDomainByVoice(cmd)
         if (detected != null && detected.id != currentDomain.id) {
-            applyDomain(detected, speakAnnouncement = true)
+            applyDomain(detected, speakAnnouncement = false)
         }
 
-        addFeedEvent(LiveEvent(EventType.USER, "Siz", cmd, currentTime()))
+        showCaption("«$cmd»")
+        jarvisParticleView.setState(JarvisParticleState.SEARCHING)
 
         if (prefs.connectionMode == "GEMINI_DIRECT") {
             executeGeminiPrompt(cmd)
         } else {
-            // PC_BRIDGE mode: send command to local WebSocket bridge service
             var sentToService = false
             try {
                 val intent = Intent(this, JarvisForegroundService::class.java).apply {
@@ -1221,15 +547,15 @@ class MainActivity : AppCompatActivity() {
     private fun executeGeminiPrompt(prompt: String) {
         val apiKey = prefs.geminiApiKey
         if (apiKey.isBlank()) {
-            val guidance = "Axmadulloh sir, to'g'ridan-to'g'ri telefonda ishlash uchun Sozlamalar bo'limidan bepul Google Gemini API kalitini kiriting."
-            tvOrbSubtitle.text = guidance
-            addFeedEvent(LiveEvent(EventType.JARVIS, "JARVIS", guidance, currentTime()))
+            val guidance = "Axmadulloh sir, to'g'ridan-to'g'ri ishlash uchun Sozlamalardan bepul Google Gemini API kalitini kiriting."
+            showCaption(guidance)
+            jarvisParticleView.setState(JarvisParticleState.IDLE)
             speakJarvis(guidance)
             return
         }
 
-        updateOrbState("THINKING")
-        tvOrbSubtitle.text = "Tahlil qilinmoqda..."
+        jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+        showCaption("Izlayapman…")
 
         lifecycleScope.launch {
             val result = GeminiApiClient.generateReply(
@@ -1239,239 +565,224 @@ class MainActivity : AppCompatActivity() {
                 userName = prefs.userName
             )
             result.onSuccess { reply ->
-                tvOrbSubtitle.text = reply
-                addFeedEvent(LiveEvent(EventType.JARVIS, "JARVIS", reply, currentTime()))
+                showCaption(reply)
+                jarvisParticleView.showResult(currentDomain.icon, reply)
                 speakJarvis(reply)
             }.onFailure { err ->
                 val errorMsg = "Xatolik: ${err.message ?: "Aloqa uzildi"}"
-                tvOrbSubtitle.text = errorMsg
-                addFeedEvent(LiveEvent(EventType.ACTION, "Xatolik", errorMsg, currentTime()))
+                showCaption(errorMsg)
+                jarvisParticleView.setState(JarvisParticleState.RELEASE)
                 speakJarvis("Kechirasiz, ser. API so'rovida xatolik yuz berdi.")
-                updateOrbState("IDLE")
             }
         }
     }
 
-    private fun setupProfileAndAuth() {
-        layoutProfileAvatar.setOnClickListener {
-            val dialog = Dialog(this)
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-            dialog.setContentView(R.layout.dialog_auth_profile)
-            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-
-            val etName = dialog.findViewById<EditText>(R.id.etProfileName)
-            val etEmail = dialog.findViewById<EditText>(R.id.etProfileEmail)
-            val btnGoogle = dialog.findViewById<MaterialButton>(R.id.btnGoogleSignIn)
-            val btnSave = dialog.findViewById<MaterialButton>(R.id.btnProfileSave)
-            val btnLogout = dialog.findViewById<MaterialButton>(R.id.btnProfileLogout)
-
-            etName.setText(prefs.userName)
-            etEmail.setText(prefs.userEmail)
-
-            btnGoogle.setOnClickListener {
-                prefs.userName = "Axmadulloh sir"
-                prefs.userEmail = "axmadulloh.dev@gmail.com"
-                prefs.isLoggedIn = true
-                etName.setText("Axmadulloh sir")
-                etEmail.setText("axmadulloh.dev@gmail.com")
-                dialog.dismiss()
-                Toast.makeText(this, "Google orqali ulandi: Axmadulloh sir", Toast.LENGTH_SHORT).show()
+    fun updateOrbState(state: String) {
+        runOnUiThread {
+            when (state.uppercase()) {
+                "IDLE" -> jarvisParticleView.setState(JarvisParticleState.IDLE)
+                "LISTENING" -> jarvisParticleView.setState(JarvisParticleState.LISTENING)
+                "THINKING", "SEARCHING" -> jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+                "SPEAKING" -> jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                "RELEASE" -> jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                else -> jarvisParticleView.setState(JarvisParticleState.IDLE)
             }
-
-            btnSave.setOnClickListener {
-                val name = etName.text.toString().trim()
-                val email = etEmail.text.toString().trim()
-                if (name.isNotEmpty()) prefs.userName = name
-                if (email.isNotEmpty()) prefs.userEmail = email
-                prefs.isLoggedIn = true
-                dialog.dismiss()
-                Toast.makeText(this, "Profil saqlandi!", Toast.LENGTH_SHORT).show()
-            }
-
-            btnLogout.setOnClickListener {
-                prefs.userName = "Foydalanuvchi"
-                prefs.userEmail = ""
-                prefs.isLoggedIn = false
-                dialog.dismiss()
-                Toast.makeText(this, "Hisobdan chiqildi", Toast.LENGTH_SHORT).show()
-            }
-
-            dialog.show()
         }
     }
 
-    private fun setupSettingsDialog() {
-        btnOpenSettings.setOnClickListener {
-            val dialog = Dialog(this)
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-            dialog.setContentView(R.layout.dialog_settings)
-            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+    // ── Sozlamalar Dialogi ─────────────────────────────────────────────────
+    private fun openSettingsDialog() {
+        val dialog = Dialog(this)
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+        dialog.setContentView(R.layout.dialog_settings)
+        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-            val btnPc = dialog.findViewById<TextView>(R.id.btnDialogRoutePc)
-            val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
-            val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
+        val btnPc = dialog.findViewById<TextView>(R.id.btnDialogRoutePc)
+        val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
+        val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
 
-            val tvActiveLabel = dialog.findViewById<TextView>(R.id.tvSettingsActiveDomainLabel)
-            val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvSettingsDomains)
+        val tvActiveLabel = dialog.findViewById<TextView>(R.id.tvSettingsActiveDomainLabel)
+        val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvSettingsDomains)
 
-            tvActiveLabel.text = "${currentDomain.icon} ${currentDomain.titleUz}"
-            tvActiveLabel.setTextColor(currentDomain.primaryColor)
+        tvActiveLabel?.text = "${currentDomain.icon} ${currentDomain.titleUz}"
+        tvActiveLabel?.setTextColor(currentDomain.primaryColor)
 
-            rvDomains.layoutManager = LinearLayoutManager(this)
-            val domainAdapter = DomainAdapter(JarvisDomainRegistry.getAllDomains(), currentDomain.id) { selected ->
-                applyDomain(selected, speakAnnouncement = true)
-                tvActiveLabel.text = "${selected.icon} ${selected.titleUz}"
-                tvActiveLabel.setTextColor(selected.primaryColor)
-                dialog.dismiss()
-            }
-            rvDomains.adapter = domainAdapter
+        rvDomains?.layoutManager = LinearLayoutManager(this)
+        val domainAdapter = DomainAdapter(JarvisDomainRegistry.getAllDomains(), currentDomain.id) { selected ->
+            applyDomain(selected, speakAnnouncement = true)
+            tvActiveLabel?.text = "${selected.icon} ${selected.titleUz}"
+            tvActiveLabel?.setTextColor(selected.primaryColor)
+            dialog.dismiss()
+        }
+        rvDomains?.adapter = domainAdapter
 
-            val btnModeGemini = dialog.findViewById<TextView>(R.id.btnModeGemini)
-            val btnModePcBridge = dialog.findViewById<TextView>(R.id.btnModePcBridge)
-            val layoutGemini = dialog.findViewById<View>(R.id.layoutGeminiSettings)
-            val layoutPc = dialog.findViewById<View>(R.id.layoutPcSettings)
-            val etGeminiKey = dialog.findViewById<EditText>(R.id.etDialogGeminiKey)
-            val cbShowTextInput = dialog.findViewById<CheckBox>(R.id.cbDialogShowTextInput)
+        val btnModeGemini = dialog.findViewById<TextView>(R.id.btnModeGemini)
+        val btnModePcBridge = dialog.findViewById<TextView>(R.id.btnModePcBridge)
+        val layoutGemini = dialog.findViewById<View>(R.id.layoutGeminiSettings)
+        val layoutPc = dialog.findViewById<View>(R.id.layoutPcSettings)
+        val etGeminiKey = dialog.findViewById<EditText>(R.id.etDialogGeminiKey)
+        val cbShowTextInput = dialog.findViewById<CheckBox>(R.id.cbDialogShowTextInput)
 
-            var selectedMode = prefs.connectionMode
+        var selectedMode = prefs.connectionMode
 
-            fun updateModeUi(mode: String) {
-                val activeBg = R.drawable.bg_ios_pill_active
-                val normalBg = R.drawable.bg_ios_action_chip
-                val activeText = Color.parseColor("#070A12")
-                val normalText = Color.WHITE
+        fun updateModeUi(mode: String) {
+            val activeBg = R.drawable.bg_ios_pill_active
+            val normalBg = R.drawable.bg_ios_action_chip
+            val activeText = Color.parseColor("#070A12")
+            val normalText = Color.WHITE
 
-                val isGemini = mode == "GEMINI_DIRECT"
-                btnModeGemini?.setBackgroundResource(if (isGemini) activeBg else normalBg)
-                btnModeGemini?.setTextColor(if (isGemini) activeText else normalText)
-                btnModePcBridge?.setBackgroundResource(if (!isGemini) activeBg else normalBg)
-                btnModePcBridge?.setTextColor(if (!isGemini) activeText else normalText)
+            val isGemini = mode == "GEMINI_DIRECT"
+            btnModeGemini?.setBackgroundResource(if (isGemini) activeBg else normalBg)
+            btnModeGemini?.setTextColor(if (isGemini) activeText else normalText)
+            btnModePcBridge?.setBackgroundResource(if (!isGemini) activeBg else normalBg)
+            btnModePcBridge?.setTextColor(if (!isGemini) activeText else normalText)
 
-                layoutGemini?.visibility = if (isGemini) View.VISIBLE else View.GONE
-                layoutPc?.visibility = if (!isGemini) View.VISIBLE else View.GONE
-            }
+            layoutGemini?.visibility = if (isGemini) View.VISIBLE else View.GONE
+            layoutPc?.visibility = if (!isGemini) View.VISIBLE else View.GONE
+        }
 
+        updateModeUi(selectedMode)
+
+        btnModeGemini?.setOnClickListener {
+            selectedMode = "GEMINI_DIRECT"
             updateModeUi(selectedMode)
-
-            btnModeGemini?.setOnClickListener {
-                selectedMode = "GEMINI_DIRECT"
-                updateModeUi(selectedMode)
-            }
-
-            btnModePcBridge?.setOnClickListener {
-                selectedMode = "PC_BRIDGE"
-                updateModeUi(selectedMode)
-            }
-
-            etGeminiKey?.setText(prefs.geminiApiKey)
-            cbShowTextInput?.isChecked = prefs.showTextInputBar
-
-            val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
-            val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
-            val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
-            val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
-            val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
-            val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
-
-            etServer?.setText(prefs.serverAddress)
-            etToken?.setText(prefs.authToken)
-            cbBoot?.isChecked = prefs.autoStartOnBoot
-            cbQuron?.isChecked = prefs.quronCardVisible
-
-            btnGrantNotif?.setOnClickListener {
-                try {
-                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Sozlamalarni ochishda xatolik", Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            fun updateRouteUi(route: AudioRoute) {
-                val activeBg = R.drawable.bg_ios_pill_active
-                val normalBg = R.drawable.bg_ios_action_chip
-                val activeText = Color.parseColor("#070A12")
-                val normalText = Color.WHITE
-
-                btnPc.setBackgroundResource(if (route == AudioRoute.PC) activeBg else normalBg)
-                btnPc.setTextColor(if (route == AudioRoute.PC) activeText else normalText)
-
-                btnPhone.setBackgroundResource(if (route == AudioRoute.PHONE) activeBg else normalBg)
-                btnPhone.setTextColor(if (route == AudioRoute.PHONE) activeText else normalText)
-
-                btnEarbuds.setBackgroundResource(if (route == AudioRoute.EARBUDS) activeBg else normalBg)
-                btnEarbuds.setTextColor(if (route == AudioRoute.EARBUDS) activeText else normalText)
-            }
-
-            updateRouteUi(activeRoute)
-
-            btnPc.setOnClickListener {
-                activeRoute = AudioRoute.PC
-                updateRouteUi(activeRoute)
-                applyAudioRoute(activeRoute)
-            }
-            btnPhone.setOnClickListener {
-                activeRoute = AudioRoute.PHONE
-                updateRouteUi(activeRoute)
-                applyAudioRoute(activeRoute)
-            }
-            btnEarbuds.setOnClickListener {
-                activeRoute = AudioRoute.EARBUDS
-                updateRouteUi(activeRoute)
-                applyAudioRoute(activeRoute)
-            }
-
-            btnSave.setOnClickListener {
-                prefs.connectionMode = selectedMode
-                prefs.geminiApiKey = etGeminiKey?.text?.toString()?.trim() ?: ""
-                prefs.showTextInputBar = cbShowTextInput?.isChecked == true
-                bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
-
-                prefs.serverAddress = etServer?.text?.toString()?.trim() ?: ""
-                prefs.authToken = etToken?.text?.toString()?.trim() ?: ""
-                prefs.autoStartOnBoot = cbBoot?.isChecked == true
-                prefs.quronCardVisible = cbQuron?.isChecked == true
-
-                tvStatusBadge.text = if (prefs.connectionMode == "GEMINI_DIRECT") "● GEMINI AI" else "● PC BRIDGE"
-                Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
-                dialog.dismiss()
-            }
-
-            dialog.show()
         }
+
+        btnModePcBridge?.setOnClickListener {
+            selectedMode = "PC_BRIDGE"
+            updateModeUi(selectedMode)
+        }
+
+        etGeminiKey?.setText(prefs.geminiApiKey)
+        cbShowTextInput?.isChecked = prefs.showTextInputBar
+
+        val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
+        val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
+        val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
+        val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
+        val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
+        val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
+
+        etServer?.setText(prefs.serverAddress)
+        etToken?.setText(prefs.authToken)
+        cbBoot?.isChecked = prefs.autoStartOnBoot
+        cbQuron?.isChecked = prefs.quronCardVisible
+
+        btnGrantNotif?.setOnClickListener {
+            try {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            } catch (_: Exception) {
+                Toast.makeText(this, "Sozlamalarni ochishda xatolik", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        fun updateRouteUi(route: AudioRoute) {
+            val activeBg = R.drawable.bg_ios_pill_active
+            val normalBg = R.drawable.bg_ios_action_chip
+            val activeText = Color.parseColor("#070A12")
+            val normalText = Color.WHITE
+
+            btnPc?.setBackgroundResource(if (route == AudioRoute.PC) activeBg else normalBg)
+            btnPc?.setTextColor(if (route == AudioRoute.PC) activeText else normalText)
+            btnPhone?.setBackgroundResource(if (route == AudioRoute.PHONE) activeBg else normalBg)
+            btnPhone?.setTextColor(if (route == AudioRoute.PHONE) activeText else normalText)
+            btnEarbuds?.setBackgroundResource(if (route == AudioRoute.EARBUDS) activeBg else normalBg)
+            btnEarbuds?.setTextColor(if (route == AudioRoute.EARBUDS) activeText else normalText)
+        }
+
+        updateRouteUi(activeRoute)
+
+        btnPc?.setOnClickListener {
+            activeRoute = AudioRoute.PC
+            updateRouteUi(activeRoute)
+            applyAudioRoute(activeRoute)
+        }
+        btnPhone?.setOnClickListener {
+            activeRoute = AudioRoute.PHONE
+            updateRouteUi(activeRoute)
+            applyAudioRoute(activeRoute)
+        }
+        btnEarbuds?.setOnClickListener {
+            activeRoute = AudioRoute.EARBUDS
+            updateRouteUi(activeRoute)
+            applyAudioRoute(activeRoute)
+        }
+
+        btnSave?.setOnClickListener {
+            val newKey = etGeminiKey?.text?.toString()?.trim() ?: ""
+            prefs.geminiApiKey = newKey
+            prefs.connectionMode = selectedMode
+            prefs.showTextInputBar = cbShowTextInput?.isChecked == true
+            prefs.serverAddress = etServer?.text?.toString()?.trim() ?: prefs.serverAddress
+            prefs.authToken = etToken?.text?.toString()?.trim() ?: prefs.authToken
+            prefs.autoStartOnBoot = cbBoot?.isChecked == true
+            prefs.quronCardVisible = cbQuron?.isChecked == true
+
+            bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+            dialog.dismiss()
+            Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
+        }
+
+        dialog.show()
     }
 
     private fun applyAudioRoute(route: AudioRoute) {
-        prefs.audioRoute = route.name
+        val intent = Intent(this, JarvisForegroundService::class.java).apply {
+            action = JarvisForegroundService.ACTION_SET_AUDIO_ROUTE
+            putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
+        }
+        startService(intent)
+    }
+
+    // ── In-App WebView (Qur'on yoki Havolalar) ──────────────────────────────
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun openQuronLesson(url: String) {
+        containerWebView.visibility = View.VISIBLE
+        tvWebTitle.text = "Qur'on Ustozi"
+
+        webViewDashboard.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_DEFAULT
+        }
+        webViewDashboard.webViewClient = WebViewClient()
+        webViewDashboard.webChromeClient = WebChromeClient()
+        webViewDashboard.loadUrl(url)
+    }
+
+    // ── Ruxsatlar va Xizmatni Ishga Tushirish ──────────────────────────────
+    private fun checkPermissionsAndStart() {
+        val perms = mutableListOf<String>()
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            perms.add(Manifest.permission.RECORD_AUDIO)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                perms.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        if (perms.isNotEmpty()) {
+            permissionLauncher.launch(perms.toTypedArray())
+        } else {
+            startJarvisService()
+        }
+    }
+
+    private fun startJarvisService() {
         try {
             val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_SET_ROUTE
-                putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
+                action = JarvisForegroundService.ACTION_START
             }
-            startService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
         } catch (e: Exception) {
-            Log.e("MainActivity", "applyAudioRoute error: ${e.message}")
+            Log.e("MainActivity", "startJarvisService error: ${e.message}")
         }
     }
-
-    private fun addFeedEvent(event: LiveEvent) {
-        // Filter out internal technical routing and raw status noise
-        if (event.type == EventType.ACTION) {
-            val title = event.title.lowercase()
-            if (title.contains("audio_route") || title.contains("phone_") || title.contains("mic_")) {
-                return
-            }
-        }
-        runOnUiThread {
-            try {
-                eventAdapter.addEvent(event)
-                rvLiveFeed.scrollToPosition(eventAdapter.itemCount - 1)
-            } catch (e: Exception) {
-                Log.e("MainActivity", "addFeedEvent error: ${e.message}")
-            }
-        }
-    }
-
-    private fun currentTime(): String = timeFormat.format(Date())
 
     override fun onResume() {
         super.onResume()
@@ -1494,71 +805,15 @@ class MainActivity : AppCompatActivity() {
         try {
             unregisterReceiver(receiver)
         } catch (_: Exception) {}
-    }
-
-    private fun checkPermissionsAndStart() {
-        val permissions = mutableListOf(
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.CALL_PHONE,
-            Manifest.permission.READ_CONTACTS,
-            Manifest.permission.SEND_SMS,
-            Manifest.permission.READ_PHONE_STATE,
-            Manifest.permission.CAMERA
-        )
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            permissions.add(Manifest.permission.BLUETOOTH_CONNECT)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
-        val needed = permissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-
-        if (needed.isEmpty()) {
-            startJarvisService()
-        } else {
-            permissionLauncher.launch(needed.toTypedArray())
-        }
-    }
-
-    private fun startJarvisService() {
-        try {
-            val intent = Intent(this, JarvisForegroundService::class.java).apply {
-                action = JarvisForegroundService.ACTION_START
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(intent)
-            } else {
-                startService(intent)
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "startJarvisService error: ${e.message}")
-        }
+        stopMobileVoiceRecognition()
     }
 
     override fun onDestroy() {
-        try {
-            speechRecognizer?.destroy()
-        } catch (_: Exception) {}
-        try {
-            tts?.stop()
-            tts?.shutdown()
-        } catch (_: Exception) {}
         super.onDestroy()
-    }
-
-    override fun onBackPressed() {
-        if (::containerWebView.isInitialized && containerWebView.visibility == View.VISIBLE) {
-            if (webViewDashboard.canGoBack()) {
-                webViewDashboard.goBack()
-            } else {
-                containerWebView.visibility = View.GONE
-                webViewDashboard.loadUrl("about:blank")
-            }
-            return
-        }
-        super.onBackPressed()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
     }
 }
