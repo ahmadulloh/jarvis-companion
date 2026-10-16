@@ -163,7 +163,7 @@ class MainActivity : AppCompatActivity() {
         initTextToSpeech()
 
         // Faol sohani yuklash
-        val savedDomain = JarvisDomainRegistry.findDomainById(prefs.activeDomainId) ?: JarvisDomainRegistry.ASOSIY
+        val savedDomain = JarvisDomainRegistry.getDomainById(prefs.activeDomain)
         applyDomain(savedDomain, speakAnnouncement = false)
 
         checkPermissionsAndStart()
@@ -277,7 +277,7 @@ class MainActivity : AppCompatActivity() {
     // ── Soha almashtirish (Theme, Zarralar rangi, Top chip) ────────────────
     private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
         currentDomain = domain
-        prefs.activeDomainId = domain.id
+        prefs.activeDomain = domain.id
 
         // Zarralar tizimini yangi soha rangiga o'tkazish
         jarvisParticleView.setMode(domain)
@@ -728,7 +728,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun applyAudioRoute(route: AudioRoute) {
         val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_SET_AUDIO_ROUTE
+            action = JarvisForegroundService.ACTION_SET_ROUTE
             putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
         }
         startService(intent)
