@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/bg_ios_card"
+    android:background="@drawable/bg_settings_dialog_light"
     android:overScrollMode="never"
     android:scrollbars="none">
 
@@ -13,31 +13,53 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Header Row -->
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.08"
-            android:text="JARVIS SOZLAMALARI"
-            android:textColor="@color/night_text_primary"
-            android:textSize="17sp" />
+            android:layout_marginBottom="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.04"
+                android:text="J.A.R.V.I.S Sozlamalari"
+                android:textColor="#0F172A"
+                android:textSize="17sp" />
+
+            <TextView
+                android:id="@+id/btnDialogClose"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:text="✕"
+                android:textColor="#64748B"
+                android:textSize="16sp" />
+        </RelativeLayout>
 
         <!-- 1. Gibrid Aloqa Rejimi: Gemini AI yoki PC Bridge -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
             android:fontFamily="sans-serif-bold"
             android:text="Ishlash va Aloqa Rejimi (Gibrid):"
-            android:textColor="@color/night_text_primary"
+            android:textColor="#334155"
             android:textSize="12sp" />
 
         <LinearLayout
             android:id="@+id/dialogConnectionModeBar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_ios_segment_bar"
+            android:layout_height="42dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_settings_segment_bar"
             android:orientation="horizontal"
             android:padding="3dp">
 
@@ -46,31 +68,25 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/bg_ios_pill_active"
+                android:background="@drawable/bg_settings_pill_active"
+                android:fontFamily="sans-serif-bold"
                 android:gravity="center"
                 android:singleLine="true"
-                android:ellipsize="end"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp"
-                android:text="🤖 Gemini AI (Telefonda)"
-                android:textColor="@color/night_pill_active_text"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-bold" />
+                android:text="⚡ Gemini AI"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/btnModePcBridge"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="center"
                 android:singleLine="true"
-                android:ellipsize="end"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp"
-                android:text="💻 PC Bridge"
-                android:textColor="@color/night_text_secondary"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-medium" />
+                android:text="🖥️ PC Bridge"
+                android:textColor="#64748B"
+                android:textSize="12sp" />
         </LinearLayout>
 
         <!-- Container for Gemini Settings -->
@@ -84,8 +100,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
                 android:text="Google Gemini API Kaliti:"
-                android:textColor="@color/night_text_secondary"
+                android:textColor="#475569"
                 android:textSize="12sp" />
 
             <EditText
@@ -93,20 +110,23 @@
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/bg_ios_action_chip"
+                android:background="@drawable/bg_settings_input"
                 android:hint="AIzaSy... (Google AI Studio)"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:textColor="@color/night_text_primary"
-                android:textSize="12sp" />
+                android:singleLine="true"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8"
+                android:textSize="13sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
                 android:text="Kompyutersiz, to'g'ridan-to'g'ri telefonda sun'iy idrok bilan muloqot."
-                android:textColor="@color/jarvis_cyan"
-                android:textSize="10sp" />
+                android:textColor="#059669"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- Container for PC Bridge Settings -->
@@ -121,8 +141,9 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
                 android:text="Server IP (Tailscale):"
-                android:textColor="@color/night_text_secondary"
+                android:textColor="#475569"
                 android:textSize="12sp" />
 
             <EditText
@@ -130,19 +151,22 @@
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/bg_ios_action_chip"
+                android:background="@drawable/bg_settings_input"
                 android:hint="100.112.86.116:8000"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:textColor="@color/night_text_primary"
+                android:singleLine="true"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8"
                 android:textSize="13sp" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="sans-serif-medium"
                 android:text="Xavfsizlik kaliti (Token):"
-                android:textColor="@color/night_text_secondary"
+                android:textColor="#475569"
                 android:textSize="12sp" />
 
             <EditText
@@ -150,11 +174,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:layout_marginTop="5dp"
-                android:background="@drawable/bg_ios_action_chip"
+                android:background="@drawable/bg_settings_input"
                 android:hint="jarvis-phone-companion-token"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:textColor="@color/night_text_primary"
+                android:singleLine="true"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -162,18 +188,18 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:fontFamily="sans-serif-bold"
             android:text="Ovoz va Boshqaruv Qurilmasi:"
-            android:textColor="@color/night_text_primary"
+            android:textColor="#334155"
             android:textSize="12sp" />
 
         <LinearLayout
             android:id="@+id/dialogSegmentBar"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_ios_segment_bar"
+            android:layout_height="40dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_settings_segment_bar"
             android:orientation="horizontal"
             android:padding="3dp">
 
@@ -182,56 +208,47 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="center"
                 android:singleLine="true"
-                android:ellipsize="end"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
                 android:text="💻 PC"
-                android:textColor="@color/night_text_secondary"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-medium" />
+                android:textColor="#64748B"
+                android:textSize="11.5sp" />
 
             <TextView
                 android:id="@+id/btnDialogRoutePhone"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="center"
                 android:singleLine="true"
-                android:ellipsize="end"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
                 android:text="📱 Telefon"
-                android:textColor="@color/night_text_secondary"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-medium" />
+                android:textColor="#64748B"
+                android:textSize="11.5sp" />
 
             <TextView
                 android:id="@+id/btnDialogRouteEarbuds"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:background="@drawable/bg_ios_pill_active"
+                android:background="@drawable/bg_settings_pill_active"
+                android:fontFamily="sans-serif-bold"
                 android:gravity="center"
                 android:singleLine="true"
-                android:ellipsize="end"
-                android:paddingStart="2dp"
-                android:paddingEnd="2dp"
                 android:text="🎧 Quloqchin"
-                android:textColor="@color/night_pill_active_text"
-                android:textSize="11sp"
-                android:fontFamily="sans-serif-bold" />
+                android:textColor="#FFFFFF"
+                android:textSize="11.5sp" />
         </LinearLayout>
 
-        <!-- 3. Interfeys va Matn Yozish Sozlamasi -->
+        <!-- 3. Interfeys va Qo'shimcha Sozlamalar -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
             android:fontFamily="sans-serif-bold"
-            android:text="Interfeys Ko'rinishi:"
-            android:textColor="@color/night_text_primary"
+            android:text="Interfeys va Funksiyalar:"
+            android:textColor="#334155"
             android:textSize="12sp" />
 
         <CheckBox
@@ -239,110 +256,107 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:buttonTint="#12A550"
+            android:fontFamily="sans-serif"
             android:text="⌨️ Pastki matn yozish maydonini ko'rsatish"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="28dp"
-            android:text="O'chirilganda ilova toza, faqat ovozli va kuchli neyron ko'rinishda ochiladi."
-            android:textColor="@color/night_text_secondary"
-            android:textSize="10sp" />
+            android:textColor="#1E293B"
+            android:textSize="12.5sp" />
 
         <CheckBox
             android:id="@+id/cbDialogAutoStart"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Telefon yoqilganda avtomatik ulanish"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
+            android:layout_marginTop="2dp"
+            android:buttonTint="#12A550"
+            android:fontFamily="sans-serif"
+            android:text="⚡ Telefon yoqilganda avtomatik ulanish"
+            android:textColor="#1E293B"
+            android:textSize="12.5sp" />
 
         <CheckBox
             android:id="@+id/cbDialogQuronAlways"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Qur'on Ustozi kartasini doimiy ko'rsatish"
-            android:textColor="@color/night_text_primary"
-            android:textSize="12sp" />
+            android:layout_marginTop="2dp"
+            android:buttonTint="#12A550"
+            android:fontFamily="sans-serif"
+            android:text="🕌 Qur'on Ustozi darslarini doimiy ko'rsatish"
+            android:textColor="#1E293B"
+            android:textSize="12.5sp" />
 
-        <!-- 4. SOHALAR VA REJIMLAR (31 TA SOHA) -->
+        <!-- 4. Faol Soha (Ixcham Kartochka) -->
         <LinearLayout
+            android:id="@+id/layoutSettingsActiveDomainRow"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_sheet_search"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:fontFamily="sans-serif-bold"
-                android:text="🧠 Sohalar va Rejimlar (31 ta soha):"
-                android:textColor="@color/night_text_primary"
-                android:textSize="13sp" />
+                android:fontFamily="sans-serif-medium"
+                android:text="Faol soha rejimi:"
+                android:textColor="#475569"
+                android:textSize="12.5sp" />
 
             <TextView
                 android:id="@+id/tvSettingsActiveDomainLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_ios_action_chip"
-                android:fontFamily="sans-serif-medium"
-                android:paddingStart="8dp"
-                android:paddingTop="3dp"
-                android:paddingEnd="8dp"
-                android:paddingBottom="3dp"
-                android:text="ASOSIY"
-                android:textColor="@color/jarvis_cyan"
-                android:textSize="10sp" />
+                android:background="@drawable/bg_domain_chip"
+                android:fontFamily="sans-serif-bold"
+                android:paddingStart="10dp"
+                android:paddingTop="4dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:text="⚡ Asosiy"
+                android:textColor="#12A550"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Ovozda soha nomini ayting (masalan: 'Haydovchi rejimi') yoki pastdan tanlang:"
-            android:textColor="@color/night_text_secondary"
-            android:textSize="11sp" />
-
+        <!-- Hidden legacy recycler view to avoid NPE if referenced -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvSettingsDomains"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
-            android:layout_marginTop="8dp"
-            android:nestedScrollingEnabled="true"
-            android:scrollbars="vertical" />
+            android:layout_height="0dp"
+            android:visibility="gone" />
 
         <!-- Notification Access button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnGrantNotificationAccess"
             android:layout_width="match_parent"
-            android:layout_height="42dp"
+            android:layout_height="44dp"
             android:layout_marginTop="12dp"
-            android:backgroundTint="@color/night_segment_bg"
-            android:text="💬 Telegram xabarlariga ruxsat"
+            android:backgroundTint="#F1F5F9"
+            android:fontFamily="sans-serif-medium"
+            android:text="💬 Telegram bildirishnomalariga ruxsat"
             android:textAllCaps="false"
-            android:textColor="@color/night_text_primary"
+            android:textColor="#334155"
             android:textSize="12sp"
             app:cornerRadius="12dp"
-            app:strokeColor="@color/night_card_border"
+            app:strokeColor="#CBD5E1"
             app:strokeWidth="1dp" />
 
         <!-- Save button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDialogSave"
             android:layout_width="match_parent"
-            android:layout_height="46dp"
+            android:layout_height="48dp"
             android:layout_marginTop="16dp"
-            android:backgroundTint="@color/jarvis_cyan"
+            android:backgroundTint="#12A550"
             android:fontFamily="sans-serif-bold"
             android:text="Saqlash va Ulanish"
             android:textAllCaps="false"
-            android:textColor="#070A12"
-            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
             app:cornerRadius="14dp" />
 
     </LinearLayout>

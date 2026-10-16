@@ -12,16 +12,16 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- 2. Minimalist Futuristic Top Bar -->
+    <!-- 2. Minimalist Futuristic Top Bar (Constrained & Compact) -->
     <RelativeLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:paddingStart="22dp"
-        android:paddingTop="28dp"
-        android:paddingEnd="20dp"
-        android:paddingBottom="12dp">
+        android:paddingStart="20dp"
+        android:paddingTop="26dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="10dp">
 
         <!-- Brand Title: J . A . R . V . I . S -->
         <TextView
@@ -30,47 +30,54 @@
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/chipDomainSelector"
+            android:layout_marginEnd="14dp"
             android:clickable="true"
             android:focusable="true"
             android:fontFamily="sans-serif-black"
-            android:letterSpacing="0.28"
+            android:letterSpacing="0.20"
+            android:singleLine="true"
             android:text="J . A . R . V . I . S"
             android:textColor="#0B2A18"
-            android:textSize="15sp" />
+            android:textSize="14sp" />
 
         <!-- Domain Mode Selector Chip (Click opens Bottom Sheet) -->
         <LinearLayout
             android:id="@+id/chipDomainSelector"
             android:layout_width="wrap_content"
-            android:layout_height="38dp"
+            android:layout_height="32dp"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="@drawable/bg_domain_chip"
             android:clickable="true"
-            android:elevation="3dp"
+            android:elevation="2dp"
             android:focusable="true"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingEnd="16dp">
+            android:paddingStart="10dp"
+            android:paddingEnd="12dp">
 
             <!-- Small Round Colored Indicator Dot -->
             <View
                 android:id="@+id/viewChipDot"
-                android:layout_width="7dp"
-                android:layout_height="7dp"
+                android:layout_width="6dp"
+                android:layout_height="6dp"
                 android:background="@drawable/bg_sheet_handle" />
 
-            <!-- Active Domain Title -->
+            <!-- Active Domain Title (Short & Compact) -->
             <TextView
                 android:id="@+id/tvChipTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
+                android:ellipsize="end"
                 android:fontFamily="sans-serif-bold"
+                android:maxWidth="115dp"
+                android:maxLines="1"
+                android:singleLine="true"
                 android:text="Asosiy"
                 android:textColor="#12A550"
-                android:textSize="13sp" />
+                android:textSize="12sp" />
         </LinearLayout>
     </RelativeLayout>
 

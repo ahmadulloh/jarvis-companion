@@ -274,6 +274,44 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getShortDomainName(domain: JarvisDomain): String {
+        return when (domain.id.uppercase()) {
+            "ASOSIY" -> "Asosiy"
+            "HAYDOVCHI" -> "Taxi"
+            "TALABA" -> "O'quvchi"
+            "O'QITUVCHI", "OQITUVCHI" -> "O'qituvchi"
+            "DIN" -> "Din"
+            "DASTURCHI" -> "Dasturchi"
+            "DOKON", "DO'KON" -> "Do'kon"
+            "MOLIYA" -> "Moliya"
+            "UY" -> "Aqlli Uy"
+            "SALOMATLIK" -> "Salomatlik"
+            "TIL" -> "Til"
+            "ONLAYN_SAVDO" -> "Savdo"
+            "KAFE" -> "Kafe"
+            "SALON" -> "Salon"
+            "AVTOUSTA" -> "Avtousta"
+            "USTA" -> "Usta"
+            "MULK" -> "Mulk"
+            "FRILANSER" -> "Frilanser"
+            "MENEJER" -> "Menejer"
+            "HR" -> "HR"
+            "YURIST" -> "Yurist"
+            "IT_ADMIN" -> "IT-Admin"
+            "KONTENT" -> "Kontent"
+            "FOTO_VIDEO" -> "Media"
+            "MUSIQA" -> "Musiqa"
+            "GAMER" -> "Geymer"
+            "FERMER" -> "Fermer"
+            "OILA" -> "Oila"
+            "KEKSA" -> "Keksa"
+            "SPORT" -> "Sport"
+            "SAYOHAT" -> "Sayohat"
+            "HAYVON" -> "Hayvon"
+            else -> domain.titleUz.split(" ", "/", "·").firstOrNull()?.trim() ?: domain.titleUz
+        }
+    }
+
     // ── Soha almashtirish (Theme, Zarralar rangi, Top chip) ────────────────
     private fun applyDomain(domain: JarvisDomain, speakAnnouncement: Boolean = false) {
         currentDomain = domain
@@ -282,9 +320,10 @@ class MainActivity : AppCompatActivity() {
         // Zarralar tizimini yangi soha rangiga o'tkazish
         jarvisParticleView.setMode(domain)
 
-        // Yuqori o'ngdagi Chip dizaynini yangilash
+        // Yuqori o'ngdagi Chip dizaynini yangilash (ixcham va qisqa nom)
         val density = resources.displayMetrics.density
-        tvChipTitle.text = domain.titleUz
+        val shortName = getShortDomainName(domain)
+        tvChipTitle.text = shortName
         tvChipTitle.setTextColor(domain.primaryColor)
 
         val chipBg = GradientDrawable().apply {
@@ -301,7 +340,7 @@ class MainActivity : AppCompatActivity() {
         }
         viewChipDot.background = dotBg
 
-        showCaption("«${domain.titleUz}» faol")
+        showCaption("«${shortName}» faol")
 
         if (speakAnnouncement) {
             speakJarvis(domain.motto)
@@ -597,24 +636,24 @@ class MainActivity : AppCompatActivity() {
         dialog.setContentView(R.layout.dialog_settings)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
+        val btnClose = dialog.findViewById<TextView>(R.id.btnDialogClose)
+        btnClose?.setOnClickListener { dialog.dismiss() }
+
         val btnPc = dialog.findViewById<TextView>(R.id.btnDialogRoutePc)
         val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
         val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
 
         val tvActiveLabel = dialog.findViewById<TextView>(R.id.tvSettingsActiveDomainLabel)
-        val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvSettingsDomains)
+        val layoutActiveDomainRow = dialog.findViewById<View>(R.id.layoutSettingsActiveDomainRow)
 
-        tvActiveLabel?.text = "${currentDomain.icon} ${currentDomain.titleUz}"
+        val shortName = getShortDomainName(currentDomain)
+        tvActiveLabel?.text = "${currentDomain.icon} $shortName"
         tvActiveLabel?.setTextColor(currentDomain.primaryColor)
 
-        rvDomains?.layoutManager = LinearLayoutManager(this)
-        val domainAdapter = DomainAdapter(JarvisDomainRegistry.getAllDomains(), currentDomain.id) { selected ->
-            applyDomain(selected, speakAnnouncement = true)
-            tvActiveLabel?.text = "${selected.icon} ${selected.titleUz}"
-            tvActiveLabel?.setTextColor(selected.primaryColor)
+        layoutActiveDomainRow?.setOnClickListener {
             dialog.dismiss()
+            showDomainBottomSheet()
         }
-        rvDomains?.adapter = domainAdapter
 
         val btnModeGemini = dialog.findViewById<TextView>(R.id.btnModeGemini)
         val btnModePcBridge = dialog.findViewById<TextView>(R.id.btnModePcBridge)
@@ -626,16 +665,18 @@ class MainActivity : AppCompatActivity() {
         var selectedMode = prefs.connectionMode
 
         fun updateModeUi(mode: String) {
-            val activeBg = R.drawable.bg_ios_pill_active
-            val normalBg = R.drawable.bg_ios_action_chip
-            val activeText = Color.parseColor("#070A12")
-            val normalText = Color.WHITE
-
             val isGemini = mode == "GEMINI_DIRECT"
-            btnModeGemini?.setBackgroundResource(if (isGemini) activeBg else normalBg)
-            btnModeGemini?.setTextColor(if (isGemini) activeText else normalText)
-            btnModePcBridge?.setBackgroundResource(if (!isGemini) activeBg else normalBg)
-            btnModePcBridge?.setTextColor(if (!isGemini) activeText else normalText)
+            if (isGemini) {
+                btnModeGemini?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                btnModeGemini?.setTextColor(Color.WHITE)
+                btnModePcBridge?.setBackgroundColor(Color.TRANSPARENT)
+                btnModePcBridge?.setTextColor(Color.parseColor("#64748B"))
+            } else {
+                btnModePcBridge?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                btnModePcBridge?.setTextColor(Color.WHITE)
+                btnModeGemini?.setBackgroundColor(Color.TRANSPARENT)
+                btnModeGemini?.setTextColor(Color.parseColor("#64748B"))
+            }
 
             layoutGemini?.visibility = if (isGemini) View.VISIBLE else View.GONE
             layoutPc?.visibility = if (!isGemini) View.VISIBLE else View.GONE
@@ -677,17 +718,27 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun updateRouteUi(route: AudioRoute) {
-            val activeBg = R.drawable.bg_ios_pill_active
-            val normalBg = R.drawable.bg_ios_action_chip
-            val activeText = Color.parseColor("#070A12")
-            val normalText = Color.WHITE
+            btnPc?.setBackgroundColor(Color.TRANSPARENT)
+            btnPc?.setTextColor(Color.parseColor("#64748B"))
+            btnPhone?.setBackgroundColor(Color.TRANSPARENT)
+            btnPhone?.setTextColor(Color.parseColor("#64748B"))
+            btnEarbuds?.setBackgroundColor(Color.TRANSPARENT)
+            btnEarbuds?.setTextColor(Color.parseColor("#64748B"))
 
-            btnPc?.setBackgroundResource(if (route == AudioRoute.PC) activeBg else normalBg)
-            btnPc?.setTextColor(if (route == AudioRoute.PC) activeText else normalText)
-            btnPhone?.setBackgroundResource(if (route == AudioRoute.PHONE) activeBg else normalBg)
-            btnPhone?.setTextColor(if (route == AudioRoute.PHONE) activeText else normalText)
-            btnEarbuds?.setBackgroundResource(if (route == AudioRoute.EARBUDS) activeBg else normalBg)
-            btnEarbuds?.setTextColor(if (route == AudioRoute.EARBUDS) activeText else normalText)
+            when (route) {
+                AudioRoute.PC -> {
+                    btnPc?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnPc?.setTextColor(Color.WHITE)
+                }
+                AudioRoute.PHONE -> {
+                    btnPhone?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnPhone?.setTextColor(Color.WHITE)
+                }
+                AudioRoute.EARBUDS -> {
+                    btnEarbuds?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnEarbuds?.setTextColor(Color.WHITE)
+                }
+            }
         }
 
         updateRouteUi(activeRoute)
