@@ -1034,142 +1034,134 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupProfileAndAuth() {
         layoutProfileAvatar.setOnClickListener {
-            showAuthProfileDialog()
-        }
-    }
+            val dialog = Dialog(this)
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(R.layout.dialog_auth_profile)
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-    private fun showAuthProfileDialog() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_auth_profile)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val etName = dialog.findViewById<EditText>(R.id.etProfileName)
+            val etEmail = dialog.findViewById<EditText>(R.id.etProfileEmail)
+            val btnGoogle = dialog.findViewById<MaterialButton>(R.id.btnGoogleSignIn)
+            val btnSave = dialog.findViewById<MaterialButton>(R.id.btnProfileSave)
+            val btnLogout = dialog.findViewById<MaterialButton>(R.id.btnProfileLogout)
 
-        val tvDialogTitle = dialog.findViewById<TextView>(R.id.tvDialogTitle)
-        val etUserName = dialog.findViewById<EditText>(R.id.etUserName)
-        val etUserEmail = dialog.findViewById<EditText>(R.id.etUserEmail)
-        val btnGoogleLogin = dialog.findViewById<View>(R.id.btnGoogleLogin)
-        val btnSaveProfile = dialog.findViewById<MaterialButton>(R.id.btnSaveProfile)
-        val btnCloseAuthDialog = dialog.findViewById<ImageButton>(R.id.btnCloseAuthDialog)
+            etName.setText(prefs.userName)
+            etEmail.setText(prefs.userEmail)
 
-        etUserName.setText(prefs.userName)
-        etUserEmail.setText(prefs.userEmail)
-
-        btnGoogleLogin.setOnClickListener {
-            prefs.userName = "Axmadulloh"
-            prefs.userEmail = "axmadulloh@gmail.com"
-            prefs.userAuthType = "GOOGLE"
-            etUserName.setText("Axmadulloh")
-            etUserEmail.setText("axmadulloh@gmail.com")
-            Toast.makeText(this, "Google hisobi ulandi: Axmadulloh", Toast.LENGTH_SHORT).show()
-        }
-
-        btnSaveProfile.setOnClickListener {
-            val name = etUserName.text.toString().trim()
-            val email = etUserEmail.text.toString().trim()
-            if (name.isNotEmpty()) {
-                prefs.userName = name
-                prefs.userEmail = email
-                Toast.makeText(this, "Profil saqlandi!", Toast.LENGTH_SHORT).show()
+            btnGoogle.setOnClickListener {
+                prefs.userName = "Axmadulloh sir"
+                prefs.userEmail = "axmadulloh.dev@gmail.com"
+                prefs.isLoggedIn = true
+                etName.setText("Axmadulloh sir")
+                etEmail.setText("axmadulloh.dev@gmail.com")
                 dialog.dismiss()
-            } else {
-                Toast.makeText(this, "Iltimos, ismingizni kiriting", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Google orqali ulandi: Axmadulloh sir", Toast.LENGTH_SHORT).show()
             }
-        }
 
-        btnCloseAuthDialog.setOnClickListener {
-            dialog.dismiss()
-        }
+            btnSave.setOnClickListener {
+                val name = etName.text.toString().trim()
+                val email = etEmail.text.toString().trim()
+                if (name.isNotEmpty()) prefs.userName = name
+                if (email.isNotEmpty()) prefs.userEmail = email
+                prefs.isLoggedIn = true
+                dialog.dismiss()
+                Toast.makeText(this, "Profil saqlandi!", Toast.LENGTH_SHORT).show()
+            }
 
-        dialog.show()
+            btnLogout.setOnClickListener {
+                prefs.userName = "Foydalanuvchi"
+                prefs.userEmail = ""
+                prefs.isLoggedIn = false
+                dialog.dismiss()
+                Toast.makeText(this, "Hisobdan chiqildi", Toast.LENGTH_SHORT).show()
+            }
+
+            dialog.show()
+        }
     }
 
     private fun setupSettingsDialog() {
         btnOpenSettings.setOnClickListener {
-            showSettingsDialog()
-        }
-    }
+            val dialog = Dialog(this)
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
+            dialog.setContentView(R.layout.dialog_settings)
+            dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
 
-    private fun showSettingsDialog() {
-        val dialog = Dialog(this)
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
-        dialog.setContentView(R.layout.dialog_settings)
-        dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            val btnPc = dialog.findViewById<TextView>(R.id.btnDialogRoutePc)
+            val btnPhone = dialog.findViewById<TextView>(R.id.btnDialogRoutePhone)
+            val btnEarbuds = dialog.findViewById<TextView>(R.id.btnDialogRouteEarbuds)
 
-        val etServer = dialog.findViewById<EditText>(R.id.etServerAddress)
-        val btnSave = dialog.findViewById<MaterialButton>(R.id.btnSaveSettings)
-        val btnClose = dialog.findViewById<ImageButton>(R.id.btnCloseSettings)
-        val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvDomains)
+            val tvActiveLabel = dialog.findViewById<TextView>(R.id.tvSettingsActiveDomainLabel)
+            val rvDomains = dialog.findViewById<RecyclerView>(R.id.rvSettingsDomains)
 
-        val routeComputer = dialog.findViewById<TextView>(R.id.chipRouteComputer)
-        val routePhone = dialog.findViewById<TextView>(R.id.chipRoutePhone)
-        val routeEarbuds = dialog.findViewById<TextView>(R.id.chipRouteEarbuds)
+            tvActiveLabel.text = "${currentDomain.icon} ${currentDomain.titleUz}"
+            tvActiveLabel.setTextColor(currentDomain.primaryColor)
 
-        val cbMic = dialog.findViewById<CheckBox>(R.id.cbAutoStartMic)
-        val cbSecretary = dialog.findViewById<CheckBox>(R.id.cbAiSecretaryDefault)
-
-        etServer.setText(prefs.serverAddress)
-        cbMic.isChecked = prefs.autoStartMic
-        cbSecretary.isChecked = prefs.aiSecretaryEnabled
-
-        fun updateRouteUi(route: AudioRoute) {
-            val activeBg = R.drawable.bg_ios_pill_active
-            val normalBg = R.drawable.bg_ios_action_chip
-            val activeText = Color.parseColor("#070A12")
-            val normalText = Color.WHITE
-
-            routeComputer.setBackgroundResource(if (route == AudioRoute.COMPUTER) activeBg else normalBg)
-            routeComputer.setTextColor(if (route == AudioRoute.COMPUTER) activeText else normalText)
-
-            routePhone.setBackgroundResource(if (route == AudioRoute.PHONE) activeBg else normalBg)
-            routePhone.setTextColor(if (route == AudioRoute.PHONE) activeText else normalText)
-
-            routeEarbuds.setBackgroundResource(if (route == AudioRoute.EARBUDS) activeBg else normalBg)
-            routeEarbuds.setTextColor(if (route == AudioRoute.EARBUDS) activeText else normalText)
-        }
-
-        updateRouteUi(activeRoute)
-
-        routeComputer.setOnClickListener {
-            activeRoute = AudioRoute.COMPUTER
-            updateRouteUi(activeRoute)
-            applyAudioRoute(activeRoute)
-        }
-        routePhone.setOnClickListener {
-            activeRoute = AudioRoute.PHONE
-            updateRouteUi(activeRoute)
-            applyAudioRoute(activeRoute)
-        }
-        routeEarbuds.setOnClickListener {
-            activeRoute = AudioRoute.EARBUDS
-            updateRouteUi(activeRoute)
-            applyAudioRoute(activeRoute)
-        }
-
-        // 31 Domains Adapter
-        val domainAdapter = DomainAdapter(
-            domains = JarvisDomainRegistry.allDomains,
-            selectedDomainId = currentDomain.id,
-            onDomainSelected = { domain ->
-                applyDomain(domain, speakAnnouncement = true)
+            rvDomains.layoutManager = LinearLayoutManager(this)
+            val domainAdapter = DomainAdapter(JarvisDomainRegistry.getAllDomains(), currentDomain.id) { selected ->
+                applyDomain(selected, speakAnnouncement = true)
+                tvActiveLabel.text = "${selected.icon} ${selected.titleUz}"
+                tvActiveLabel.setTextColor(selected.primaryColor)
                 dialog.dismiss()
             }
-        )
-        rvDomains.layoutManager = LinearLayoutManager(this)
-        rvDomains.adapter = domainAdapter
+            rvDomains.adapter = domainAdapter
 
-        btnSave.setOnClickListener {
-            prefs.serverAddress = etServer.text.toString().trim()
-            prefs.autoStartMic = cbMic.isChecked
-            prefs.aiSecretaryEnabled = cbSecretary.isChecked
-            Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
+            val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
+            val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
+            val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
+            val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
+            val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
+
+            etServer.setText(prefs.serverAddress)
+            etToken.setText(prefs.authToken)
+            cbBoot.isChecked = prefs.autoStartOnBoot
+            cbQuron.isChecked = prefs.quronCardVisible
+
+            fun updateRouteUi(route: AudioRoute) {
+                val activeBg = R.drawable.bg_ios_pill_active
+                val normalBg = R.drawable.bg_ios_action_chip
+                val activeText = Color.parseColor("#070A12")
+                val normalText = Color.WHITE
+
+                btnPc.setBackgroundResource(if (route == AudioRoute.PC) activeBg else normalBg)
+                btnPc.setTextColor(if (route == AudioRoute.PC) activeText else normalText)
+
+                btnPhone.setBackgroundResource(if (route == AudioRoute.PHONE) activeBg else normalBg)
+                btnPhone.setTextColor(if (route == AudioRoute.PHONE) activeText else normalText)
+
+                btnEarbuds.setBackgroundResource(if (route == AudioRoute.EARBUDS) activeBg else normalBg)
+                btnEarbuds.setTextColor(if (route == AudioRoute.EARBUDS) activeText else normalText)
+            }
+
+            updateRouteUi(activeRoute)
+
+            btnPc.setOnClickListener {
+                activeRoute = AudioRoute.PC
+                updateRouteUi(activeRoute)
+                applyAudioRoute(activeRoute)
+            }
+            btnPhone.setOnClickListener {
+                activeRoute = AudioRoute.PHONE
+                updateRouteUi(activeRoute)
+                applyAudioRoute(activeRoute)
+            }
+            btnEarbuds.setOnClickListener {
+                activeRoute = AudioRoute.EARBUDS
+                updateRouteUi(activeRoute)
+                applyAudioRoute(activeRoute)
+            }
+
+            btnSave.setOnClickListener {
+                prefs.serverAddress = etServer.text.toString().trim()
+                prefs.authToken = etToken.text.toString().trim()
+                prefs.autoStartOnBoot = cbBoot.isChecked
+                prefs.quronCardVisible = cbQuron.isChecked
+                Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+
+            dialog.show()
         }
-
-        btnClose.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
     }
 
     private fun applyAudioRoute(route: AudioRoute) {
