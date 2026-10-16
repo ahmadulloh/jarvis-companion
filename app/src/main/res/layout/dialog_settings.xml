@@ -241,6 +241,184 @@
                 android:textSize="11.5sp" />
         </LinearLayout>
 
+        <!-- Ovoz Tizimi (TTS): UzbekVoice.ai (Sevinch), ElevenLabs, Qurilma -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:fontFamily="sans-serif-bold"
+            android:text="🗣️ Jarvis Ovoz Tizimi (TTS):"
+            android:textColor="#334155"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/dialogTtsEngineBar"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_settings_segment_bar"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <TextView
+                android:id="@+id/btnTtsUzbekVoice"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/bg_settings_pill_active"
+                android:fontFamily="sans-serif-bold"
+                android:gravity="center"
+                android:singleLine="true"
+                android:text="🇺🇿 UzbekVoice"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/btnTtsElevenLabs"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:singleLine="true"
+                android:text="✨ ElevenLabs"
+                android:textColor="#64748B"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/btnTtsDevice"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:singleLine="true"
+                android:text="📱 Qurilma"
+                android:textColor="#64748B"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Container for UzbekVoice Settings -->
+        <LinearLayout
+            android:id="@+id/layoutUzbekVoiceSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="O'zbek Ovoz Tanlovi:"
+                android:textColor="#475569"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_settings_segment_bar"
+                android:orientation="horizontal"
+                android:padding="2dp">
+
+                <TextView
+                    android:id="@+id/btnVoiceSevinch"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_settings_pill_active"
+                    android:fontFamily="sans-serif-bold"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="👩 Sevinch (Ayol ovozi)"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11.5sp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:text="UzbekVoice.ai API Kaliti:"
+                android:textColor="#475569"
+                android:textSize="11.5sp" />
+
+            <EditText
+                android:id="@+id/etDialogUzbekVoiceKey"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_settings_input"
+                android:hint="393c4279-0b87-4935-a8ce-8391e859f81c:..."
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:singleLine="true"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8"
+                android:textSize="12.5sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:fontFamily="sans-serif"
+                android:text="Studio darajasidagi tabiiy, jarangdor O'zbek ayol ovozi."
+                android:textColor="#059669"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- Container for ElevenLabs Settings -->
+        <LinearLayout
+            android:id="@+id/layoutElevenLabsSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:text="ElevenLabs API Kaliti:"
+                android:textColor="#475569"
+                android:textSize="11.5sp" />
+
+            <EditText
+                android:id="@+id/etDialogElevenLabsKey"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_settings_input"
+                android:hint="sk_cae53f7e2debb8bd6a99700edfd811ce..."
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:singleLine="true"
+                android:textColor="#0F172A"
+                android:textColorHint="#94A3B8"
+                android:textSize="12.5sp" />
+        </LinearLayout>
+
+        <!-- Container for Device TTS Settings -->
+        <LinearLayout
+            android:id="@+id/layoutDeviceTtsSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
+                android:text="Telefonning ichki offline sintezatoridan foydalaniladi (Internet talab qilinmaydi)."
+                android:textColor="#64748B"
+                android:textSize="11.5sp" />
+        </LinearLayout>
+
         <!-- 3. Interfeys va Qo'shimcha Sozlamalar -->
         <TextView
             android:layout_width="wrap_content"

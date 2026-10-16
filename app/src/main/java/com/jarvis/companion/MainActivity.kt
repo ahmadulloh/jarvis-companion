@@ -57,12 +57,17 @@ import com.jarvis.companion.domain.DomainGridAdapter
 import com.jarvis.companion.domain.JarvisDomain
 import com.jarvis.companion.domain.JarvisDomainRegistry
 import com.jarvis.companion.network.GeminiApiClient
+import com.jarvis.companion.network.UzbekVoiceApiClient
+import com.jarvis.companion.network.ElevenLabsApiClient
 import com.jarvis.companion.service.JarvisForegroundService
 import com.jarvis.companion.ui.JarvisParticleState
 import com.jarvis.companion.ui.JarvisParticleView
 import com.jarvis.companion.util.PhoneActionManager
 import com.jarvis.companion.util.PreferencesHelper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import android.media.MediaPlayer
+import java.io.File
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
@@ -107,6 +112,8 @@ class MainActivity : AppCompatActivity() {
     private var isVoiceListening = false
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
+    private var mediaPlayer: MediaPlayer? = null
+    private var activeSpeechJob: Job? = null
 
     // Broadcast Receiver for Foreground Service
     private val receiver = object : BroadcastReceiver() {
@@ -826,22 +833,207 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun stopCurrentAudio() {
+        activeSpeechJob?.cancel()
+        activeSpeechJob = null
+        try {
+            tts?.stop()
+        } catch (_: Exception) {}
+        try {
+            mediaPlayer?.let { mp ->
+                if (mp.isPlaying) {
+                    mp.stop()
+                }
+                mp.reset()
+                mp.release()
+            }
+        } catch (_: Exception) {}
+        mediaPlayer = null
+    }
+
+    private fun ensureAudioVolume() {
+        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        audioManager?.let { am ->
+            val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+            val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            if (currentVol == 0 && maxVol > 0) {
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.75f).toInt(), 0)
+            }
+        }
+    }
+
     private fun speakJarvis(text: String) {
         showCaption(text)
+        stopCurrentAudio()
+
+        when (prefs.ttsEngine) {
+            "UZBEKVOICE_AI" -> speakWithUzbekVoice(text)
+            "ELEVENLABS" -> speakWithElevenLabs(text)
+            else -> speakWithDeviceTts(text)
+        }
+    }
+
+    private fun speakWithUzbekVoice(text: String) {
+        val apiKey = prefs.uzbekVoiceApiKey.ifEmpty { "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1" }
+        val spokenText = prepareTextForSpeech(text)
+
+        activeSpeechJob = lifecycleScope.launch {
+            jarvisParticleView.setState(JarvisParticleState.THINKING)
+            val result = UzbekVoiceApiClient.synthesizeSpeech(
+                apiKey = apiKey,
+                text = spokenText,
+                model = prefs.uzbekVoiceModel
+            )
+
+            if (result.isSuccess) {
+                val audioUrl = result.getOrNull()
+                if (!audioUrl.isNullOrEmpty()) {
+                    playAudioFromUrl(audioUrl) {
+                        showCaption("")
+                    }
+                    return@launch
+                }
+            }
+
+            Log.w("MainActivity", "UzbekVoice API fallback to Device TTS: ${result.exceptionOrNull()?.message}")
+            speakWithDeviceTts(text)
+        }
+    }
+
+    private fun speakWithElevenLabs(text: String) {
+        val apiKey = prefs.elevenLabsApiKey.ifEmpty { "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b" }
+        val spokenText = prepareTextForSpeech(text)
+
+        activeSpeechJob = lifecycleScope.launch {
+            jarvisParticleView.setState(JarvisParticleState.THINKING)
+            val tempFile = File(cacheDir, "elevenlabs_temp_${System.currentTimeMillis()}.mp3")
+            val result = ElevenLabsApiClient.synthesizeSpeechToFile(
+                apiKey = apiKey,
+                text = spokenText,
+                voiceId = prefs.elevenLabsVoiceId,
+                outputFile = tempFile
+            )
+
+            if (result.isSuccess && tempFile.exists() && tempFile.length() > 0) {
+                playAudioFromFile(tempFile) {
+                    tempFile.delete()
+                    showCaption("")
+                }
+                return@launch
+            }
+
+            Log.w("MainActivity", "ElevenLabs fallback to Device TTS: ${result.exceptionOrNull()?.message}")
+            speakWithDeviceTts(text)
+        }
+    }
+
+    private fun playAudioFromUrl(url: String, onDone: () -> Unit) {
+        try {
+            ensureAudioVolume()
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(url)
+                setOnPreparedListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                        jarvisParticleView.setSpeechLevel(0.88f)
+                    }
+                    player.start()
+                }
+                setOnCompletionListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                }
+                setOnErrorListener { player, what, extra ->
+                    Log.e("MainActivity", "MediaPlayer error: what=$what, extra=$extra")
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                    true
+                }
+                prepareAsync()
+            }
+            mediaPlayer = mp
+        } catch (e: Exception) {
+            Log.e("MainActivity", "playAudioFromUrl error: ${e.message}")
+            jarvisParticleView.setState(JarvisParticleState.IDLE)
+            onDone()
+        }
+    }
+
+    private fun playAudioFromFile(file: File, onDone: () -> Unit) {
+        try {
+            ensureAudioVolume()
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(file.absolutePath)
+                setOnPreparedListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                        jarvisParticleView.setSpeechLevel(0.88f)
+                    }
+                    player.start()
+                }
+                setOnCompletionListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                }
+                setOnErrorListener { player, what, extra ->
+                    Log.e("MainActivity", "MediaPlayer file error: what=$what, extra=$extra")
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                    true
+                }
+                prepareAsync()
+            }
+            mediaPlayer = mp
+        } catch (e: Exception) {
+            Log.e("MainActivity", "playAudioFromFile error: ${e.message}")
+            jarvisParticleView.setState(JarvisParticleState.IDLE)
+            onDone()
+        }
+    }
+
+    private fun speakWithDeviceTts(text: String) {
         if (!isTtsReady || tts == null) {
             return
         }
 
         try {
-            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-            audioManager?.let { am ->
-                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                if (currentVol == 0 && maxVol > 0) {
-                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.75f).toInt(), 0)
-                }
-            }
-
+            ensureAudioVolume()
             val spokenText = prepareTextForSpeech(text)
             val utteranceId = "JARVIS_${System.currentTimeMillis()}"
             val params = Bundle().apply {
@@ -851,7 +1043,7 @@ class MainActivity : AppCompatActivity() {
             }
             tts?.speak(spokenText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
         } catch (e: Exception) {
-            Log.e("MainActivity", "speakJarvis error: ${e.message}")
+            Log.e("MainActivity", "speakWithDeviceTts error: ${e.message}")
         }
     }
 
@@ -1099,6 +1291,69 @@ class MainActivity : AppCompatActivity() {
             applyAudioRoute(activeRoute)
         }
 
+        // TTS Engine & Voice Configuration
+        val btnTtsUzbekVoice = dialog.findViewById<TextView>(R.id.btnTtsUzbekVoice)
+        val btnTtsElevenLabs = dialog.findViewById<TextView>(R.id.btnTtsElevenLabs)
+        val btnTtsDevice = dialog.findViewById<TextView>(R.id.btnTtsDevice)
+        val layoutUzbekVoice = dialog.findViewById<View>(R.id.layoutUzbekVoiceSettings)
+        val layoutElevenLabs = dialog.findViewById<View>(R.id.layoutElevenLabsSettings)
+        val layoutDeviceTts = dialog.findViewById<View>(R.id.layoutDeviceTtsSettings)
+        val etDialogUzbekVoiceKey = dialog.findViewById<EditText>(R.id.etDialogUzbekVoiceKey)
+        val etDialogElevenLabsKey = dialog.findViewById<EditText>(R.id.etDialogElevenLabsKey)
+
+        var selectedTtsEngine = prefs.ttsEngine
+
+        fun updateTtsEngineUi(engine: String) {
+            btnTtsUzbekVoice?.setBackgroundColor(Color.TRANSPARENT)
+            btnTtsUzbekVoice?.setTextColor(Color.parseColor("#64748B"))
+            btnTtsElevenLabs?.setBackgroundColor(Color.TRANSPARENT)
+            btnTtsElevenLabs?.setTextColor(Color.parseColor("#64748B"))
+            btnTtsDevice?.setBackgroundColor(Color.TRANSPARENT)
+            btnTtsDevice?.setTextColor(Color.parseColor("#64748B"))
+
+            when (engine) {
+                "UZBEKVOICE_AI" -> {
+                    btnTtsUzbekVoice?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnTtsUzbekVoice?.setTextColor(Color.WHITE)
+                    layoutUzbekVoice?.visibility = View.VISIBLE
+                    layoutElevenLabs?.visibility = View.GONE
+                    layoutDeviceTts?.visibility = View.GONE
+                }
+                "ELEVENLABS" -> {
+                    btnTtsElevenLabs?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnTtsElevenLabs?.setTextColor(Color.WHITE)
+                    layoutUzbekVoice?.visibility = View.GONE
+                    layoutElevenLabs?.visibility = View.VISIBLE
+                    layoutDeviceTts?.visibility = View.GONE
+                }
+                else -> {
+                    btnTtsDevice?.setBackgroundResource(R.drawable.bg_settings_pill_active)
+                    btnTtsDevice?.setTextColor(Color.WHITE)
+                    layoutUzbekVoice?.visibility = View.GONE
+                    layoutElevenLabs?.visibility = View.GONE
+                    layoutDeviceTts?.visibility = View.VISIBLE
+                }
+            }
+        }
+
+        updateTtsEngineUi(selectedTtsEngine)
+
+        btnTtsUzbekVoice?.setOnClickListener {
+            selectedTtsEngine = "UZBEKVOICE_AI"
+            updateTtsEngineUi(selectedTtsEngine)
+        }
+        btnTtsElevenLabs?.setOnClickListener {
+            selectedTtsEngine = "ELEVENLABS"
+            updateTtsEngineUi(selectedTtsEngine)
+        }
+        btnTtsDevice?.setOnClickListener {
+            selectedTtsEngine = "DEVICE_TTS"
+            updateTtsEngineUi(selectedTtsEngine)
+        }
+
+        etDialogUzbekVoiceKey?.setText(prefs.uzbekVoiceApiKey)
+        etDialogElevenLabsKey?.setText(prefs.elevenLabsApiKey)
+
         btnSave?.setOnClickListener {
             val newKey = etGeminiKey?.text?.toString()?.trim() ?: ""
             prefs.geminiApiKey = newKey
@@ -1108,6 +1363,10 @@ class MainActivity : AppCompatActivity() {
             prefs.authToken = etToken?.text?.toString()?.trim() ?: prefs.authToken
             prefs.autoStartOnBoot = cbBoot?.isChecked == true
             prefs.quronCardVisible = cbQuron?.isChecked == true
+
+            prefs.ttsEngine = selectedTtsEngine
+            prefs.uzbekVoiceApiKey = etDialogUzbekVoiceKey?.text?.toString()?.trim() ?: prefs.uzbekVoiceApiKey
+            prefs.elevenLabsApiKey = etDialogElevenLabsKey?.text?.toString()?.trim() ?: prefs.elevenLabsApiKey
 
             bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
             applyAudioRoute(activeRoute)
@@ -1207,6 +1466,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopCurrentAudio()
         try {
             webViewLivingParticle.removeJavascriptInterface("AndroidBridge")
             webViewLivingParticle.loadUrl("about:blank")

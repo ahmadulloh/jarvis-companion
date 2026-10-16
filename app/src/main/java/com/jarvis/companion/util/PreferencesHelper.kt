@@ -81,4 +81,27 @@ class PreferencesHelper(context: Context) {
     var showTextInputBar: Boolean
         get() = prefs.getBoolean("show_text_input_bar", false)
         set(value) = prefs.edit().putBoolean("show_text_input_bar", value).apply()
+
+    // TTS Voice Engine: "UZBEKVOICE_AI", "ELEVENLABS", "DEVICE_TTS"
+    var ttsEngine: String
+        get() = prefs.getString("tts_engine", "UZBEKVOICE_AI") ?: "UZBEKVOICE_AI"
+        set(value) = prefs.edit().putString("tts_engine", value.trim()).apply()
+
+    // UzbekVoice.ai Credentials
+    var uzbekVoiceApiKey: String
+        get() = prefs.getString("uzbek_voice_api_key", "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1") ?: "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1"
+        set(value) = prefs.edit().putString("uzbek_voice_api_key", value.trim()).apply()
+
+    var uzbekVoiceModel: String
+        get() = prefs.getString("uzbek_voice_model", "sevinch") ?: "sevinch"
+        set(value) = prefs.edit().putString("uzbek_voice_model", value.trim()).apply()
+
+    // ElevenLabs Credentials
+    var elevenLabsApiKey: String
+        get() = prefs.getString("eleven_labs_api_key", "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b") ?: "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b"
+        set(value) = prefs.edit().putString("eleven_labs_api_key", value.trim()).apply()
+
+    var elevenLabsVoiceId: String
+        get() = prefs.getString("eleven_labs_voice_id", "21m00Tcm4TlvDq8ikWAM") ?: "21m00Tcm4TlvDq8ikWAM"
+        set(value) = prefs.edit().putString("eleven_labs_voice_id", value.trim()).apply()
 }
