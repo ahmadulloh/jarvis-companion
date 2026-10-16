@@ -401,12 +401,13 @@ class MainActivity : AppCompatActivity() {
         }
         viewChipDot.background = dotBg
 
-        val announcement = buildDomainAnnouncement(domain)
-        showCaption(announcement)
-        jarvisParticleView.showResult(domain.icon, announcement)
-
         if (speakAnnouncement) {
+            val announcement = buildDomainAnnouncement(domain)
+            showCaption(announcement)
+            jarvisParticleView.showResult(domain.icon, announcement)
             speakJarvis(announcement)
+        } else {
+            showCaption("")
         }
     }
 
@@ -878,6 +879,12 @@ class MainActivity : AppCompatActivity() {
             prefs.quronCardVisible = cbQuron?.isChecked == true
 
             bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+            applyAudioRoute(activeRoute)
+
+            if (selectedMode == "PC_BRIDGE") {
+                startJarvisService()
+            }
+
             dialog.dismiss()
             Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
         }

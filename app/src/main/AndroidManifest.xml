@@ -34,6 +34,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Quvvat va Ekran o'chganda ishlash (WakeLock) -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -86,7 +87,7 @@
             android:name=".service.JarvisForegroundService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="microphone|connectedDevice" />
+            android:foregroundServiceType="microphone|connectedDevice|mediaPlayback" />
 
         <!-- Telegram va boshqa bildirishnomalarni tinglovchi xizmat -->
         <service

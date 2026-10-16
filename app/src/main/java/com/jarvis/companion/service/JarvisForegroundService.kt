@@ -367,17 +367,14 @@ class JarvisForegroundService : Service() {
                         ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
                         fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
                     }
+                    fgsType = fgsType or ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
                 }
-                if (fgsType != 0) {
-                    startForeground(NOTIFICATION_ID, notification, fgsType)
-                } else {
-                    startForeground(NOTIFICATION_ID, notification)
-                }
+                startForeground(NOTIFICATION_ID, notification, fgsType)
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
             isForegroundStarted = true
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e("JarvisService", "startForegroundSafely error: ${e.message}")
         }
     }

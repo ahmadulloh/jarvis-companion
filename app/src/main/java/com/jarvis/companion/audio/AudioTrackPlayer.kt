@@ -41,11 +41,17 @@ class AudioTrackPlayer(
                 AudioTrack.MODE_STREAM,
                 AudioManager.AUDIO_SESSION_ID_GENERATE
             )
-            audioTrack?.play()
-            isPlaying = true
-            Log.d("AudioTrackPlayer", "AudioTrack started at $sampleRate Hz")
-        } catch (e: Exception) {
+            if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+                audioTrack?.play()
+                isPlaying = true
+                Log.d("AudioTrackPlayer", "AudioTrack started at $sampleRate Hz")
+            } else {
+                Log.e("AudioTrackPlayer", "AudioTrack uninitialized: state=${audioTrack?.state}")
+                isPlaying = false
+            }
+        } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error creating AudioTrack: ${e.message}")
+            isPlaying = false
         }
     }
 
@@ -59,12 +65,14 @@ class AudioTrackPlayer(
         if (System.currentTimeMillis() < discardUntil) {
             return
         }
-        if (!isPlaying || audioTrack == null) {
-            start()
-        }
         try {
-            audioTrack?.write(pcmChunk, 0, pcmChunk.size)
-        } catch (e: Exception) {
+            if (!isPlaying || audioTrack == null || audioTrack?.state != AudioTrack.STATE_INITIALIZED) {
+                start()
+            }
+            if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+                audioTrack?.write(pcmChunk, 0, pcmChunk.size)
+            }
+        } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error writing audio: ${e.message}")
         }
     }
@@ -72,11 +80,13 @@ class AudioTrackPlayer(
     fun flush() {
         discardUntil = System.currentTimeMillis() + 800L
         try {
-            audioTrack?.pause()
-            audioTrack?.flush()
-            audioTrack?.play()
+            if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+                audioTrack?.pause()
+                audioTrack?.flush()
+                audioTrack?.play()
+            }
             Log.d("AudioTrackPlayer", "AudioTrack flushed (interrupted)")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error flushing AudioTrack: ${e.message}")
         }
     }
@@ -84,11 +94,13 @@ class AudioTrackPlayer(
     fun stop() {
         isPlaying = false
         try {
-            audioTrack?.stop()
-            audioTrack?.release()
+            if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
+                audioTrack?.stop()
+                audioTrack?.release()
+            }
             audioTrack = null
             Log.d("AudioTrackPlayer", "AudioTrack stopped")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error stopping AudioTrack: ${e.message}")
         }
     }

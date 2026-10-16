@@ -366,9 +366,11 @@ class JarvisParticleView @JvmOverloads constructor(
 
     // ── Shape Mask Sampling (Emoji yoki Belgin pikseldan namuna olish) ──────
     private fun sampleShape(emoji: String) {
-        val S = min(width, height) * 0.64f
-        val cx = width / 2f
-        val cy = height * 0.45f
+        val w = if (width > 0) width.toFloat() else 1080f
+        val h = if (height > 0) height.toFloat() else 1920f
+        val S = min(w, h) * 0.64f
+        val cx = w / 2f
+        val cy = h * 0.45f
 
         val pts = ArrayList<SampledPoint>(600)
         try {
@@ -401,7 +403,7 @@ class JarvisParticleView @JvmOverloads constructor(
                 }
             }
             bmp.recycle()
-        } catch (_: Exception) {}
+        } catch (_: Throwable) {}
 
         if (pts.isEmpty()) {
             // Agar emoji chizilmasa, doira shakliga yig'iladi
@@ -417,16 +419,18 @@ class JarvisParticleView @JvmOverloads constructor(
             }
         }
 
-        val rnd = Random(42)
-        val ptsCount = pts.size
-        for (i in 0 until N) {
-            val sp = pts[rnd.nextInt(ptsCount)]
-            fx[i] = cx + (sp.x - 120f) / 240f * S
-            fy[i] = cy + (sp.y - 120f) / 240f * S
-            fcR[i] = sp.r
-            fcG[i] = sp.g
-            fcB[i] = sp.b
-        }
+        try {
+            val rnd = Random(42)
+            val ptsCount = pts.size.coerceAtLeast(1)
+            for (i in 0 until N) {
+                val sp = pts[rnd.nextInt(ptsCount)]
+                fx[i] = cx + (sp.x - 120f) / 240f * S
+                fy[i] = cy + (sp.y - 120f) / 240f * S
+                fcR[i] = sp.r
+                fcG[i] = sp.g
+                fcB[i] = sp.b
+            }
+        } catch (_: Throwable) {}
     }
 
     private data class SampledPoint(
