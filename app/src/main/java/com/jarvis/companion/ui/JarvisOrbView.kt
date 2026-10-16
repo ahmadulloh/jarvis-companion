@@ -333,7 +333,8 @@ class JarvisOrbView @JvmOverloads constructor(
                 if (distSq < maxDistSq) {
                     val normDist = 1.0f - (distSq / maxDistSq)
                     val depthAlpha = ((n1.pz + n2.pz + 2.0f) / 4.0f).coerceIn(0.18f, 1.0f)
-                    val alpha = (normDist * depthAlpha * (if (isNightMode) 80 else 140 + activeAudio * 115)).toInt().coerceIn(20, 255)
+                    val baseAlpha = if (isNightMode) (80f + activeAudio * 155f) else (140f + activeAudio * 115f)
+                    val alpha = (normDist * depthAlpha * baseAlpha).toInt().coerceIn(20, 255)
 
                     synapseLinePaint.color = Color.argb(
                         alpha,
@@ -383,7 +384,8 @@ class JarvisOrbView @JvmOverloads constructor(
         for (node in nodes) {
             val depthScale = ((node.pz + 1.2f) / 2.4f).coerceIn(0.4f, 1.3f)
             val nodeRadius = (2.8f + node.pulse * 2.5f + activeAudio * 4.2f) * depthScale
-            val nodeAlpha = (if (isNightMode) 150 else 200 * depthScale + activeAudio * 55).toInt().coerceIn(50, 255)
+            val baseNodeAlpha = if (isNightMode) 150f else 200f
+            val nodeAlpha = (baseNodeAlpha * depthScale + activeAudio * 55f).toInt().coerceIn(50, 255)
 
             nodePaint.color = Color.argb(
                 nodeAlpha,
@@ -414,7 +416,8 @@ class JarvisOrbView @JvmOverloads constructor(
             if (abs(bx - cx) > coreRadius * 0.72f) {
                 val waveVal = sin(phase * 14.0f + i * 0.60f)
                 val barHeight = (5f + activeAudio * 65f * centerFalloff * abs(waveVal).toFloat())
-                val barAlpha = (if (isNightMode) 95 else 150 + activeAudio * 105).toInt().coerceIn(35, 255)
+                val baseBarAlpha = if (isNightMode) 95f else 150f
+                val barAlpha = (baseBarAlpha + activeAudio * 105f).toInt().coerceIn(35, 255)
 
                 soundwavePaint.color = Color.argb(
                     barAlpha,
