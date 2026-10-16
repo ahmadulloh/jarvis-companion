@@ -77,7 +77,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipDomainSelector: LinearLayout
     private lateinit var viewChipDot: View
     private lateinit var tvChipTitle: TextView
+    private lateinit var cardCaptionContainer: View
     private lateinit var tvJarvisCaption: TextView
+    private var captionDismissRunnable: Runnable? = null
+    private val captionHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     // Optional bottom text input
     private lateinit var bottomBarContainer: View
@@ -208,7 +211,13 @@ class MainActivity : AppCompatActivity() {
         chipDomainSelector = findViewById(R.id.chipDomainSelector)
         viewChipDot = findViewById(R.id.viewChipDot)
         tvChipTitle = findViewById(R.id.tvChipTitle)
+        cardCaptionContainer = findViewById(R.id.cardCaptionContainer)
         tvJarvisCaption = findViewById(R.id.tvJarvisCaption)
+
+        cardCaptionContainer.setOnClickListener {
+            vibrateBrief(15)
+            showCaption("")
+        }
 
         ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
             val statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
@@ -285,14 +294,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Matnli Status / Subtitle ko'rsatish (Smooth Fade) ───────────────────
-    fun showCaption(text: String) {
+    // ── Matnli Status / Subtitle ko'rsatish (Floating Glass Capsule & Auto Fade) ──
+    fun showCaption(text: String, durationMs: Long = 5000L) {
         runOnUiThread {
-            if (text.isBlank()) {
-                tvJarvisCaption.animate().alpha(0f).setDuration(300).start()
+            captionDismissRunnable?.let { captionHandler.removeCallbacks(it) }
+            val clean = text.trim()
+            if (clean.isBlank()) {
+                cardCaptionContainer.animate()
+                    .alpha(0f)
+                    .translationY(16f)
+                    .setDuration(250)
+                    .withEndAction { cardCaptionContainer.visibility = View.GONE }
+                    .start()
             } else {
-                tvJarvisCaption.text = text
-                tvJarvisCaption.animate().alpha(1f).setDuration(300).start()
+                tvJarvisCaption.text = clean
+                cardCaptionContainer.visibility = View.VISIBLE
+                cardCaptionContainer.translationY = 16f
+                cardCaptionContainer.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(300)
+                    .start()
+
+                // 5 soniyadan so'ng avtomatik mayin yo'qoladi (ekran yana toza galaktikaga aylanadi)
+                val runnable = Runnable {
+                    cardCaptionContainer.animate()
+                        .alpha(0f)
+                        .translationY(16f)
+                        .setDuration(350)
+                        .withEndAction { cardCaptionContainer.visibility = View.GONE }
+                        .start()
+                }
+                captionDismissRunnable = runnable
+                captionHandler.postDelayed(runnable, durationMs)
             }
         }
     }
@@ -583,6 +617,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Ovozli Sintez (TextToSpeech) ───────────────────────────────────────
+    private fun prepareTextForSpeech(text: String): String {
+        return text
+            .replace(Regex("\\*\\*|\\*|#|_|`"), "")
+            .replace(Regex("[\\p{So}\\p{Cn}]"), "")
+            .replace("«", "").replace("»", "")
+            .replace("\"", "").replace("'", "")
+            // Normalize Uzbek vowels with apostrophes so TTS reads them fluently as single words without stuttering
+            .replace("o‘", "o").replace("o’", "o").replace("o'", "o").replace("o`", "o")
+            .replace("O‘", "O").replace("O’", "O").replace("O'", "O").replace("O`", "O")
+            .replace("g‘", "g").replace("g’", "g").replace("g'", "g").replace("g`", "g")
+            .replace("G‘", "G").replace("G’", "G").replace("G'", "G").replace("G`", "G")
+            .replace("·", " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    // ── Ovozli Sintez (TextToSpeech) ───────────────────────────────────────
     private fun initTextToSpeech() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
@@ -603,8 +654,9 @@ class MainActivity : AppCompatActivity() {
                     tts?.setAudioAttributes(attrs)
                 } catch (_: Exception) {}
 
-                tts?.setSpeechRate(1.02f)
-                tts?.setPitch(0.98f)
+                // Deeper, masculine, resonant JARVIS pitch and steady articulation pace
+                tts?.setSpeechRate(0.98f)
+                tts?.setPitch(0.92f)
 
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
@@ -618,6 +670,7 @@ class MainActivity : AppCompatActivity() {
                         runOnUiThread {
                             jarvisParticleView.setSpeechLevel(0f)
                             jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                            showCaption("")
                         }
                     }
 
@@ -625,6 +678,7 @@ class MainActivity : AppCompatActivity() {
                         runOnUiThread {
                             jarvisParticleView.setSpeechLevel(0f)
                             jarvisParticleView.setState(JarvisParticleState.IDLE)
+                            showCaption("")
                         }
                     }
                 })
@@ -650,13 +704,14 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            val spokenText = prepareTextForSpeech(text)
             val utteranceId = "JARVIS_${System.currentTimeMillis()}"
             val params = Bundle().apply {
                 putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
                 putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
                 putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
             }
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
+            tts?.speak(spokenText, TextToSpeech.QUEUE_FLUSH, params, utteranceId)
         } catch (e: Exception) {
             Log.e("MainActivity", "speakJarvis error: ${e.message}")
         }
