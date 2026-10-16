@@ -24,14 +24,14 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:parseDebugLocalResources
 > Task :app:processDebugMainManifest
 > Task :app:processDebugManifest
-> Task :app:processDebugManifestForPackage
 > Task :app:javaPreCompileDebug
 > Task :app:mergeDebugShaders
+> Task :app:processDebugManifestForPackage
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
-> Task :app:compressDebugAssets
 > Task :app:desugarDebugFileDependencies
+> Task :app:compressDebugAssets
 > Task :app:processDebugResources
 > Task :app:checkDebugDuplicateClasses
 > Task :app:mergeDebugStartupProfile
@@ -39,10 +39,8 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:mergeExtDexDebug
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:166:48 Unresolved reference: findDomainById
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:166:69 Unresolved reference: activeDomainId
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:280:15 Unresolved reference: activeDomainId
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:731:46 Unresolved reference: ACTION_SET_AUDIO_ROUTE
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:70:46 Unresolved reference: PhoneActionManager
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:175:30 Unresolved reference: PhoneActionManager
 
 FAILURE: Build failed with an exception.
 
@@ -251,5 +249,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 1m 51s
+BUILD FAILED in 1m 53s
 23 actionable tasks: 23 executed
