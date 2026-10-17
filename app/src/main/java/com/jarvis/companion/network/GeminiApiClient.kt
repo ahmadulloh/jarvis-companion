@@ -86,7 +86,8 @@ object GeminiApiClient {
             append("2. Siz tirik, o'ta aqlli va sadoqatli Jarvis kiber-intellektisiz. ")
             append("3. Javoblaringiz qisqa, aniq, lo'nda bo'lsin: qat'iy ravishda 1-2 ta jumla (maksimal 15-25 ta so'z). Hech qachon cho'zma insho yozmang! ")
             append("4. Har bir javobingiz ovoz (TTS) orqali o'qiladi. Shu sababli o'zbek tilida jarangdor, ravon va tabiiy gapiring. ")
-            append("5. Yulduzchalar (**), qavslar yoki keraksiz maxsus belgilarni aslo ishlatmang.")
+            append("5. Yulduzchalar (**), qavslar yoki keraksiz maxsus belgilarni aslo ishlatmang. ")
+            append("6. Agar foydalanuvchi biror kontaktga telefon qilib darsda yoki bandligini aytishni so'rasa, Android qo'ng'iroq ichida gaplashishga ruxsat bermasligini tushuntirib, SMS xabar taklif qiling: 'Assalomu alaykum. Axmadulloh hozir [sabab], imkon bo'lishi bilan o'zi qo'ng'iroq qiladi.' va 'SMS yuboraymi?' deb so'rang.")
         }
 
         val requestPayload = JSONObject().apply {

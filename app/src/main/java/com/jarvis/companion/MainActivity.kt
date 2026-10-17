@@ -141,6 +141,10 @@ class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var activeSpeechJob: Job? = null
 
+    // AI Kotib ovozli tasdiq saqlovi
+    private var pendingSecretaryTarget: String? = null
+    private var pendingSecretaryMessage: String? = null
+
     // Broadcast Receiver for Foreground Service
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -1355,15 +1359,75 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
         jarvisParticleView.setState(JarvisParticleState.SEARCHING)
 
-        val lower = cmd.lowercase()
-        // 1. Eslatmalar (Reminders / Alarms in all domains)
+        val lower = cmd.lowercase().trim()
+
+        // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
+        if (pendingSecretaryTarget != null) {
+            val target = pendingSecretaryTarget!!
+            val message = pendingSecretaryMessage!!
+            if (lower == "ha" || lower.startsWith("ha ") || lower.contains("yubor") || lower.contains("jo'nat") || lower.contains("mayli") || lower.contains("tasdiqlayman") || lower.contains("yaxshi")) {
+                pendingSecretaryTarget = null
+                pendingSecretaryMessage = null
+                val res = phoneActionManager.sendSms(target, message)
+                if (res.contains("yuborildi") || res.contains("tayyorlandi")) {
+                    deliverJarvisResponseToUi("Axmadulloh sir, ${target}ga xabar yubordim: «$message»", "✉️")
+                } else {
+                    deliverJarvisResponseToUi("Xabar yuborilmadi, sir: $res", "⚠️")
+                }
+                return
+            } else if (lower == "yo'q" || lower.contains("bekor") || lower.contains("kerakmas") || lower.contains("yuborma")) {
+                pendingSecretaryTarget = null
+                pendingSecretaryMessage = null
+                deliverJarvisResponseToUi("Xabar bekor qilindi, Axmadulloh sir.", "❌")
+                return
+            }
+        }
+
+        // 1. AI Kotib: "Onamga band ekanligimni ayt", "Onamga qo'ng'iroq qilib darsda ekanimni ayt", "Darsdaman deb ayt"
+        val isSecretaryCommand = (lower.contains("ayt") || lower.contains("xabar ber") || lower.contains("yozib qo'y") || lower.contains("deb qo'y") || lower.contains("yetkaz")) &&
+                (lower.contains("band") || lower.contains("dars") || lower.contains("ish") || lower.contains("majlis") || lower.contains("namoz") || lower.contains("hayda") || lower.contains("uxla") || lower.contains("dam ol"))
+                || lower.contains("band ekanligimni") || lower.contains("bandligimni") || lower.contains("darsda ekanligimni") || lower.contains("ishda ekanligimni")
+
+        if (isSecretaryCommand) {
+            val target = when {
+                lower.contains("onam") -> "Onam"
+                lower.contains("dadam") || lower.contains("otam") -> "Dadam"
+                lower.contains("akam") -> "Akam"
+                lower.contains("ukam") -> "Ukam"
+                lower.contains("opam") -> "Opam"
+                lower.contains("singlim") -> "Singlim"
+                lower.contains("ayolim") || lower.contains("rafiqam") -> "Ayolim"
+                else -> {
+                    cmd.replace(Regex("(?i)onamga|dadamga|akamga|ukamga|opamga|singlimga|telefon qilib|qo'ng'iroq qilib|band ekanligimni ayt|darsda ekanligimni ayt|ayt|deb ayt|xabar ber"), "").trim().ifEmpty { "Onam" }
+                }
+            }
+
+            val reason = when {
+                lower.contains("dars") -> "darsda"
+                lower.contains("ish") -> "ishda"
+                lower.contains("majlis") -> "muhim majlisda"
+                lower.contains("namoz") -> "namozda"
+                lower.contains("hayda") || lower.contains("mashina") -> "mashina haydamoqda"
+                else -> "band"
+            }
+
+            val smsBody = "Assalomu alaykum. Axmadulloh hozir $reason, imkon bo'lishi bilan o'zi qo'ng'iroq qiladi."
+            pendingSecretaryTarget = target
+            pendingSecretaryMessage = smsBody
+
+            val prompt = "Axmadulloh sir, Android xavfsizlik cheklovi sababli qo'ng'iroq ichida AI gaplasha olmaydi. Shuning uchun ${target}ga quyidagi SMS xabarni yuboraymi:\n«$smsBody»?\nYuborishim uchun 'ha' deng."
+            deliverJarvisResponseToUi(prompt, "✉️")
+            return
+        }
+
+        // 2. Eslatmalar (Reminders / Alarms in all domains)
         if (lower.contains("eslat") || lower.contains("budilnik") || lower.contains("taymer") || lower.contains("reminder")) {
             val res = phoneActionManager.setReminder(cmd, "")
             deliverJarvisResponseToUi(res, "⏰")
             return
         }
 
-        // 2. Qo'ng'iroqlar
+        // 3. To'g'ridan-to'g'ri Qo'ng'iroqlar (Faqat xabar yetkazish/sabab aytish bo'lmaganda)
         if (lower.startsWith("onamga telefon") || lower.contains("telefon qil") || lower.contains("qo'ng'iroq qil")) {
             val target = if (lower.contains("onam")) "onam" else cmd.replace(Regex("(?i)telefon qil|qo'ng'iroq qil"), "").trim()
             val res = phoneActionManager.makeCall(target)
@@ -1371,7 +1435,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 3. SMS xabarlar
+        // 4. SMS xabarlar
         if (lower.contains("sms yoz") || lower.contains("sms yubor")) {
             val res = phoneActionManager.sendSms(cmd, "JARVIS xabari")
             deliverJarvisResponseToUi(res, "✉️")
