@@ -18,29 +18,59 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:mapDebugSourceSetPaths
 > Task :app:generateDebugResources
 > Task :app:packageDebugResources
+> Task :app:mergeDebugResources
 > Task :app:createDebugCompatibleScreenManifests
 > Task :app:extractDeepLinksDebug
 > Task :app:parseDebugLocalResources
-> Task :app:mergeDebugResources
 > Task :app:processDebugMainManifest
 > Task :app:processDebugManifest
 > Task :app:javaPreCompileDebug
 > Task :app:mergeDebugShaders
-> Task :app:processDebugManifestForPackage
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
-> Task :app:desugarDebugFileDependencies
 > Task :app:compressDebugAssets
-> Task :app:processDebugResources
-> Task :app:checkDebugDuplicateClasses
+> Task :app:desugarDebugFileDependencies
 > Task :app:mergeDebugStartupProfile
-> Task :app:compileDebugKotlin
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:processDebugManifestForPackage
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:mergeLibDexDebug
+> Task :app:processDebugResources
 > Task :app:mergeExtDexDebug
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:216:13 Unresolved reference: speakResponse
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/util/CallSecretaryManager.kt:113:76 Unresolved reference: searchContactByNumber
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:140:30 Unresolved reference: MediaPlayer
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1136:32 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1226:22 Unresolved reference: MediaPlayer
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1227:17 Unresolved reference: setAudioAttributes
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1233:17 Unresolved reference: setDataSource
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1234:17 Unresolved reference: setOnPreparedListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1234:41 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1241:17 Unresolved reference: setOnCompletionListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1241:43 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1251:17 Unresolved reference: setOnErrorListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1251:38 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1251:46 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1251:52 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1263:17 Unresolved reference: prepareAsync
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1276:22 Unresolved reference: MediaPlayer
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1277:17 Unresolved reference: setAudioAttributes
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1283:17 Unresolved reference: setDataSource
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1284:17 Unresolved reference: setOnPreparedListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1284:41 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1291:17 Unresolved reference: setOnCompletionListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1291:43 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1301:17 Unresolved reference: setOnErrorListener
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1301:38 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1301:46 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1301:52 Cannot infer a type for this parameter. Please specify it explicitly.
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1313:17 Unresolved reference: prepareAsync
 
 FAILURE: Build failed with an exception.
 
@@ -249,5 +279,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 2m 3s
-23 actionable tasks: 23 executed
+BUILD FAILED in 1m 27s
+28 actionable tasks: 28 executed
