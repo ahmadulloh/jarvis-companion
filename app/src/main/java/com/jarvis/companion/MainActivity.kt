@@ -69,7 +69,16 @@ import com.jarvis.companion.util.PhoneActionManager
 import com.jarvis.companion.util.PreferencesHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import android.media.MediaPlayer
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
+import android.view.inputmethod.InputMethodManager
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.io.File
 import java.util.Locale
 
@@ -109,6 +118,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etCommandInput: EditText
     private lateinit var btnToggleMic: ImageButton
     private lateinit var btnSendCommand: ImageButton
+    private lateinit var btnFloatingKeyboard: ImageButton
 
     // In-App WebView
     private lateinit var containerWebView: View
@@ -328,6 +338,7 @@ class MainActivity : AppCompatActivity() {
         etCommandInput = findViewById(R.id.etCommandInput)
         btnToggleMic = findViewById(R.id.btnToggleMic)
         btnSendCommand = findViewById(R.id.btnSendCommand)
+        btnFloatingKeyboard = findViewById(R.id.btnFloatingKeyboard)
 
         // WindowInsets for bottomBarContainer: adjust for navigation bar and IME keyboard
         ViewCompat.setOnApplyWindowInsetsListener(bottomBarContainer) { v, insets ->
@@ -346,7 +357,18 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+        val showInput = prefs.showTextInputBar
+        bottomBarContainer.visibility = if (showInput) View.VISIBLE else View.GONE
+        btnFloatingKeyboard.visibility = if (showInput) View.GONE else View.VISIBLE
+
+        btnFloatingKeyboard.setOnClickListener {
+            vibrateBrief(15)
+            bottomBarContainer.visibility = View.VISIBLE
+            btnFloatingKeyboard.visibility = View.GONE
+            etCommandInput.requestFocus()
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.showSoftInput(etCommandInput, InputMethodManager.SHOW_IMPLICIT)
+        }
 
         btnChatHistory.setOnClickListener {
             vibrateBrief(15)
@@ -362,9 +384,6 @@ class MainActivity : AppCompatActivity() {
         tvWebTitle = findViewById(R.id.tvWebTitle)
         btnOpenExternalBrowser = findViewById(R.id.btnOpenExternalBrowser)
         btnCloseWebView = findViewById(R.id.btnCloseWebView)
-
-        // Matn kiritish satri har doim ochiq
-        bottomBarContainer.visibility = View.VISIBLE
 
         // Enter bosilganda ham buyruqni yuborish
         etCommandInput.setOnEditorActionListener { _, actionId, _ ->
@@ -1421,7 +1440,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 "SPEAKING" -> {
                     jarvisParticleView.setState(JarvisParticleState.SPEAKING)
-                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('form');", null) } catch (_: Exception) {}
+                    try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('speak');", null) } catch (_: Exception) {}
                 }
                 "RELEASE" -> {
                     jarvisParticleView.setState(JarvisParticleState.RELEASE)
@@ -1438,6 +1457,10 @@ class MainActivity : AppCompatActivity() {
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE)
         dialog.setContentView(R.layout.dialog_settings)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        dialog.window?.setLayout(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
 
         val btnClose = dialog.findViewById<TextView>(R.id.btnDialogClose)
         btnClose?.setOnClickListener { dialog.dismiss() }
@@ -1463,7 +1486,28 @@ class MainActivity : AppCompatActivity() {
         val layoutGemini = dialog.findViewById<View>(R.id.layoutGeminiSettings)
         val layoutPc = dialog.findViewById<View>(R.id.layoutPcSettings)
         val etGeminiKey = dialog.findViewById<EditText>(R.id.etDialogGeminiKey)
+        val btnToggleGeminiEye = dialog.findViewById<ImageButton>(R.id.btnToggleGeminiKeyEye)
+        val btnTestConnection = dialog.findViewById<MaterialButton>(R.id.btnTestConnection)
+        val tvTestConnectionStatus = dialog.findViewById<TextView>(R.id.tvTestConnectionStatus)
+
+        val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
+        val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
+        val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
+        val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
         val cbShowTextInput = dialog.findViewById<CheckBox>(R.id.cbDialogShowTextInput)
+        val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
+
+        // Route selection styling helper
+        fun updateRouteUi(route: AudioRoute) {
+            btnPc?.setBackgroundResource(if (route == AudioRoute.PC) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnPc?.setTextColor(if (route == AudioRoute.PC) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+
+            btnPhone?.setBackgroundResource(if (route == AudioRoute.PHONE) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnPhone?.setTextColor(if (route == AudioRoute.PHONE) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+
+            btnEarbuds?.setBackgroundResource(if (route == AudioRoute.EARBUDS) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnEarbuds?.setTextColor(if (route == AudioRoute.EARBUDS) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+        }
 
         var selectedMode = prefs.connectionMode
 
@@ -1474,15 +1518,26 @@ class MainActivity : AppCompatActivity() {
                 btnModeGemini?.setTextColor(Color.WHITE)
                 btnModePcBridge?.setBackgroundColor(Color.TRANSPARENT)
                 btnModePcBridge?.setTextColor(Color.parseColor("#64748B"))
+
+                layoutGemini?.visibility = View.VISIBLE
+                layoutPc?.visibility = View.GONE
+                btnPc?.visibility = View.GONE
+
+                // Gemini rejimida PC marshruti tanlangan bo'lsa, ziddiyatni bartaraf etib avtomatik telefonga o'tkazamiz
+                if (activeRoute == AudioRoute.PC) {
+                    activeRoute = AudioRoute.PHONE
+                    updateRouteUi(activeRoute)
+                }
             } else {
                 btnModePcBridge?.setBackgroundResource(R.drawable.bg_settings_pill_active)
                 btnModePcBridge?.setTextColor(Color.WHITE)
                 btnModeGemini?.setBackgroundColor(Color.TRANSPARENT)
                 btnModeGemini?.setTextColor(Color.parseColor("#64748B"))
-            }
 
-            layoutGemini?.visibility = if (isGemini) View.VISIBLE else View.GONE
-            layoutPc?.visibility = if (!isGemini) View.VISIBLE else View.GONE
+                layoutGemini?.visibility = View.GONE
+                layoutPc?.visibility = View.VISIBLE
+                btnPc?.visibility = View.VISIBLE
+            }
         }
 
         updateModeUi(selectedMode)
@@ -1499,50 +1554,28 @@ class MainActivity : AppCompatActivity() {
 
         etGeminiKey?.setText(prefs.geminiApiKey)
         cbShowTextInput?.isChecked = prefs.showTextInputBar
-
-        val etServer = dialog.findViewById<EditText>(R.id.etDialogServer)
-        val etToken = dialog.findViewById<EditText>(R.id.etDialogToken)
-        val cbBoot = dialog.findViewById<CheckBox>(R.id.cbDialogAutoStart)
-        val cbQuron = dialog.findViewById<CheckBox>(R.id.cbDialogQuronAlways)
-        val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
-        val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
-
         etServer?.setText(prefs.serverAddress)
         etToken?.setText(prefs.authToken)
         cbBoot?.isChecked = prefs.autoStartOnBoot
         cbQuron?.isChecked = prefs.quronCardVisible
 
-        btnGrantNotif?.setOnClickListener {
-            try {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            } catch (_: Exception) {
-                Toast.makeText(this, "Sozlamalarni ochishda xatolik", Toast.LENGTH_SHORT).show()
+        // Password eye toggler helper
+        fun setupPasswordToggle(editText: EditText?, eyeButton: ImageButton?) {
+            var isVisible = false
+            eyeButton?.setOnClickListener {
+                isVisible = !isVisible
+                if (isVisible) {
+                    editText?.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                    eyeButton.setImageResource(R.drawable.ic_visibility_off)
+                } else {
+                    editText?.transformationMethod = PasswordTransformationMethod.getInstance()
+                    eyeButton.setImageResource(R.drawable.ic_visibility)
+                }
+                editText?.setSelection(editText.text?.length ?: 0)
             }
         }
 
-        fun updateRouteUi(route: AudioRoute) {
-            btnPc?.setBackgroundColor(Color.TRANSPARENT)
-            btnPc?.setTextColor(Color.parseColor("#64748B"))
-            btnPhone?.setBackgroundColor(Color.TRANSPARENT)
-            btnPhone?.setTextColor(Color.parseColor("#64748B"))
-            btnEarbuds?.setBackgroundColor(Color.TRANSPARENT)
-            btnEarbuds?.setTextColor(Color.parseColor("#64748B"))
-
-            when (route) {
-                AudioRoute.PC -> {
-                    btnPc?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnPc?.setTextColor(Color.WHITE)
-                }
-                AudioRoute.PHONE -> {
-                    btnPhone?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnPhone?.setTextColor(Color.WHITE)
-                }
-                AudioRoute.EARBUDS -> {
-                    btnEarbuds?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnEarbuds?.setTextColor(Color.WHITE)
-                }
-            }
-        }
+        setupPasswordToggle(etGeminiKey, btnToggleGeminiEye)
 
         updateRouteUi(activeRoute)
 
@@ -1563,48 +1596,36 @@ class MainActivity : AppCompatActivity() {
         }
 
         // TTS Engine & Voice Configuration
-        val btnTtsUzbekVoice = dialog.findViewById<TextView>(R.id.btnTtsUzbekVoice)
-        val btnTtsElevenLabs = dialog.findViewById<TextView>(R.id.btnTtsElevenLabs)
-        val btnTtsDevice = dialog.findViewById<TextView>(R.id.btnTtsDevice)
+        val btnTtsUzbekVoice = dialog.findViewById<LinearLayout>(R.id.btnTtsUzbekVoice)
+        val btnTtsElevenLabs = dialog.findViewById<LinearLayout>(R.id.btnTtsElevenLabs)
+        val btnTtsDevice = dialog.findViewById<LinearLayout>(R.id.btnTtsDevice)
         val layoutUzbekVoice = dialog.findViewById<View>(R.id.layoutUzbekVoiceSettings)
         val layoutElevenLabs = dialog.findViewById<View>(R.id.layoutElevenLabsSettings)
-        val layoutDeviceTts = dialog.findViewById<View>(R.id.layoutDeviceTtsSettings)
         val etDialogUzbekVoiceKey = dialog.findViewById<EditText>(R.id.etDialogUzbekVoiceKey)
+        val btnToggleUzbekVoiceKeyEye = dialog.findViewById<ImageButton>(R.id.btnToggleUzbekVoiceKeyEye)
         val etDialogElevenLabsKey = dialog.findViewById<EditText>(R.id.etDialogElevenLabsKey)
+        val btnToggleElevenLabsKeyEye = dialog.findViewById<ImageButton>(R.id.btnToggleElevenLabsKeyEye)
+
+        setupPasswordToggle(etDialogUzbekVoiceKey, btnToggleUzbekVoiceKeyEye)
+        setupPasswordToggle(etDialogElevenLabsKey, btnToggleElevenLabsKeyEye)
+
+        etDialogUzbekVoiceKey?.setText(prefs.uzbekVoiceApiKey)
+        etDialogElevenLabsKey?.setText(prefs.elevenLabsApiKey)
 
         var selectedTtsEngine = prefs.ttsEngine
 
         fun updateTtsEngineUi(engine: String) {
-            btnTtsUzbekVoice?.setBackgroundColor(Color.TRANSPARENT)
-            btnTtsUzbekVoice?.setTextColor(Color.parseColor("#64748B"))
-            btnTtsElevenLabs?.setBackgroundColor(Color.TRANSPARENT)
-            btnTtsElevenLabs?.setTextColor(Color.parseColor("#64748B"))
-            btnTtsDevice?.setBackgroundColor(Color.TRANSPARENT)
-            btnTtsDevice?.setTextColor(Color.parseColor("#64748B"))
+            btnTtsUzbekVoice?.setBackgroundResource(if (engine == "UZBEKVOICE_AI") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            (btnTtsUzbekVoice?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "UZBEKVOICE_AI") "#12A550" else "#334155"))
 
-            when (engine) {
-                "UZBEKVOICE_AI" -> {
-                    btnTtsUzbekVoice?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnTtsUzbekVoice?.setTextColor(Color.WHITE)
-                    layoutUzbekVoice?.visibility = View.VISIBLE
-                    layoutElevenLabs?.visibility = View.GONE
-                    layoutDeviceTts?.visibility = View.GONE
-                }
-                "ELEVENLABS" -> {
-                    btnTtsElevenLabs?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnTtsElevenLabs?.setTextColor(Color.WHITE)
-                    layoutUzbekVoice?.visibility = View.GONE
-                    layoutElevenLabs?.visibility = View.VISIBLE
-                    layoutDeviceTts?.visibility = View.GONE
-                }
-                else -> {
-                    btnTtsDevice?.setBackgroundResource(R.drawable.bg_settings_pill_active)
-                    btnTtsDevice?.setTextColor(Color.WHITE)
-                    layoutUzbekVoice?.visibility = View.GONE
-                    layoutElevenLabs?.visibility = View.GONE
-                    layoutDeviceTts?.visibility = View.VISIBLE
-                }
-            }
+            btnTtsElevenLabs?.setBackgroundResource(if (engine == "ELEVENLABS") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            (btnTtsElevenLabs?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "ELEVENLABS") "#12A550" else "#334155"))
+
+            btnTtsDevice?.setBackgroundResource(if (engine == "DEVICE_TTS") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            (btnTtsDevice?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "DEVICE_TTS") "#12A550" else "#334155"))
+
+            layoutUzbekVoice?.visibility = if (engine == "UZBEKVOICE_AI") View.VISIBLE else View.GONE
+            layoutElevenLabs?.visibility = if (engine == "ELEVENLABS") View.VISIBLE else View.GONE
         }
 
         updateTtsEngineUi(selectedTtsEngine)
@@ -1622,10 +1643,152 @@ class MainActivity : AppCompatActivity() {
             updateTtsEngineUi(selectedTtsEngine)
         }
 
-        etDialogUzbekVoiceKey?.setText(prefs.uzbekVoiceApiKey)
-        etDialogElevenLabsKey?.setText(prefs.elevenLabsApiKey)
+        // Test buttons
+        val btnTestVoice = dialog.findViewById<MaterialButton>(R.id.btnTestVoice)
+        val btnTestMic = dialog.findViewById<MaterialButton>(R.id.btnTestMic)
+        val tvAudioTestStatus = dialog.findViewById<TextView>(R.id.tvAudioTestStatus)
+
+        btnTestConnection?.setOnClickListener {
+            tvTestConnectionStatus?.visibility = View.VISIBLE
+            tvTestConnectionStatus?.setTextColor(Color.parseColor("#3B82F6"))
+            tvTestConnectionStatus?.text = "⏳ Ulanish tekshirilmoqda..."
+
+            if (selectedMode == "GEMINI_DIRECT") {
+                val key = etGeminiKey?.text?.toString()?.trim() ?: ""
+                if (key.isBlank()) {
+                    tvTestConnectionStatus?.setTextColor(Color.parseColor("#EF4444"))
+                    tvTestConnectionStatus?.text = "⚠️ Gemini API kalitini kiriting"
+                    return@setOnClickListener
+                }
+                lifecycleScope.launch {
+                    val result = GeminiApiClient.generateReply(
+                        apiKey = key,
+                        userPrompt = "Salom",
+                        activeDomain = "Test",
+                        userName = "Axmadulloh"
+                    )
+                    result.onSuccess {
+                        tvTestConnectionStatus?.setTextColor(Color.parseColor("#12A550"))
+                        tvTestConnectionStatus?.text = "✅ Gemini API ulandi!"
+                    }.onFailure { err ->
+                        tvTestConnectionStatus?.setTextColor(Color.parseColor("#EF4444"))
+                        tvTestConnectionStatus?.text = "❌ Xatolik: ${err.message?.take(40)}"
+                    }
+                }
+            } else {
+                val serverStr = etServer?.text?.toString()?.trim() ?: ""
+                if (serverStr.isBlank()) {
+                    tvTestConnectionStatus?.setTextColor(Color.parseColor("#EF4444"))
+                    tvTestConnectionStatus?.text = "⚠️ Server IP manzilini kiriting"
+                    return@setOnClickListener
+                }
+                lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        val clean = serverStr.replace("ws://", "").replace("http://", "").replace("https://", "").replace("/", "")
+                        val parts = clean.split(":")
+                        val host = parts[0]
+                        val port = if (parts.size > 1) parts[1].filter { it.isDigit() }.toIntOrNull() ?: 8000 else 8000
+                        val socket = Socket()
+                        socket.connect(InetSocketAddress(host, port), 2500)
+                        socket.close()
+                        withContext(Dispatchers.Main) {
+                            tvTestConnectionStatus?.setTextColor(Color.parseColor("#12A550"))
+                            tvTestConnectionStatus?.text = "✅ Kompyuter serveri ulandi!"
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            tvTestConnectionStatus?.setTextColor(Color.parseColor("#EF4444"))
+                            tvTestConnectionStatus?.text = "❌ Serverga ulanib bo'lmadi"
+                        }
+                    }
+                }
+            }
+        }
+
+        btnTestVoice?.setOnClickListener {
+            tvAudioTestStatus?.visibility = View.VISIBLE
+            tvAudioTestStatus?.setTextColor(Color.parseColor("#3B82F6"))
+            tvAudioTestStatus?.text = "🔊 Ovoz sinovi yangramoqda..."
+            prefs.ttsEngine = selectedTtsEngine
+            prefs.uzbekVoiceApiKey = etDialogUzbekVoiceKey?.text?.toString()?.trim() ?: prefs.uzbekVoiceApiKey
+            prefs.elevenLabsApiKey = etDialogElevenLabsKey?.text?.toString()?.trim() ?: prefs.elevenLabsApiKey
+            speakJarvis("Salom Axmadulloh sir! Jarvis ovoz tizimi sinovdan o'tmoqda.")
+        }
+
+        btnTestMic?.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                tvAudioTestStatus?.visibility = View.VISIBLE
+                tvAudioTestStatus?.setTextColor(Color.parseColor("#EF4444"))
+                tvAudioTestStatus?.text = "⚠️ Mikrofon ruxsati berilmagan!"
+                return@setOnClickListener
+            }
+
+            tvAudioTestStatus?.visibility = View.VISIBLE
+            tvAudioTestStatus?.setTextColor(Color.parseColor("#3B82F6"))
+            tvAudioTestStatus?.text = "🎙️ Mikrofonga gapiring (2 soniya)..."
+
+            lifecycleScope.launch(Dispatchers.IO) {
+                var maxRms = 0f
+                var record: AudioRecord? = null
+                try {
+                    val sampleRate = 16000
+                    val minBuf = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+                    val bufferSize = if (minBuf > 0) minBuf else 2048
+                    record = AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize)
+                    if (record.state == AudioRecord.STATE_INITIALIZED) {
+                        record.startRecording()
+                        val buf = ShortArray(bufferSize / 2)
+                        val startTime = System.currentTimeMillis()
+                        while (System.currentTimeMillis() - startTime < 2000) {
+                            val read = record.read(buf, 0, buf.size)
+                            if (read > 0) {
+                                var sumSq = 0.0
+                                for (i in 0 until read) {
+                                    val s = buf[i].toDouble()
+                                    sumSq += s * s
+                                }
+                                val rms = Math.sqrt(sumSq / read).toFloat()
+                                if (rms > maxRms) maxRms = rms
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Mic test error: ${e.message}")
+                } finally {
+                    try {
+                        record?.stop()
+                        record?.release()
+                    } catch (_: Exception) {}
+                }
+
+                withContext(Dispatchers.Main) {
+                    tvAudioTestStatus?.visibility = View.VISIBLE
+                    if (maxRms > 50f) {
+                        val percent = ((maxRms / 3000f).coerceIn(0.1f, 1f) * 100).toInt()
+                        tvAudioTestStatus?.setTextColor(Color.parseColor("#12A550"))
+                        tvAudioTestStatus?.text = "✅ Mikrofon a'lo darajada ishlayapti ($percent%)"
+                    } else {
+                        tvAudioTestStatus?.setTextColor(Color.parseColor("#F59E0B"))
+                        tvAudioTestStatus?.text = "⚠️ Ovoz juda past yoki eshitilmadi"
+                    }
+                }
+            }
+        }
+
+        btnGrantNotif?.setOnClickListener {
+            try {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            } catch (_: Exception) {
+                Toast.makeText(this, "Sozlamalarni ochishda xatolik", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Sticky Bottom Save Bar
+        val tvSaveFeedback = dialog.findViewById<TextView>(R.id.tvSaveFeedback)
+        val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
 
         btnSave?.setOnClickListener {
+            vibrateBrief(30)
             val newKey = etGeminiKey?.text?.toString()?.trim() ?: ""
             prefs.geminiApiKey = newKey
             prefs.connectionMode = selectedMode
@@ -1639,15 +1802,23 @@ class MainActivity : AppCompatActivity() {
             prefs.uzbekVoiceApiKey = etDialogUzbekVoiceKey?.text?.toString()?.trim() ?: prefs.uzbekVoiceApiKey
             prefs.elevenLabsApiKey = etDialogElevenLabsKey?.text?.toString()?.trim() ?: prefs.elevenLabsApiKey
 
-            bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+            val showBar = prefs.showTextInputBar
+            bottomBarContainer.visibility = if (showBar) View.VISIBLE else View.GONE
+            btnFloatingKeyboard.visibility = if (showBar) View.GONE else View.VISIBLE
+
             applyAudioRoute(activeRoute)
 
             if (selectedMode == "PC_BRIDGE") {
                 startJarvisService()
             }
 
-            dialog.dismiss()
-            Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
+            tvSaveFeedback?.visibility = View.VISIBLE
+            tvSaveFeedback?.postDelayed({
+                try {
+                    dialog.dismiss()
+                } catch (_: Exception) {}
+                Toast.makeText(this, "Sozlamalar saqlandi", Toast.LENGTH_SHORT).show()
+            }, 600)
         }
 
         dialog.show()

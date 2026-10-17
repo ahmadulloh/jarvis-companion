@@ -1,329 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@drawable/bg_settings_dialog_light"
-    android:overScrollMode="never"
-    android:scrollbars="none">
+    android:orientation="vertical">
 
-    <LinearLayout
+    <!-- Header Row (Fixed at Top) -->
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
+        android:layout_height="52dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="16dp">
 
-        <!-- Header Row -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:fontFamily="sans-serif-black"
-                android:letterSpacing="0.04"
-                android:text="J.A.R.V.I.S Sozlamalari"
-                android:textColor="#0F172A"
-                android:textSize="17sp" />
-
-            <TextView
-                android:id="@+id/btnDialogClose"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:text="✕"
-                android:textColor="#64748B"
-                android:textSize="16sp" />
-        </RelativeLayout>
-
-        <!-- 1. Gibrid Aloqa Rejimi: Gemini AI yoki PC Bridge -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-bold"
-            android:text="Ishlash va Aloqa Rejimi (Gibrid):"
-            android:textColor="#334155"
-            android:textSize="12sp" />
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:fontFamily="sans-serif-black"
+            android:letterSpacing="0.04"
+            android:text="J.A.R.V.I.S Sozlamalari"
+            android:textColor="#0F172A"
+            android:textSize="17sp" />
+
+        <TextView
+            android:id="@+id/btnDialogClose"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#64748B"
+            android:textSize="18sp" />
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#F1F5F9" />
+
+    <!-- Scrollable Content Body -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="never"
+        android:scrollbars="vertical">
 
         <LinearLayout
-            android:id="@+id/dialogConnectionModeBar"
-            android:layout_width="match_parent"
-            android:layout_height="42dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_settings_segment_bar"
-            android:orientation="horizontal"
-            android:padding="3dp">
-
-            <TextView
-                android:id="@+id/btnModeGemini"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/bg_settings_pill_active"
-                android:fontFamily="sans-serif-bold"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="⚡ Gemini AI"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp" />
-
-            <TextView
-                android:id="@+id/btnModePcBridge"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="🖥️ PC Bridge"
-                android:textColor="#64748B"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <!-- Container for Gemini Settings -->
-        <LinearLayout
-            android:id="@+id/layoutGeminiSettings"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:text="Google Gemini API Kaliti:"
-                android:textColor="#475569"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/etDialogGeminiKey"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="5dp"
-                android:background="@drawable/bg_settings_input"
-                android:hint="AIzaSy... (Google AI Studio)"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:fontFamily="sans-serif"
-                android:text="Kompyutersiz, to'g'ridan-to'g'ri telefonda sun'iy idrok bilan muloqot."
-                android:textColor="#059669"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <!-- Container for PC Bridge Settings -->
-        <LinearLayout
-            android:id="@+id/layoutPcSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:orientation="vertical"
-            android:visibility="gone">
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="20dp">
 
+            <!-- ════════════════ 1. ULANISH BO'LIMI ════════════════ -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:text="Server IP (Tailscale):"
-                android:textColor="#475569"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/etDialogServer"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="5dp"
-                android:background="@drawable/bg_settings_input"
-                android:hint="100.112.86.116:8000"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.06"
+                android:text="🌐 1. ULANISH VA ISHLASH REJIMI"
                 android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
-                android:textSize="13sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="Xavfsizlik kaliti (Token):"
-                android:textColor="#475569"
-                android:textSize="12sp" />
-
-            <EditText
-                android:id="@+id/etDialogToken"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="5dp"
-                android:background="@drawable/bg_settings_input"
-                android:hint="jarvis-phone-companion-token"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
-                android:textSize="13sp" />
-        </LinearLayout>
-
-        <!-- 2. Device Route Selector inside Settings -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:fontFamily="sans-serif-bold"
-            android:text="Ovoz va Boshqaruv Qurilmasi:"
-            android:textColor="#334155"
-            android:textSize="12sp" />
-
-        <LinearLayout
-            android:id="@+id/dialogSegmentBar"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_settings_segment_bar"
-            android:orientation="horizontal"
-            android:padding="3dp">
-
-            <TextView
-                android:id="@+id/btnDialogRoutePc"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="💻 PC"
-                android:textColor="#64748B"
-                android:textSize="11.5sp" />
-
-            <TextView
-                android:id="@+id/btnDialogRoutePhone"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="📱 Telefon"
-                android:textColor="#64748B"
-                android:textSize="11.5sp" />
-
-            <TextView
-                android:id="@+id/btnDialogRouteEarbuds"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/bg_settings_pill_active"
-                android:fontFamily="sans-serif-bold"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="🎧 Quloqchin"
-                android:textColor="#FFFFFF"
-                android:textSize="11.5sp" />
-        </LinearLayout>
-
-        <!-- Ovoz Tizimi (TTS): UzbekVoice.ai (Sevinch), ElevenLabs, Qurilma -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:fontFamily="sans-serif-bold"
-            android:text="🗣️ Jarvis Ovoz Tizimi (TTS):"
-            android:textColor="#334155"
-            android:textSize="12sp" />
-
-        <LinearLayout
-            android:id="@+id/dialogTtsEngineBar"
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_marginTop="6dp"
-            android:background="@drawable/bg_settings_segment_bar"
-            android:orientation="horizontal"
-            android:padding="3dp">
-
-            <TextView
-                android:id="@+id/btnTtsUzbekVoice"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/bg_settings_pill_active"
-                android:fontFamily="sans-serif-bold"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="🇺🇿 UzbekVoice"
-                android:textColor="#FFFFFF"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/btnTtsElevenLabs"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="✨ ElevenLabs"
-                android:textColor="#64748B"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/btnTtsDevice"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center"
-                android:singleLine="true"
-                android:text="📱 Qurilma"
-                android:textColor="#64748B"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <!-- Container for UzbekVoice Settings -->
-        <LinearLayout
-            android:id="@+id/layoutUzbekVoiceSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:text="O'zbek Ovoz Tanlovi:"
-                android:textColor="#475569"
-                android:textSize="12sp" />
+                android:textSize="12.5sp" />
 
             <LinearLayout
+                android:id="@+id/dialogConnectionModeBar"
                 android:layout_width="match_parent"
-                android:layout_height="36dp"
-                android:layout_marginTop="4dp"
+                android:layout_height="44dp"
+                android:layout_marginTop="8dp"
                 android:background="@drawable/bg_settings_segment_bar"
                 android:orientation="horizontal"
-                android:padding="2dp">
+                android:padding="3dp">
 
                 <TextView
-                    android:id="@+id/btnVoiceSevinch"
+                    android:id="@+id/btnModeGemini"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
@@ -331,211 +89,661 @@
                     android:fontFamily="sans-serif-bold"
                     android:gravity="center"
                     android:singleLine="true"
-                    android:text="👩 Sevinch (Ayol ovozi)"
+                    android:text="⚡ Gemini AI (Mustaqil)"
                     android:textColor="#FFFFFF"
-                    android:textSize="11.5sp" />
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btnModePcBridge"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="🖥️ PC Bridge"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
             </LinearLayout>
 
+            <!-- Gemini Direct Settings -->
+            <LinearLayout
+                android:id="@+id/layoutGeminiSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Google Gemini API Kaliti:"
+                    android:textColor="#475569"
+                    android:textSize="12sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_settings_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="6dp">
+
+                    <EditText
+                        android:id="@+id/etDialogGeminiKey"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="AIzaSy... (Google AI Studio)"
+                        android:inputType="textPassword"
+                        android:singleLine="true"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="13sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnToggleGeminiKeyEye"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Ko'rsatish"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_visibility"
+                        app:tint="#64748B" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:fontFamily="sans-serif"
+                    android:text="Kompyutersiz, to'g'ridan-to'g'ri telefonda sun'iy idrok bilan muloqot."
+                    android:textColor="#059669"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- PC Bridge Settings -->
+            <LinearLayout
+                android:id="@+id/layoutPcSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Kompyuter Server IP (Tailscale yoki LAN):"
+                    android:textColor="#475569"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etDialogServer"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_settings_input"
+                    android:hint="100.112.86.116:8000"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:singleLine="true"
+                    android:textColor="#0F172A"
+                    android:textColorHint="#94A3B8"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Auth Token:"
+                    android:textColor="#475569"
+                    android:textSize="12sp" />
+
+                <EditText
+                    android:id="@+id/etDialogToken"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="5dp"
+                    android:background="@drawable/bg_settings_input"
+                    android:hint="jarvis-phone-companion-token"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:singleLine="true"
+                    android:textColor="#0F172A"
+                    android:textColorHint="#94A3B8"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Ulanishni tekshirish tugmasi -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTestConnection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="38dp"
+                    android:backgroundTint="#F1F5F9"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="⚡ Ulanishni tekshirish"
+                    android:textAllCaps="false"
+                    android:textColor="#334155"
+                    android:textSize="12sp"
+                    app:cornerRadius="10dp"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp" />
+
+                <TextView
+                    android:id="@+id/tvTestConnectionStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif"
+                    android:text=""
+                    android:textSize="11.5sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="#F1F5F9" />
+
+            <!-- ════════════════ 2. OVOZ VA BOSHQARUV ════════════════ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.06"
+                android:text="🗣️ 2. OVOZ VA QURILMA"
+                android:textColor="#0F172A"
+                android:textSize="12.5sp" />
+
+            <!-- Ovoz Chiqish Qurilmasi (Truncation-Free Responsive Cards) -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:fontFamily="sans-serif-medium"
-                android:text="UzbekVoice.ai API Kaliti:"
-                android:textColor="#475569"
-                android:textSize="11.5sp" />
-
-            <EditText
-                android:id="@+id/etDialogUzbekVoiceKey"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/bg_settings_input"
-                android:hint="393c4279-0b87-4935-a8ce-8391e859f81c:..."
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
-                android:textSize="12.5sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:fontFamily="sans-serif"
-                android:text="Studio darajasidagi tabiiy, jarangdor O'zbek ayol ovozi."
-                android:textColor="#059669"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <!-- Container for ElevenLabs Settings -->
-        <LinearLayout
-            android:id="@+id/layoutElevenLabsSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:text="ElevenLabs API Kaliti:"
-                android:textColor="#475569"
-                android:textSize="11.5sp" />
-
-            <EditText
-                android:id="@+id/etDialogElevenLabsKey"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/bg_settings_input"
-                android:hint="sk_cae53f7e2debb8bd6a99700edfd811ce..."
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:singleLine="true"
-                android:textColor="#0F172A"
-                android:textColorHint="#94A3B8"
-                android:textSize="12.5sp" />
-        </LinearLayout>
-
-        <!-- Container for Device TTS Settings -->
-        <LinearLayout
-            android:id="@+id/layoutDeviceTtsSettings"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:orientation="vertical"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif"
-                android:text="Telefonning ichki offline sintezatoridan foydalaniladi (Internet talab qilinmaydi)."
-                android:textColor="#64748B"
-                android:textSize="11.5sp" />
-        </LinearLayout>
-
-        <!-- 3. Interfeys va Qo'shimcha Sozlamalar -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:fontFamily="sans-serif-bold"
-            android:text="Interfeys va Funksiyalar:"
-            android:textColor="#334155"
-            android:textSize="12sp" />
-
-        <CheckBox
-            android:id="@+id/cbDialogShowTextInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:buttonTint="#12A550"
-            android:fontFamily="sans-serif"
-            android:text="⌨️ Pastki matn yozish maydonini ko'rsatish"
-            android:textColor="#1E293B"
-            android:textSize="12.5sp" />
-
-        <CheckBox
-            android:id="@+id/cbDialogAutoStart"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:buttonTint="#12A550"
-            android:fontFamily="sans-serif"
-            android:text="⚡ Telefon yoqilganda avtomatik ulanish"
-            android:textColor="#1E293B"
-            android:textSize="12.5sp" />
-
-        <CheckBox
-            android:id="@+id/cbDialogQuronAlways"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:buttonTint="#12A550"
-            android:fontFamily="sans-serif"
-            android:text="🕌 Qur'on Ustozi darslarini doimiy ko'rsatish"
-            android:textColor="#1E293B"
-            android:textSize="12.5sp" />
-
-        <!-- 4. Faol Soha (Ixcham Kartochka) -->
-        <LinearLayout
-            android:id="@+id/layoutSettingsActiveDomainRow"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="12dp"
-            android:background="@drawable/bg_sheet_search"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:fontFamily="sans-serif-medium"
-                android:text="Faol soha rejimi:"
-                android:textColor="#475569"
-                android:textSize="12.5sp" />
-
-            <TextView
-                android:id="@+id/tvSettingsActiveDomainLabel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_domain_chip"
                 android:fontFamily="sans-serif-bold"
-                android:paddingStart="10dp"
-                android:paddingTop="4dp"
-                android:paddingEnd="10dp"
-                android:paddingBottom="4dp"
-                android:text="⚡ Asosiy"
-                android:textColor="#12A550"
+                android:text="Ovoz chiqish qurilmasi:"
+                android:textColor="#475569"
                 android:textSize="12sp" />
-        </LinearLayout>
 
-        <!-- Hidden legacy recycler view to avoid NPE if referenced -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvSettingsDomains"
+            <LinearLayout
+                android:id="@+id/layoutRouteButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btnDialogRoutePhone"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_selector_selected"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-bold"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="📱 Telefon"
+                    android:textColor="#12A550"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btnDialogRouteEarbuds"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_selector_normal"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="🎧 Quloqchin"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btnDialogRoutePc"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_card_selector_normal"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:fontFamily="sans-serif-medium"
+                    android:gravity="center"
+                    android:singleLine="true"
+                    android:text="💻 PC"
+                    android:textColor="#64748B"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- TTS Engine Tanlovi (Vertical Cards - Kesilmasdan to'liq ko'rinadi) -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:fontFamily="sans-serif-bold"
+                android:text="Jarvis Ovoz Tizimi (TTS):"
+                android:textColor="#475569"
+                android:textSize="12sp" />
+
+            <!-- Card 1: UzbekVoice.ai -->
+            <LinearLayout
+                android:id="@+id/btnTtsUzbekVoice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_selector_selected"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="🇺🇿 UzbekVoice.ai (Sevinch)"
+                    android:textColor="#12A550"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Studio darajasidagi tabiiy, jarangdor O'zbek ayol ovozi."
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Card 2: ElevenLabs -->
+            <LinearLayout
+                android:id="@+id/btnTtsElevenLabs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_selector_normal"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="✨ ElevenLabs AI"
+                    android:textColor="#334155"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Ko'p tilli yuqori aniqlikdagi kiber-ovoz."
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Card 3: Qurilma Sintezatori -->
+            <LinearLayout
+                android:id="@+id/btnTtsDevice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card_selector_normal"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical"
+                android:paddingStart="14dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="14dp"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="📱 Qurilma sintezatori"
+                    android:textColor="#334155"
+                    android:textSize="13sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Telefonning ichki offline sintezatori (Internet talab qilinmaydi)."
+                    android:textColor="#64748B"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- UzbekVoice Key Container -->
+            <LinearLayout
+                android:id="@+id/layoutUzbekVoiceSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="UzbekVoice.ai API Kaliti:"
+                    android:textColor="#475569"
+                    android:textSize="11.5sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_settings_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="6dp">
+
+                    <EditText
+                        android:id="@+id/etDialogUzbekVoiceKey"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="393c4279-0b87-4935-a8ce-8391e859f81c:..."
+                        android:inputType="textPassword"
+                        android:singleLine="true"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="12.5sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnToggleUzbekVoiceKeyEye"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Ko'rsatish"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_visibility"
+                        app:tint="#64748B" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- ElevenLabs Key Container -->
+            <LinearLayout
+                android:id="@+id/layoutElevenLabsSettings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="ElevenLabs API Kaliti:"
+                    android:textColor="#475569"
+                    android:textSize="11.5sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/bg_settings_input"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="6dp">
+
+                    <EditText
+                        android:id="@+id/etDialogElevenLabsKey"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="sk_cae53f7e2debb8bd6a99700edfd811ce..."
+                        android:inputType="textPassword"
+                        android:singleLine="true"
+                        android:textColor="#0F172A"
+                        android:textColorHint="#94A3B8"
+                        android:textSize="12.5sp" />
+
+                    <ImageButton
+                        android:id="@+id/btnToggleElevenLabsKeyEye"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Ko'rsatish"
+                        android:scaleType="centerInside"
+                        app:srcCompat="@drawable/ic_visibility"
+                        app:tint="#64748B" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Interactive Voice & Mic Test Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTestVoice"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#F1F5F9"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="🔊 Ovozni sinash"
+                    android:textAllCaps="false"
+                    android:textColor="#334155"
+                    android:textSize="11.5sp"
+                    app:cornerRadius="10dp"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTestMic"
+                    android:layout_width="0dp"
+                    android:layout_height="38dp"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="#F1F5F9"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="🎙️ Mikrofonni sinash"
+                    android:textAllCaps="false"
+                    android:textColor="#334155"
+                    android:textSize="11.5sp"
+                    app:cornerRadius="10dp"
+                    app:strokeColor="#CBD5E1"
+                    app:strokeWidth="1dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvAudioTestStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
+                android:text=""
+                android:textSize="11.5sp"
+                android:visibility="gone" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="16dp"
+                android:background="#F1F5F9" />
+
+            <!-- ════════════════ 3. KO'RINISH VA FUNKSIYALAR ════════════════ -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:fontFamily="sans-serif-black"
+                android:letterSpacing="0.06"
+                android:text="📱 3. KO'RINISH VA BOSHQARUV"
+                android:textColor="#0F172A"
+                android:textSize="12.5sp" />
+
+            <CheckBox
+                android:id="@+id/cbDialogShowTextInput"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:buttonTint="#12A550"
+                android:fontFamily="sans-serif"
+                android:text="⌨️ Pastki matn yozish maydonini ko'rsatish"
+                android:textColor="#1E293B"
+                android:textSize="12.5sp" />
+
+            <CheckBox
+                android:id="@+id/cbDialogAutoStart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:buttonTint="#12A550"
+                android:fontFamily="sans-serif"
+                android:text="⚡ Telefon yoqilganda avtomatik ulanish"
+                android:textColor="#1E293B"
+                android:textSize="12.5sp" />
+
+            <CheckBox
+                android:id="@+id/cbDialogQuronAlways"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:buttonTint="#12A550"
+                android:fontFamily="sans-serif"
+                android:text="🕌 Qur'on Ustozi darslarini doimiy ko'rsatish"
+                android:textColor="#1E293B"
+                android:textSize="12.5sp" />
+
+            <!-- Faol Soha Rejimi Row -->
+            <LinearLayout
+                android:id="@+id/layoutSettingsActiveDomainRow"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_sheet_search"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Faol soha rejimi:"
+                    android:textColor="#475569"
+                    android:textSize="12.5sp" />
+
+                <TextView
+                    android:id="@+id/tvSettingsActiveDomainLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_domain_chip"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="⚡ Asosiy"
+                    android:textColor="#12A550"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Telegram bildirishnomalari ruxsati -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGrantNotificationAccess"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="#F1F5F9"
+                android:fontFamily="sans-serif-medium"
+                android:text="💬 Telegram bildirishnomalariga ruxsat"
+                android:textAllCaps="false"
+                android:textColor="#334155"
+                android:textSize="12sp"
+                app:cornerRadius="10dp"
+                app:strokeColor="#CBD5E1"
+                app:strokeWidth="1dp" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E2E8F0" />
+
+    <!-- Sticky Bottom Save Bar (Har doim ko'rinib turadi!) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="10dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp">
+
+        <TextView
+            android:id="@+id/tvSaveFeedback"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:fontFamily="sans-serif-bold"
+            android:gravity="center"
+            android:text="✅ Sozlamalar muvaffaqiyatli saqlandi!"
+            android:textColor="#12A550"
+            android:textSize="12sp"
             android:visibility="gone" />
 
-        <!-- Notification Access button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnGrantNotificationAccess"
-            android:layout_width="match_parent"
-            android:layout_height="44dp"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="#F1F5F9"
-            android:fontFamily="sans-serif-medium"
-            android:text="💬 Telegram bildirishnomalariga ruxsat"
-            android:textAllCaps="false"
-            android:textColor="#334155"
-            android:textSize="12sp"
-            app:cornerRadius="12dp"
-            app:strokeColor="#CBD5E1"
-            app:strokeWidth="1dp" />
-
-        <!-- Save button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnDialogSave"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="16dp"
             android:backgroundTint="#12A550"
             android:fontFamily="sans-serif-bold"
-            android:text="Saqlash va Ulanish"
+            android:text="💾 Saqlash va Ulanish"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
             app:cornerRadius="14dp" />
-
     </LinearLayout>
-</ScrollView>
+
+</LinearLayout>

@@ -64,6 +64,8 @@ class AudioTrackPlayer(
         return isPlaying && (System.currentTimeMillis() - lastAudioWriteTime < 700L)
     }
 
+    var onAudioRms: ((Float) -> Unit)? = null
+
     fun write(pcmChunk: ByteArray) {
         if (currentRoute == AudioRoute.PC) {
             return
@@ -78,6 +80,18 @@ class AudioTrackPlayer(
             if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
                 audioTrack?.write(pcmChunk, 0, pcmChunk.size)
                 lastAudioWriteTime = System.currentTimeMillis()
+
+                if (pcmChunk.isNotEmpty()) {
+                    var sum = 0.0
+                    val numSamples = pcmChunk.size / 2
+                    for (i in 0 until numSamples) {
+                        val sample = ((pcmChunk[i * 2 + 1].toInt() shl 8) or (pcmChunk[i * 2].toInt() and 0xFF)).toShort()
+                        sum += sample * sample
+                    }
+                    val rms = Math.sqrt(sum / numSamples.coerceAtLeast(1))
+                    val normRms = ((rms - 400.0) / 2500.0).coerceIn(0.0, 1.0).toFloat()
+                    onAudioRms?.invoke(normRms)
+                }
             }
         } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error writing audio: ${e.message}")

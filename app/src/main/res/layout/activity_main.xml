@@ -226,6 +226,23 @@
             app:tint="#12A550" />
     </LinearLayout>
 
+    <!-- Floating mini keyboard button when bottom bar is hidden in settings -->
+    <ImageButton
+        android:id="@+id/btnFloatingKeyboard"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/bg_caption_glass"
+        android:contentDescription="Klaviaturani ochish"
+        android:elevation="4dp"
+        android:scaleType="centerInside"
+        android:visibility="gone"
+        app:srcCompat="@drawable/ic_keyboard"
+        app:tint="#12A550" />
+
     <!-- 5. In-App Web View Container (Hidden by default, used for Quran recitation or web links) -->
     <RelativeLayout
         android:id="@+id/containerWebView"

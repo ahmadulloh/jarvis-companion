@@ -346,89 +346,125 @@ function draw() {
   const P = modes[cur].p;
   const cx = w / 2;
   const cy = h * 0.45;
-  const Rc = Math.min(w, h) * 0.2;
+  const Rc = Math.min(w, h) * 0.22;
   const maxL = Math.hypot(w, h) * 0.55;
 
-  const L = phase === 'listen' ? (0.3 + 0.3 * Math.sin(t * 7) * Math.sin(t * 2.3)) :
-            phase === 'scan' ? 0.25 :
-            (0.05 + 0.03 * Math.sin(t * 1.4));
-  lvl += (Math.abs(L) - lvl) * 0.12;
+  // Ensure lvl is clamped to [0..1] and finite
+  if (!isFinite(lvl) || isNaN(lvl)) lvl = 0;
+  lvl = Math.max(0, Math.min(1, lvl));
+
+  // Breathing amplitude when voice/mic is silent
+  const breath = 0.08 * Math.sin(t * 2.0);
+  const activeAmp = Math.max(lvl, Math.abs(breath));
 
   x.clearRect(0, 0, w, h);
 
-  // Soft Ambient Radial Glow
-  const gl = x.createRadialGradient(cx, cy, 0, cx, cy, Rc * 2.2);
-  gl.addColorStop(0, P[1] + (phase === 'idle' || phase === 'listen' ? '40' : '10'));
+  // Soft Ambient Radial Glow (Always centered, never blank)
+  const glowPulse = 1 + (phase === 'speak' ? activeAmp * 0.4 : 0.08 * Math.sin(t * 1.5));
+  const gl = x.createRadialGradient(cx, cy, 0, cx, cy, Rc * 2.3 * glowPulse);
+  gl.addColorStop(0, P[1] + (phase === 'speak' ? '50' : phase === 'listen' ? '40' : '28'));
   gl.addColorStop(1, P[1] + '00');
   x.fillStyle = gl;
   x.fillRect(0, 0, w, h);
 
   // Galaxy 3D Matrix
-  const ang = t * 0.25;
+  const ang = t * 0.28;
   const ca = Math.cos(ang), sa = Math.sin(ang);
   const tl = 0.95 + 0.12 * Math.sin(t * 0.3);
   const ct = Math.cos(tl), st = Math.sin(tl);
-  const G = Rc * 1.15 * (1 + 0.04 * Math.sin(t * 1.2)) * (phase === 'listen' ? 0.85 : 1);
+  const G = Rc * 1.15;
 
-  // Expanding shockwaves in SCAN phase
-  const r1 = ((t - tScan) * maxL * 0.5) % maxL;
-  const r2 = (r1 + maxL * 0.5) % maxL;
+  // Expanding shockwave in SCAN phase (Task 2)
+  const rWave = ((t - tScan) * 90) % maxL;
   if (phase === 'scan') {
-    x.lineWidth = 2;
-    for (const rr of [r1, r2]) {
-      x.strokeStyle = P[1] + '55';
-      x.beginPath();
-      x.arc(cx, cy, rr, 0, 6.283);
-      x.stroke();
-    }
+    x.lineWidth = 1.5;
+    x.strokeStyle = P[1] + '33';
+    x.beginPath();
+    x.arc(cx, cy, rWave, 0, 6.283);
+    x.stroke();
   }
 
   // 2800 Particles Simulation
   for (const p of ps) {
-    let tx, ty, k, s = 1, al, z = 0;
+    let tx, ty, k, s = 1, al = 0.7, z = 0, sz = p.sz;
+
     if (phase === 'scan') {
-      tx = p.ux * w + Math.sin(t * 0.6 + p.ph) * 28;
-      ty = p.uy * h + Math.cos(t * 0.5 + p.ph) * 28;
-      k = 0.012 * p.k;
-      al = 0.4;
-    } else if (phase === 'form' || phase === 'hold') {
-      tx = p.fx + (phase === 'hold' ? Math.sin(t * 4 + p.ph) * 1.4 : 0);
-      ty = p.fy + (phase === 'hold' ? Math.cos(t * 4 + p.ph) * 1.4 : 0);
-      k = (phase === 'hold' ? 0.14 : 0.05) * p.k;
-      al = 0.95;
+      // ── TASK 2: ELEGANT GREEN STARRY SKY ──
+      const topMargin = 90;
+      const bottomMargin = 125;
+      const usableH = Math.max(100, h - topMargin - bottomMargin);
+
+      // Uniformly distributed across screen without edge bunching
+      tx = p.ux * w + Math.sin(t * 0.35 + p.ph) * 12;
+      ty = topMargin + p.uy * usableH + Math.cos(t * 0.35 + p.ph) * 12;
+      k = 0.025 * p.k;
+
+      // Expanding smooth wave ring (lights up stars as it passes)
+      const d = Math.hypot(tx - cx, ty - cy);
+      const waveGlow = Math.exp(-Math.pow((d - rWave) / 36, 2));
+
+      // Fade out near top 90px and bottom 125px so particles don't crowd title or input
+      let edgeFade = 1.0;
+      if (ty < topMargin + 35) edgeFade = Math.max(0, (ty - topMargin) / 35);
+      else if (ty > h - bottomMargin - 35) edgeFade = Math.max(0, (h - bottomMargin - ty) / 35);
+
+      al = (0.26 + waveGlow * 0.54) * edgeFade;
+      sz = (1.0 + (p.sz % 1.2) + waveGlow * 0.7); // 1.0px to 2.5px fine dots!
     } else {
+      // ── TASK 1: 3D LIVING GALAXY ORB (ALWAYS VISIBLE & VIBRANT!) ──
       const X = p.hx * ca + p.hz * sa;
       const Z0 = -p.hx * sa + p.hz * ca;
       const Y = p.hy * ct - Z0 * st;
       z = p.hy * st + Z0 * ct;
-      const gg = G * (1 + lvl * 0.4 * Math.sin(t * 9 + p.ph * 3));
-      s = 1 / (1 - z * 0.25);
+
+      let pulse = 1.0;
+      if (phase === 'speak') {
+        // While speaking: rhythmic voice pulsation!
+        const speechRhythm = Math.sin(t * 14 + p.ph * 2) * 0.5 + 0.5;
+        pulse = 1.0 + (activeAmp * 0.75 + 0.15 * Math.sin(t * 7)) * speechRhythm;
+        k = 0.12 * p.k;
+        al = 0.55 + 0.45 * (z + 1) / 2;
+      } else if (phase === 'listen') {
+        // While listening: pulse with mic input
+        pulse = 1.0 + activeAmp * 0.65 * Math.sin(t * 10 + p.ph * 3);
+        k = 0.09 * p.k;
+        al = 0.45 + 0.5 * (z + 1) / 2;
+      } else {
+        // Idle: serene breathing
+        pulse = 1.0 + 0.06 * Math.sin(t * 1.5 + p.ph);
+        k = 0.08 * p.k;
+        al = 0.38 + 0.5 * (z + 1) / 2;
+      }
+
+      const gg = G * pulse;
+      s = 1 / Math.max(0.2, (1 - z * 0.25));
       tx = cx + X * gg * s;
       ty = cy + Y * gg * s;
-      k = (phase === 'release' ? 0.06 : 0.09) * p.k;
-      al = 0.3 + 0.5 * (z + 1) / 2;
+      sz = p.sz * s * (phase === 'speak' ? 1.25 : 1.0);
     }
 
-    p.vx *= 0.9;
-    p.vy *= 0.9;
+    // VALIDATION & SANITIZATION (Never allow NaN or Infinity)
+    if (!isFinite(tx) || isNaN(tx)) tx = cx;
+    if (!isFinite(ty) || isNaN(ty)) ty = cy;
+
+    p.vx *= 0.88;
+    p.vy *= 0.88;
     p.x += (tx - p.x) * k + p.vx;
     p.y += (ty - p.y) * k + p.vy;
 
-    const tc = (phase === 'form' || phase === 'hold') ? p.fc : p.gc;
-    for (let j = 0; j < 3; j++) p.c[j] += (tc[j] - p.c[j]) * 0.09;
+    if (!isFinite(p.x) || isNaN(p.x)) p.x = tx;
+    if (!isFinite(p.y) || isNaN(p.y)) p.y = ty;
 
-    let sz = p.sz * s * (phase === 'form' || phase === 'hold' ? 1.15 : 1);
-    if (phase === 'scan') {
-      const d = Math.hypot(p.x - cx, p.y - cy);
-      const i = Math.max(Math.exp(-Math.pow((d - r1) / 45, 2)), Math.exp(-Math.pow((d - r2) / 45, 2)));
-      al += i * 0.6;
-      sz += i * 3.2;
+    // Particle color interpolation
+    for (let j = 0; j < 3; j++) {
+      p.c[j] += (p.gc[j] - p.c[j]) * 0.08;
     }
 
-    x.globalAlpha = Math.min(1, al);
+    // Draw particle
+    x.globalAlpha = Math.max(0.04, Math.min(1.0, al));
     x.fillStyle = 'rgb(' + (p.c[0] | 0) + ',' + (p.c[1] | 0) + ',' + (p.c[2] | 0) + ')';
     x.beginPath();
-    x.arc(p.x, p.y, sz, 0, 6.283);
+    x.arc(p.x, p.y, Math.max(0.8, Math.min(3.5, sz)), 0, 6.283);
     x.fill();
   }
   x.globalAlpha = 1;
@@ -465,10 +501,8 @@ function triggerCommand(cmdText, customEmoji) {
     tScan = t;
     say('Izlayapman…', 4000);
     for (const p of ps) {
-      const a = Math.random() * 6.283;
-      const v = 14 + Math.random() * 30;
-      p.vx = Math.cos(a) * v;
-      p.vy = Math.sin(a) * v;
+      p.vx = (Math.random() - 0.5) * 4;
+      p.vy = (Math.random() - 0.5) * 4;
     }
 
     // Call native Android bridge
@@ -480,26 +514,10 @@ function triggerCommand(cmdText, customEmoji) {
 
 // Called from Android Kotlin when JARVIS finds result / generates response
 window.jarvisDeliverResponse = function(replyText, shapeEmoji) {
-  setShape(shapeEmoji || modes[cur].sh);
-  phase = 'form';
-  say(replyText || 'Topdim, sir!', 6000);
-
+  phase = 'speak';
   setTimeout(() => {
-    if (phase === 'form') phase = 'hold';
-  }, 1800);
-
-  setTimeout(() => {
-    phase = 'release';
-    say('', 500);
-    for (const p of ps) {
-      p.vx = (p.x - w / 2) * 0.06 + rnd(6);
-      p.vy = (p.y - h * 0.45) * 0.06 + rnd(6);
-    }
-  }, 6200);
-
-  setTimeout(() => {
-    if (phase === 'release') phase = 'idle';
-  }, 8000);
+    if (phase === 'speak') phase = 'idle';
+  }, 6500);
 };
 
 // Canvas click initiates action
@@ -606,11 +624,24 @@ window.jarvisSay = function(text, durationMs) {
 };
 
 window.jarvisSetPhase = function(p) {
-  phase = p;
+  const norm = String(p || '').toLowerCase();
+  if (norm.includes('speak') || norm.includes('form') || norm.includes('hold')) {
+    phase = 'speak';
+  } else if (norm.includes('scan') || norm.includes('search') || norm.includes('think')) {
+    phase = 'scan';
+    tScan = t;
+  } else if (norm.includes('listen')) {
+    phase = 'listen';
+  } else {
+    phase = 'idle';
+  }
 };
 
 window.jarvisSetMicLevel = function(val) {
-  lvl = val;
+  const n = parseFloat(val);
+  if (isFinite(n) && !isNaN(n)) {
+    lvl = Math.max(0, Math.min(1, n));
+  }
 };
 
 updateQuickPills();

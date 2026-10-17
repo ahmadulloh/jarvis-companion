@@ -129,7 +129,11 @@ class JarvisForegroundService : Service() {
         createNotificationChannel()
         setupMediaSession()
 
-        audioPlayer = AudioTrackPlayer(sampleRate = 24000)
+        audioPlayer = AudioTrackPlayer(sampleRate = 24000).apply {
+            onAudioRms = { speechRms ->
+                broadcastRms(speechRms)
+            }
+        }
 
         geminiLiveClient = GeminiLiveWebSocketClient(
             onSetupComplete = {

@@ -72,10 +72,53 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getString("connection_mode", "GEMINI_DIRECT") ?: "GEMINI_DIRECT"
         set(value) = prefs.edit().putString("connection_mode", value.trim()).apply()
 
-    // Direct Google Gemini API Key for phone-only AI
+    // Encryption helper for sensitive API keys
+    private fun encryptKey(plain: String): String {
+        if (plain.isBlank()) return ""
+        try {
+            val keyBytes = "JarvisSecretKey2026SecureSeed".toByteArray()
+            val inBytes = plain.toByteArray(Charsets.UTF_8)
+            val out = ByteArray(inBytes.size)
+            for (i in inBytes.indices) {
+                out[i] = (inBytes[i].toInt() xor keyBytes[i % keyBytes.size].toInt()).toByte()
+            }
+            return "ENC:" + android.util.Base64.encodeToString(out, android.util.Base64.NO_WRAP)
+        } catch (_: Exception) {
+            return plain
+        }
+    }
+
+    private fun decryptKey(encoded: String): String {
+        if (encoded.isBlank()) return ""
+        if (!encoded.startsWith("ENC:")) return encoded
+        try {
+            val b64 = encoded.removePrefix("ENC:")
+            val inBytes = android.util.Base64.decode(b64, android.util.Base64.NO_WRAP)
+            val keyBytes = "JarvisSecretKey2026SecureSeed".toByteArray()
+            val out = ByteArray(inBytes.size)
+            for (i in inBytes.indices) {
+                out[i] = (inBytes[i].toInt() xor keyBytes[i % keyBytes.size].toInt()).toByte()
+            }
+            return String(out, Charsets.UTF_8)
+        } catch (_: Exception) {
+            return ""
+        }
+    }
+
+    // Direct Google Gemini API Key for phone-only AI (Encrypted storage)
     var geminiApiKey: String
-        get() = prefs.getString("gemini_api_key", "") ?: ""
-        set(value) = prefs.edit().putString("gemini_api_key", value.trim()).apply()
+        get() {
+            val enc = prefs.getString("gemini_api_key_enc", null)
+            if (enc != null) return decryptKey(enc)
+            val legacy = prefs.getString("gemini_api_key", "") ?: ""
+            if (legacy.isNotBlank()) {
+                geminiApiKey = legacy
+            }
+            return legacy
+        }
+        set(value) {
+            prefs.edit().putString("gemini_api_key_enc", encryptKey(value.trim())).remove("gemini_api_key").apply()
+        }
 
     // Show Text Input Bar (default true = input bar always visible above keyboard)
     var showTextInputBar: Boolean
@@ -87,19 +130,31 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getString("tts_engine", "UZBEKVOICE_AI") ?: "UZBEKVOICE_AI"
         set(value) = prefs.edit().putString("tts_engine", value.trim()).apply()
 
-    // UzbekVoice.ai Credentials
+    // UzbekVoice.ai Credentials (Encrypted storage)
     var uzbekVoiceApiKey: String
-        get() = prefs.getString("uzbek_voice_api_key", "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1") ?: "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1"
-        set(value) = prefs.edit().putString("uzbek_voice_api_key", value.trim()).apply()
+        get() {
+            val enc = prefs.getString("uzbek_voice_api_key_enc", null)
+            val key = if (enc != null) decryptKey(enc) else (prefs.getString("uzbek_voice_api_key", "") ?: "")
+            return key.ifBlank { "393c4279-0b87-4935-a8ce-8391e859f81c:bbc076fd-1dae-48fd-a0fd-29a86cc16fa1" }
+        }
+        set(value) {
+            prefs.edit().putString("uzbek_voice_api_key_enc", encryptKey(value.trim())).remove("uzbek_voice_api_key").apply()
+        }
 
     var uzbekVoiceModel: String
         get() = prefs.getString("uzbek_voice_model", "sevinch") ?: "sevinch"
         set(value) = prefs.edit().putString("uzbek_voice_model", value.trim()).apply()
 
-    // ElevenLabs Credentials
+    // ElevenLabs Credentials (Encrypted storage)
     var elevenLabsApiKey: String
-        get() = prefs.getString("eleven_labs_api_key", "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b") ?: "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b"
-        set(value) = prefs.edit().putString("eleven_labs_api_key", value.trim()).apply()
+        get() {
+            val enc = prefs.getString("eleven_labs_api_key_enc", null)
+            val key = if (enc != null) decryptKey(enc) else (prefs.getString("eleven_labs_api_key", "") ?: "")
+            return key.ifBlank { "sk_cae53f7e2debb8bd6a99700edfd811ce69b9b4dbbca7995b" }
+        }
+        set(value) {
+            prefs.edit().putString("eleven_labs_api_key_enc", encryptKey(value.trim())).remove("eleven_labs_api_key").apply()
+        }
 
     var elevenLabsVoiceId: String
         get() = prefs.getString("eleven_labs_voice_id", "21m00Tcm4TlvDq8ikWAM") ?: "21m00Tcm4TlvDq8ikWAM"
