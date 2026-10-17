@@ -256,31 +256,46 @@ class JarvisForegroundService : Service() {
                     "interrupt" -> {
                         audioPlayer.flush()
                     }
-                    "media_play" -> {
-                        val streamUrlRaw = json.optString("stream_url", "")
-                        val directUrlRaw = json.optString("direct_url", "")
+                    "media_play", "play" -> {
+                        val streamUrlRaw = json.optString("stream_url", json.optString("url", ""))
+                        val directUrlRaw = json.optString("direct_url", json.optString("fallback_url", ""))
                         val title = json.optString("title", "Musiqa")
                         currentMediaTitle = title
 
-                        val host = prefs.serverAddress.trim()
-                            .removePrefix("http://")
-                            .removePrefix("https://")
-                            .removePrefix("ws://")
-                            .removePrefix("wss://")
+                        val isYouTube = streamUrlRaw.contains("youtube.com") || streamUrlRaw.contains("youtu.be") ||
+                                directUrlRaw.contains("youtube.com") || directUrlRaw.contains("youtu.be")
 
-                        val finalUrl = when {
-                            streamUrlRaw.startsWith("http://") || streamUrlRaw.startsWith("https://") -> streamUrlRaw
-                            streamUrlRaw.isNotEmpty() -> "http://$host$streamUrlRaw"
-                            directUrlRaw.isNotEmpty() -> directUrlRaw
-                            else -> ""
-                        }
+                        if (isYouTube) {
+                            val ytUrl = if (streamUrlRaw.contains("youtube") || streamUrlRaw.contains("youtu.be")) streamUrlRaw else directUrlRaw
+                            try {
+                                val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ytUrl)).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(ytIntent)
+                                broadcastActionLog("musiqa", "YouTube ochildi: $title")
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error opening YouTube: ${e.message}")
+                            }
+                        } else {
+                            val host = prefs.serverAddress.trim()
+                                .removePrefix("http://")
+                                .removePrefix("https://")
+                                .removePrefix("ws://")
+                                .removePrefix("wss://")
 
-                        // Prefer directUrl if remote (YouTube CDN / https), fallback to finalUrl (PC server stream)
-                        val primaryUrl = if (directUrlRaw.startsWith("http://") || directUrlRaw.startsWith("https://")) directUrlRaw else finalUrl
-                        val fallbackUrl = if (primaryUrl == directUrlRaw) finalUrl else directUrlRaw
+                            val finalUrl = when {
+                                streamUrlRaw.startsWith("http://") || streamUrlRaw.startsWith("https://") -> streamUrlRaw
+                                streamUrlRaw.isNotEmpty() -> "http://$host$streamUrlRaw"
+                                directUrlRaw.isNotEmpty() -> directUrlRaw
+                                else -> ""
+                            }
 
-                        if (primaryUrl.isNotEmpty()) {
-                            playMediaStream(primaryUrl, fallbackUrl, title)
+                            val primaryUrl = if (directUrlRaw.startsWith("http://") || directUrlRaw.startsWith("https://")) directUrlRaw else finalUrl
+                            val fallbackUrl = if (primaryUrl == directUrlRaw) finalUrl else directUrlRaw
+
+                            if (primaryUrl.isNotEmpty()) {
+                                playMediaStream(primaryUrl, fallbackUrl, title)
+                            }
                         }
                     }
                     "media_mute" -> {
@@ -341,6 +356,7 @@ class JarvisForegroundService : Service() {
                         val limit = json.optInt("limit", 5)
 
                         val resText = when (act) {
+                            "open_app" -> phoneActionManager.openApp(query, json.optString("package"))
                             "call" -> phoneActionManager.makeCall(query)
                             "search_contact" -> phoneActionManager.searchContactDetailed(query)
                             "sms" -> phoneActionManager.sendSms(query, message)

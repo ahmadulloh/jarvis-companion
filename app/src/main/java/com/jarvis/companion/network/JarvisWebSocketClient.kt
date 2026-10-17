@@ -28,8 +28,8 @@ class JarvisWebSocketClient(
     }
 
     private val client = OkHttpClient.Builder()
-        .pingInterval(15, TimeUnit.SECONDS)
-        .connectTimeout(8, TimeUnit.SECONDS)
+        .pingInterval(30, TimeUnit.SECONDS)
+        .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
@@ -78,6 +78,7 @@ class JarvisWebSocketClient(
 
                 val request = Request.Builder()
                     .url(currentUrl)
+                    .addHeader("Authorization", "Bearer $authToken")
                     .build()
 
                 disconnectInternal()
@@ -115,9 +116,8 @@ class JarvisWebSocketClient(
                     }
 
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                        val errMsg = "Kompyuterga ulanib bo'lmadi: ${t.localizedMessage ?: "Aloqa uzildi"}. Wi-Fi va PC serverni tekshiring."
-                        Log.e(TAG, "Failure: $errMsg", t)
-                        onError(errMsg)
+                        val errMsg = "Kompyuterga ulanishda uzilish: ${t.localizedMessage ?: "Aloqa uzildi"}."
+                        Log.w(TAG, "WebSocket failure: $errMsg")
                         onDisconnected()
                         if (!isManuallyStopped.get()) {
                             scheduleReconnect()
@@ -135,19 +135,24 @@ class JarvisWebSocketClient(
 
     private fun scheduleReconnect() {
         if (isManuallyStopped.get()) return
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            Log.w(TAG, "Max reconnect attempts reached ($MAX_RECONNECT_ATTEMPTS). Stopping auto-reconnect.")
-            onError("Kompyuter serveriga qayta ulanish limitiga yetildi. Wi-Fi yoki serverni tekshiring.")
-            return
-        }
 
         reconnectAttempts++
+        // Exponential backoff: 2s, 4s, 8s, 16s, capped at 20s
+        val delayMs = (1000L * (1 shl (reconnectAttempts.coerceAtMost(4)))).coerceIn(2000L, 20000L)
+
+        if (reconnectAttempts == 6) {
+            Log.w(TAG, "Multiple reconnect attempts ($reconnectAttempts). Server may be offline or changing network.")
+        }
+
         ioExecutor.execute {
             try {
-                Thread.sleep(3000L)
+                Thread.sleep(delayMs)
                 if (!isManuallyStopped.get() && currentUrl.isNotEmpty()) {
-                    Log.d(TAG, "Reconnecting attempt $reconnectAttempts/$MAX_RECONNECT_ATTEMPTS...")
-                    val request = Request.Builder().url(currentUrl).build()
+                    Log.d(TAG, "Reconnecting attempt $reconnectAttempts (delay ${delayMs}ms)...")
+                    val request = Request.Builder()
+                        .url(currentUrl)
+                        .addHeader("Authorization", "Bearer ${currentUrl.substringAfter("token=")}")
+                        .build()
                     webSocket = client.newWebSocket(request, object : WebSocketListener() {
                         override fun onOpen(ws: WebSocket, response: Response) {
                             Log.i(TAG, "✅ Reconnected to PC server!")

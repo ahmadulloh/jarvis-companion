@@ -682,4 +682,99 @@ class PhoneActionManager(private val context: Context) {
         }
         return sb.toString().trim()
     }
+
+    /**
+     * Opens an app on the phone by name or package, with high compatibility for Android 11+.
+     */
+    fun openApp(query: String, explicitPackage: String? = null): String {
+        val q = query.trim().lowercase()
+        val pkg = when {
+            !explicitPackage.isNullOrBlank() -> explicitPackage.trim()
+            q.contains("youtube") || q.contains("yutub") || q == "yt" -> "com.google.android.youtube"
+            q.contains("telegram") || q == "tg" -> "org.telegram.messenger"
+            q.contains("spotify") -> "com.spotify.music"
+            q.contains("youtube music") || q.contains("yt music") -> "com.google.android.apps.youtube.music"
+            q.contains("whatsapp") -> "com.whatsapp"
+            q.contains("instagram") || q.contains("insta") -> "com.instagram.android"
+            q.contains("tiktok") -> "com.zhiliaoapp.musically"
+            q.contains("chrome") || q.contains("brauzer") || q.contains("browser") -> "com.android.chrome"
+            q.contains("sozlama") || q.contains("nastroyk") || q.contains("setting") -> "com.android.settings"
+            q.contains("play market") || q.contains("market") || q.contains("google play") -> "com.android.vending"
+            else -> null
+        }
+
+        val pm = context.packageManager
+
+        // Special system handlers
+        if (q.contains("kamera") || q.contains("camera")) {
+            val cameraIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            return try {
+                context.startActivity(cameraIntent)
+                "Axmadulloh sir, Kamera ochildi."
+            } catch (e: Exception) {
+                "Kamerani ochishda xatolik: ${e.message}"
+            }
+        }
+
+        if (q.contains("galereya") || q.contains("gallery") || q.contains("rasmlar")) {
+            val galleryIntent = Intent(Intent.ACTION_VIEW).apply {
+                type = "image/*"
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            return try {
+                context.startActivity(galleryIntent)
+                "Axmadulloh sir, Galereya ochildi."
+            } catch (e: Exception) {
+                "Galereyani ochishda xatolik: ${e.message}"
+            }
+        }
+
+        // 1. Try direct package launch
+        if (targetPackage(pkg) != null) {
+            val target = targetPackage(pkg)!!
+            val intent = pm.getLaunchIntentForPackage(target)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                return try {
+                    context.startActivity(intent)
+                    "Axmadulloh sir, $query ilovasi ochildi."
+                } catch (e: Exception) {
+                    "Ilovani ochishda xatolik: ${e.message}"
+                }
+            }
+        }
+
+        // 2. Search installed applications by label
+        try {
+            val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val pkgAppsList = pm.queryIntentActivities(mainIntent, 0)
+            val cleanQuery = normalizeForSearch(query)
+
+            for (resolveInfo in pkgAppsList) {
+                val appLabel = resolveInfo.loadLabel(pm).toString()
+                val normLabel = normalizeForSearch(appLabel)
+                val packageName = resolveInfo.activityInfo.packageName
+
+                if (normLabel.contains(cleanQuery) || cleanQuery.contains(normLabel)) {
+                    val intent = pm.getLaunchIntentForPackage(packageName)
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+                        context.startActivity(intent)
+                        return "Axmadulloh sir, $appLabel ilovasi ochildi."
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Search by label error: ${e.message}")
+        }
+
+        return "Axmadulloh sir, telefonda '$query' nomli ilova topilmadi."
+    }
+
+    private fun targetPackage(pkg: String?): String? = pkg
 }
+
