@@ -1,6 +1,8 @@
 package com.jarvis.companion.network
 
 import android.util.Log
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -9,113 +11,177 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import org.json.JSONObject
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 class JarvisWebSocketClient(
     private val onConnected: () -> Unit,
     private val onDisconnected: () -> Unit,
     private val onAudioReceived: (ByteArray) -> Unit,
-    private val onControlReceived: (JSONObject) -> Unit
+    private val onControlReceived: (JSONObject) -> Unit,
+    private val onError: (String) -> Unit = {}
 ) {
+    companion object {
+        private const val TAG = "JarvisWebSocketClient"
+        private const val MAX_RECONNECT_ATTEMPTS = 5
+    }
+
     private val client = OkHttpClient.Builder()
         .pingInterval(15, TimeUnit.SECONDS)
-        .connectTimeout(10, TimeUnit.SECONDS)
+        .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
 
+    private val ioExecutor = Executors.newSingleThreadExecutor()
     private var webSocket: WebSocket? = null
-    private var isManuallyStopped = false
+    private val isManuallyStopped = AtomicBoolean(false)
     private var currentUrl: String = ""
+    private var reconnectAttempts = 0
 
     fun connect(serverAddress: String, authToken: String) {
-        isManuallyStopped = false
+        isManuallyStopped.set(false)
+        reconnectAttempts = 0
 
-        val host = serverAddress.trim()
-            .removePrefix("http://")
-            .removePrefix("https://")
-            .removePrefix("ws://")
-            .removePrefix("wss://")
-
-        val scheme = if (serverAddress.startsWith("https://") || serverAddress.startsWith("wss://")) "wss" else "ws"
-        currentUrl = "$scheme://$host/ws/jarvis-audio?token=$authToken"
-
-        val request = Request.Builder()
-            .url(currentUrl)
-            .build()
-
-        Log.d("JarvisWebSocketClient", "Connecting to $currentUrl...")
-
-        webSocket = client.newWebSocket(request, object : WebSocketListener() {
-            override fun onOpen(webSocket: WebSocket, response: Response) {
-                Log.d("JarvisWebSocketClient", "Connected successfully!")
-                onConnected()
-            }
-
-            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
-                onAudioReceived(bytes.toByteArray())
-            }
-
-            override fun onMessage(webSocket: WebSocket, text: String) {
-                try {
-                    val json = JSONObject(text)
-                    onControlReceived(json)
-                } catch (e: Exception) {
-                    Log.w("JarvisWebSocketClient", "Non-JSON message: $text")
+        ioExecutor.execute {
+            try {
+                val raw = serverAddress.trim()
+                if (raw.isBlank()) {
+                    val err = "Kompyuter manzili kiritilmagan. Sozlamalardan IP va portni kiriting."
+                    Log.w(TAG, err)
+                    onError(err)
+                    onDisconnected()
+                    return@execute
                 }
-            }
 
-            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d("JarvisWebSocketClient", "Closing: $code / $reason")
-            }
+                val host = raw
+                    .removePrefix("http://")
+                    .removePrefix("https://")
+                    .removePrefix("ws://")
+                    .removePrefix("wss://")
+                    .trimEnd('/')
 
-            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                Log.d("JarvisWebSocketClient", "Closed: $code / $reason")
+                val scheme = if (raw.startsWith("https://") || raw.startsWith("wss://")) "wss" else "ws"
+                val httpEquivalent = if (scheme == "wss") "https" else "http"
+                val testHttpUrl = "$httpEquivalent://$host/ws/jarvis-audio?token=$authToken".toHttpUrlOrNull()
+
+                if (testHttpUrl == null) {
+                    val err = "Noto'g'ri server manzili formati: '$raw'. Masalan: 192.168.1.5:8000"
+                    Log.e(TAG, err)
+                    onError(err)
+                    onDisconnected()
+                    return@execute
+                }
+
+                currentUrl = "$scheme://$host/ws/jarvis-audio?token=$authToken"
+                Log.i(TAG, "Connecting to PC Bridge: $currentUrl...")
+
+                val request = Request.Builder()
+                    .url(currentUrl)
+                    .build()
+
+                disconnectInternal()
+
+                webSocket = client.newWebSocket(request, object : WebSocketListener() {
+                    override fun onOpen(webSocket: WebSocket, response: Response) {
+                        Log.i(TAG, "✅ Connected to Jarvis PC server successfully!")
+                        reconnectAttempts = 0
+                        onConnected()
+                    }
+
+                    override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                        onAudioReceived(bytes.toByteArray())
+                    }
+
+                    override fun onMessage(webSocket: WebSocket, text: String) {
+                        try {
+                            val json = JSONObject(text)
+                            onControlReceived(json)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Non-JSON message: $text")
+                        }
+                    }
+
+                    override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                        Log.d(TAG, "Closing: $code / $reason")
+                    }
+
+                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                        Log.i(TAG, "Closed: $code / $reason")
+                        onDisconnected()
+                        if (!isManuallyStopped.get()) {
+                            scheduleReconnect()
+                        }
+                    }
+
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        val errMsg = "Kompyuterga ulanib bo'lmadi: ${t.localizedMessage ?: "Aloqa uzildi"}. Wi-Fi va PC serverni tekshiring."
+                        Log.e(TAG, "Failure: $errMsg", t)
+                        onError(errMsg)
+                        onDisconnected()
+                        if (!isManuallyStopped.get()) {
+                            scheduleReconnect()
+                        }
+                    }
+                })
+            } catch (t: Throwable) {
+                val err = "Kompyuterga ulanishda xatolik: ${t.message ?: t.javaClass.simpleName}"
+                Log.e(TAG, err, t)
+                onError(err)
                 onDisconnected()
-                scheduleReconnect()
             }
-
-            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                Log.e("JarvisWebSocketClient", "Failure: ${t.message}")
-                onDisconnected()
-                scheduleReconnect()
-            }
-        })
+        }
     }
 
     private fun scheduleReconnect() {
-        if (isManuallyStopped) return
-        Thread {
+        if (isManuallyStopped.get()) return
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            Log.w(TAG, "Max reconnect attempts reached ($MAX_RECONNECT_ATTEMPTS). Stopping auto-reconnect.")
+            onError("Kompyuter serveriga qayta ulanish limitiga yetildi. Wi-Fi yoki serverni tekshiring.")
+            return
+        }
+
+        reconnectAttempts++
+        ioExecutor.execute {
             try {
-                Thread.sleep(4000)
-                if (!isManuallyStopped && currentUrl.isNotEmpty()) {
-                    Log.d("JarvisWebSocketClient", "Reconnecting...")
+                Thread.sleep(3000L)
+                if (!isManuallyStopped.get() && currentUrl.isNotEmpty()) {
+                    Log.d(TAG, "Reconnecting attempt $reconnectAttempts/$MAX_RECONNECT_ATTEMPTS...")
                     val request = Request.Builder().url(currentUrl).build()
                     webSocket = client.newWebSocket(request, object : WebSocketListener() {
-                        override fun onOpen(ws: WebSocket, response: Response) = onConnected()
+                        override fun onOpen(ws: WebSocket, response: Response) {
+                            Log.i(TAG, "✅ Reconnected to PC server!")
+                            reconnectAttempts = 0
+                            onConnected()
+                        }
                         override fun onMessage(ws: WebSocket, bytes: ByteString) = onAudioReceived(bytes.toByteArray())
                         override fun onMessage(ws: WebSocket, text: String) {
                             try { onControlReceived(JSONObject(text)) } catch (_: Exception) {}
                         }
                         override fun onClosed(ws: WebSocket, code: Int, reason: String) {
                             onDisconnected()
-                            scheduleReconnect()
+                            if (!isManuallyStopped.get()) scheduleReconnect()
                         }
                         override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                             onDisconnected()
-                            scheduleReconnect()
+                            if (!isManuallyStopped.get()) scheduleReconnect()
                         }
                     })
                 }
             } catch (_: Exception) {}
-        }.start()
+        }
     }
 
     fun sendAudio(pcmChunk: ByteArray) {
-        webSocket?.send(pcmChunk.toByteString())
+        try {
+            webSocket?.send(pcmChunk.toByteString())
+        } catch (_: Exception) {}
     }
 
     fun sendControl(json: JSONObject) {
-        webSocket?.send(json.toString())
+        try {
+            webSocket?.send(json.toString())
+        } catch (_: Exception) {}
     }
 
     fun sendWake() {
@@ -140,10 +206,16 @@ class JarvisWebSocketClient(
         sendControl(json)
     }
 
-    fun disconnect() {
-        isManuallyStopped = true
-        webSocket?.close(1000, "User disconnected")
+    private fun disconnectInternal() {
+        try {
+            webSocket?.close(1000, "Reconnecting or changing mode")
+        } catch (_: Exception) {}
         webSocket = null
+    }
+
+    fun disconnect() {
+        isManuallyStopped.set(true)
+        disconnectInternal()
         onDisconnected()
     }
 }

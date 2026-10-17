@@ -57,6 +57,12 @@ class AudioTrackPlayer(
 
     var currentRoute: AudioRoute = AudioRoute.EARBUDS
     private var discardUntil = 0L
+    var lastAudioWriteTime = 0L
+        private set
+
+    fun isActivelyPlaying(): Boolean {
+        return isPlaying && (System.currentTimeMillis() - lastAudioWriteTime < 700L)
+    }
 
     fun write(pcmChunk: ByteArray) {
         if (currentRoute == AudioRoute.PC) {
@@ -71,6 +77,7 @@ class AudioTrackPlayer(
             }
             if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
                 audioTrack?.write(pcmChunk, 0, pcmChunk.size)
+                lastAudioWriteTime = System.currentTimeMillis()
             }
         } catch (e: Throwable) {
             Log.e("AudioTrackPlayer", "Error writing audio: ${e.message}")
@@ -79,6 +86,7 @@ class AudioTrackPlayer(
 
     fun flush() {
         discardUntil = System.currentTimeMillis() + 800L
+        lastAudioWriteTime = 0L
         try {
             if (audioTrack?.state == AudioTrack.STATE_INITIALIZED) {
                 audioTrack?.pause()

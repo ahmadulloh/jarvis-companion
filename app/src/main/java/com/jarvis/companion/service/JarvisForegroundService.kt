@@ -83,6 +83,14 @@ class JarvisForegroundService : Service() {
 
         const val ACTION_INTERRUPT = "com.jarvis.companion.ACTION_INTERRUPT"
         const val ACTION_SET_SECRETARY = "com.jarvis.companion.ACTION_SET_SECRETARY"
+
+        const val BROADCAST_PC_CONNECTION_FAILED = "com.jarvis.companion.PC_CONNECTION_FAILED"
+        const val EXTRA_PC_ERROR = "extra_pc_error"
+
+        const val BROADCAST_CAPTION = "com.jarvis.companion.CAPTION"
+        const val EXTRA_CAPTION = "extra_caption"
+
+        const val BROADCAST_TURN_COMPLETE = "com.jarvis.companion.TURN_COMPLETE"
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -132,11 +140,11 @@ class JarvisForegroundService : Service() {
             onInputTranscription = { transcript ->
                 Log.d("JarvisService", "Gemini Live Input: $transcript")
                 broadcastInputTranscript(transcript)
-                broadcastChatLog("user", transcript)
             },
             onOutputTranscription = { text ->
                 Log.d("JarvisService", "Gemini Live Output: $text")
-                broadcastChatLog("jarvis", text)
+                broadcastCaption(text)
+                broadcastState("SPEAKING")
             },
             onAudioChunkReceived = { pcmChunk ->
                 audioPlayer.write(pcmChunk)
@@ -144,11 +152,13 @@ class JarvisForegroundService : Service() {
             onTurnComplete = {
                 Log.d("JarvisService", "Gemini Live turnComplete")
                 if (isMicStreaming) broadcastState("LISTENING")
+                broadcastTurnComplete()
             },
             onInterrupted = {
                 Log.d("JarvisService", "Gemini Live interrupted")
                 audioPlayer.flush()
                 if (isMicStreaming) broadcastState("LISTENING")
+                broadcastTurnComplete()
             },
             onError = { err ->
                 Log.e("JarvisService", "Gemini Live error: $err")
@@ -170,6 +180,10 @@ class JarvisForegroundService : Service() {
 
         audioRecorder = AudioRecordManager(this, sampleRate = 16000) { pcmChunk ->
             if (isMicStreaming) {
+                // Echo Gate: if Jarvis is actively playing audio through the phone speaker, DO NOT send mic to Gemini
+                if (audioPlayer.isActivelyPlaying() || isSpeaking) {
+                    return@AudioRecordManager
+                }
                 if (prefs.connectionMode == "GEMINI_DIRECT") {
                     geminiLiveClient.sendAudio(pcmChunk)
                 } else {
@@ -364,6 +378,11 @@ class JarvisForegroundService : Service() {
                         callSecretary.triggerSecretaryManually(target, reason)
                     }
                 }
+            },
+            onError = { errorMsg ->
+                Log.e("JarvisService", "PC connection error: $errorMsg")
+                broadcastActionLog("pc_bridge", errorMsg)
+                broadcastPcConnectionFailed(errorMsg)
             }
         )
 
@@ -522,6 +541,7 @@ class JarvisForegroundService : Service() {
                 try { audioPlayer.start() } catch (e: Exception) { Log.e("JarvisService", "audioPlayer.start error: ${e.message}") }
 
                 if (prefs.connectionMode == "GEMINI_DIRECT") {
+                    try { wsClient.disconnect() } catch (_: Exception) {}
                     val key = prefs.geminiApiKey
                     if (key.isNotBlank()) {
                         Log.i("JarvisService", "Starting Gemini Live direct mode...")
@@ -531,6 +551,7 @@ class JarvisForegroundService : Service() {
                         broadcastActionLog("gemini_live", "Gemini API kaliti kiritilmagan. Sozlamalardan kiriting.")
                     }
                 } else {
+                    try { geminiLiveClient.disconnect() } catch (_: Exception) {}
                     try { wsClient.connect(prefs.serverAddress, prefs.authToken) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
                 }
 
@@ -963,6 +984,29 @@ class JarvisForegroundService : Service() {
         val intent = Intent(BROADCAST_ACTION_LOG).apply {
             putExtra(EXTRA_ACTION_NAME, name)
             putExtra(EXTRA_ACTION_RESULT, result)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastCaption(caption: String) {
+        val intent = Intent(BROADCAST_CAPTION).apply {
+            putExtra(EXTRA_CAPTION, caption)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastTurnComplete() {
+        val intent = Intent(BROADCAST_TURN_COMPLETE).apply {
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastPcConnectionFailed(errorMsg: String) {
+        val intent = Intent(BROADCAST_PC_CONNECTION_FAILED).apply {
+            putExtra(EXTRA_PC_ERROR, errorMsg)
             setPackage(packageName)
         }
         sendBroadcast(intent)

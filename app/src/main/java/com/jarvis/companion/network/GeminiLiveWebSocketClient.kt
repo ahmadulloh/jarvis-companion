@@ -174,15 +174,25 @@ class GeminiLiveWebSocketClient(
                     // Enable both input and output audio transcriptions
                     put("inputAudioTranscription", JSONObject())
                     put("outputAudioTranscription", JSONObject())
+                    // Automatic Activity Detection (VAD) configuration
+                    put("realtimeInputConfig", JSONObject().apply {
+                        put("automaticActivityDetection", JSONObject().apply {
+                            put("disabled", false)
+                            put("silenceDurationMs", 800)
+                            put("prefixPaddingMs", 300)
+                        })
+                    })
                 })
             }
 
             webSocket?.send(setupJson.toString())
-            Log.d(TAG, "Sent setup packet to Gemini Live: $modelName")
+            Log.d(TAG, "Sent setup packet to Gemini Live with VAD: $modelName")
         } catch (e: Exception) {
             Log.e(TAG, "Error building setup packet: ${e.message}", e)
         }
     }
+
+    private val currentTurnOutput = StringBuilder()
 
     private fun handleServerMessage(text: String) {
         try {
@@ -202,6 +212,7 @@ class GeminiLiveWebSocketClient(
                 // Check if user's turn was interrupted
                 if (serverContent.optBoolean("interrupted", false)) {
                     Log.d(TAG, "Server signaled interruption")
+                    currentTurnOutput.clear()
                     onInterrupted()
                 }
 
@@ -217,12 +228,15 @@ class GeminiLiveWebSocketClient(
                 }
 
                 // Check for outputTranscription (what model is speaking)
+                var hasOutputTranscription = false
                 val outputTranscription = serverContent.optJSONObject("outputTranscription")
                     ?: serverContent.optJSONObject("output_audio_transcription")
                 if (outputTranscription != null) {
-                    val modelText = outputTranscription.optString("text", "").trim()
+                    val modelText = outputTranscription.optString("text", "")
                     if (modelText.isNotEmpty()) {
-                        onOutputTranscription(modelText)
+                        hasOutputTranscription = true
+                        currentTurnOutput.append(modelText)
+                        onOutputTranscription(currentTurnOutput.toString())
                     }
                 }
 
@@ -234,10 +248,13 @@ class GeminiLiveWebSocketClient(
                         for (i in 0 until parts.length()) {
                             val part = parts.optJSONObject(i) ?: continue
 
-                            // Text part
-                            val textPart = part.optString("text", "").trim()
-                            if (textPart.isNotEmpty()) {
-                                onOutputTranscription(textPart)
+                            // If server didn't send outputTranscription, fallback to modelTurn text part
+                            if (!hasOutputTranscription) {
+                                val textPart = part.optString("text", "")
+                                if (textPart.isNotEmpty()) {
+                                    currentTurnOutput.append(textPart)
+                                    onOutputTranscription(currentTurnOutput.toString())
+                                }
                             }
 
                             // Audio part (inlineData: base64 PCM 24kHz)
@@ -257,6 +274,7 @@ class GeminiLiveWebSocketClient(
                 // Check for turnComplete
                 if (serverContent.optBoolean("turnComplete", false)) {
                     Log.d(TAG, "Gemini Live turnComplete")
+                    currentTurnOutput.clear()
                     onTurnComplete()
                 }
             }

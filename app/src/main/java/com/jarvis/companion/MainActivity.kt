@@ -25,7 +25,9 @@ import android.speech.tts.UtteranceProgressListener
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.inputmethod.EditorInfo
 import android.webkit.WebChromeClient
@@ -83,29 +85,29 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rootContainer: View
     private lateinit var topBar: View
     private lateinit var tvBrandTitle: TextView
-    private lateinit var tvMicStatus: TextView
     private lateinit var chipDomainSelector: LinearLayout
     private lateinit var viewChipDot: View
     private lateinit var tvChipTitle: TextView
 
-    // Captions & Input Transcript
-    private lateinit var cardCaptionContainer: View
+    // Center Info under the Orb (Subtle status, single-line transcript, 1-2 line auto-fading caption)
+    private lateinit var layoutCenterInfo: LinearLayout
+    private lateinit var tvMicStatus: TextView
     private lateinit var tvInputTranscript: TextView
     private lateinit var tvJarvisCaption: TextView
     private var captionDismissRunnable: Runnable? = null
     private val captionHandler = android.os.Handler(android.os.Looper.getMainLooper())
-    private var lastShownCaption: String = ""
-    private var lastShownInput: String = ""
+    private var activeTurnJarvisCaption: String = ""
+    private var activeTurnUserTranscript: String = ""
 
-    // Mini Chat History (Last 2-3 exchanges)
-    private lateinit var layoutChatHistory: LinearLayout
-    private lateinit var tvHistoryItem1: TextView
-    private lateinit var tvHistoryItem2: TextView
-    private val chatHistoryList = mutableListOf<Pair<String, String>>()
+    // Full Chat History (Shown only in pull-up Bottom Sheet)
+    data class ChatHistoryMessage(val speaker: String, val text: String, val timestamp: Long = System.currentTimeMillis())
+    private val fullChatHistory = mutableListOf<ChatHistoryMessage>()
 
     // Always-Visible Bottom Text Input Bar
     private lateinit var bottomBarContainer: View
+    private lateinit var btnChatHistory: ImageButton
     private lateinit var etCommandInput: EditText
+    private lateinit var btnToggleMic: ImageButton
     private lateinit var btnSendCommand: ImageButton
 
     // In-App WebView
@@ -150,6 +152,19 @@ class MainActivity : AppCompatActivity() {
                         showInputTranscript(transcript)
                     }
                 }
+                JarvisForegroundService.BROADCAST_CAPTION -> {
+                    val caption = intent.getStringExtra(JarvisForegroundService.EXTRA_CAPTION) ?: ""
+                    if (caption.isNotBlank()) {
+                        showJarvisTurnCaption(caption)
+                    }
+                }
+                JarvisForegroundService.BROADCAST_TURN_COMPLETE -> {
+                    onTurnCompleted()
+                }
+                JarvisForegroundService.BROADCAST_PC_CONNECTION_FAILED -> {
+                    val errorMsg = intent.getStringExtra(JarvisForegroundService.EXTRA_PC_ERROR) ?: "Tarmoq xatosi"
+                    handlePcConnectionFailed(errorMsg)
+                }
                 JarvisForegroundService.BROADCAST_CHAT_LOG -> {
                     val speaker = intent.getStringExtra(JarvisForegroundService.EXTRA_SPEAKER) ?: ""
                     val text = intent.getStringExtra(JarvisForegroundService.EXTRA_TEXT) ?: ""
@@ -157,7 +172,8 @@ class MainActivity : AppCompatActivity() {
                         if (speaker.equals("user", ignoreCase = true)) {
                             showInputTranscript(text)
                         } else {
-                            showCaption(text)
+                            showJarvisTurnCaption(text)
+                            onTurnCompleted()
                         }
                         if (!speaker.equals("JARVIS", ignoreCase = true)) {
                             val detectedDomain = JarvisDomainRegistry.findDomainByVoice(text)
@@ -228,6 +244,7 @@ class MainActivity : AppCompatActivity() {
         prefs = PreferencesHelper(this)
         phoneActionManager = PhoneActionManager(this)
         initVibrator()
+        checkStartupCrashLog()
         initViews()
         initSpeechRecognizer()
         initTextToSpeech()
@@ -237,6 +254,17 @@ class MainActivity : AppCompatActivity() {
         applyDomain(savedDomain, speakAnnouncement = false)
 
         checkPermissionsAndStart()
+    }
+
+    private fun checkStartupCrashLog() {
+        try {
+            val crashPrefs = getSharedPreferences("jarvis_crash_log", Context.MODE_PRIVATE)
+            val lastCrash = crashPrefs.getString("last_crash", null)
+            if (!lastCrash.isNullOrBlank()) {
+                Log.w("MainActivity", "Previous crash detected:\n$lastCrash")
+                crashPrefs.edit().remove("last_crash").apply()
+            }
+        } catch (_: Exception) {}
     }
 
     private fun initVibrator() {
@@ -268,24 +296,18 @@ class MainActivity : AppCompatActivity() {
         setupLivingParticleWebView()
 
         tvBrandTitle = findViewById(R.id.tvBrandTitle)
-        tvMicStatus = findViewById(R.id.tvMicStatus)
         chipDomainSelector = findViewById(R.id.chipDomainSelector)
         viewChipDot = findViewById(R.id.viewChipDot)
         tvChipTitle = findViewById(R.id.tvChipTitle)
-        cardCaptionContainer = findViewById(R.id.cardCaptionContainer)
+
+        // Center Info under the central Orb
+        layoutCenterInfo = findViewById(R.id.layoutCenterInfo)
+        tvMicStatus = findViewById(R.id.tvMicStatus)
         tvInputTranscript = findViewById(R.id.tvInputTranscript)
         tvJarvisCaption = findViewById(R.id.tvJarvisCaption)
-        layoutChatHistory = findViewById(R.id.layoutChatHistory)
-        tvHistoryItem1 = findViewById(R.id.tvHistoryItem1)
-        tvHistoryItem2 = findViewById(R.id.tvHistoryItem2)
 
         tvMicStatus.setOnClickListener {
             toggleMicFromUi()
-        }
-
-        cardCaptionContainer.setOnClickListener {
-            vibrateBrief(15)
-            showCaption("")
         }
 
         ViewCompat.setOnApplyWindowInsetsListener(topBar) { v, insets ->
@@ -300,9 +322,40 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
+        // Bottom Bar & Controls
         bottomBarContainer = findViewById(R.id.bottomBarContainer)
+        btnChatHistory = findViewById(R.id.btnChatHistory)
         etCommandInput = findViewById(R.id.etCommandInput)
+        btnToggleMic = findViewById(R.id.btnToggleMic)
         btnSendCommand = findViewById(R.id.btnSendCommand)
+
+        // WindowInsets for bottomBarContainer: adjust for navigation bar and IME keyboard
+        ViewCompat.setOnApplyWindowInsetsListener(bottomBarContainer) { v, insets ->
+            val imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            val navHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+            val bottomMargin = if (imeHeight > 0) {
+                imeHeight + (8 * resources.displayMetrics.density).toInt()
+            } else {
+                navHeight + (12 * resources.displayMetrics.density).toInt()
+            }
+            val lp = v.layoutParams as? android.widget.RelativeLayout.LayoutParams
+            if (lp != null) {
+                lp.bottomMargin = bottomMargin
+                v.layoutParams = lp
+            }
+            insets
+        }
+
+        bottomBarContainer.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+
+        btnChatHistory.setOnClickListener {
+            vibrateBrief(15)
+            showChatHistoryBottomSheet()
+        }
+
+        btnToggleMic.setOnClickListener {
+            toggleMicFromUi()
+        }
 
         containerWebView = findViewById(R.id.containerWebView)
         webViewDashboard = findViewById(R.id.webViewDashboard)
@@ -481,7 +534,9 @@ class MainActivity : AppCompatActivity() {
 
     fun deliverJarvisResponseToUi(replyText: String, shapeEmoji: String = currentDomain.icon) {
         runOnUiThread {
-            showCaption(replyText)
+            showJarvisTurnCaption(replyText)
+            fullChatHistory.add(ChatHistoryMessage("jarvis", replyText))
+            onTurnCompleted()
             val clean = replyText.replace("'", "\\'").replace("\"", "\\\"").replace("\n", " ").trim()
             val js = "window.jarvisDeliverResponse('$clean', '$shapeEmoji');"
             try {
@@ -492,69 +547,67 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Matnli Status / Subtitle ko'rsatish (Floating Glass Capsule & Auto Fade) ──
+    // ── Matnli Status / Subtitle ko'rsatish (Organic in-place update & 6s Auto Fade) ──
     fun showInputTranscript(text: String) {
         val clean = text.trim()
-        if (clean.isBlank() || clean == lastShownInput) return
-        lastShownInput = clean
+        if (clean.isBlank()) return
+        activeTurnUserTranscript = clean
 
         runOnUiThread {
-            tvInputTranscript.text = "Eshitdim: «$clean»"
+            tvInputTranscript.text = clean
             tvInputTranscript.visibility = View.VISIBLE
-            cardCaptionContainer.visibility = View.VISIBLE
-            cardCaptionContainer.alpha = 1f
-            cardCaptionContainer.translationY = 0f
-            addToChatHistory("user", clean)
         }
     }
 
-    fun showCaption(text: String, durationMs: Long = 4500L) {
+    fun showJarvisTurnCaption(text: String) {
         val clean = text.trim()
+        if (clean.isBlank()) return
+        activeTurnJarvisCaption = clean
+
         runOnUiThread {
             captionDismissRunnable?.let { captionHandler.removeCallbacks(it) }
-            if (clean.isBlank()) {
-                cardCaptionContainer.animate()
+            tvJarvisCaption.text = clean
+            if (tvJarvisCaption.visibility != View.VISIBLE) {
+                tvJarvisCaption.alpha = 0f
+                tvJarvisCaption.visibility = View.VISIBLE
+                tvJarvisCaption.animate().alpha(1f).setDuration(200).start()
+            }
+        }
+    }
+
+    fun showCaption(text: String, durationMs: Long = 6000L) {
+        showJarvisTurnCaption(text)
+        onTurnCompleted(durationMs)
+    }
+
+    fun onTurnCompleted(durationMs: Long = 6000L) {
+        runOnUiThread {
+            if (activeTurnUserTranscript.isNotBlank()) {
+                if (fullChatHistory.isEmpty() || fullChatHistory.last().text != activeTurnUserTranscript) {
+                    fullChatHistory.add(ChatHistoryMessage("user", activeTurnUserTranscript))
+                }
+                activeTurnUserTranscript = ""
+            }
+            if (activeTurnJarvisCaption.isNotBlank()) {
+                if (fullChatHistory.isEmpty() || fullChatHistory.last().text != activeTurnJarvisCaption) {
+                    fullChatHistory.add(ChatHistoryMessage("jarvis", activeTurnJarvisCaption))
+                }
+                activeTurnJarvisCaption = ""
+            }
+
+            captionDismissRunnable?.let { captionHandler.removeCallbacks(it) }
+            val runnable = Runnable {
+                tvJarvisCaption.animate()
                     .alpha(0f)
-                    .translationY(16f)
-                    .setDuration(250)
+                    .setDuration(400)
                     .withEndAction {
-                        cardCaptionContainer.visibility = View.GONE
+                        tvJarvisCaption.visibility = View.GONE
                         tvInputTranscript.visibility = View.GONE
                     }
                     .start()
-            } else {
-                // Deduplicate consecutive identical messages
-                if (clean == lastShownCaption && cardCaptionContainer.visibility == View.VISIBLE) {
-                    return@runOnUiThread
-                }
-                lastShownCaption = clean
-
-                tvJarvisCaption.text = clean
-                cardCaptionContainer.visibility = View.VISIBLE
-                cardCaptionContainer.translationY = 16f
-                cardCaptionContainer.animate()
-                    .alpha(1f)
-                    .translationY(0f)
-                    .setDuration(250)
-                    .start()
-
-                addToChatHistory("jarvis", clean)
-
-                // 4.5 soniyadan so'ng avtomatik mayin yo'qoladi (ekran yana toza galaktikaga aylanadi)
-                val runnable = Runnable {
-                    cardCaptionContainer.animate()
-                        .alpha(0f)
-                        .translationY(16f)
-                        .setDuration(300)
-                        .withEndAction {
-                            cardCaptionContainer.visibility = View.GONE
-                            tvInputTranscript.visibility = View.GONE
-                        }
-                        .start()
-                }
-                captionDismissRunnable = runnable
-                captionHandler.postDelayed(runnable, durationMs)
             }
+            captionDismissRunnable = runnable
+            captionHandler.postDelayed(runnable, durationMs)
         }
     }
 
@@ -566,8 +619,12 @@ class MainActivity : AppCompatActivity() {
                     tvMicStatus.setTextColor(Color.parseColor("#12A550"))
                 }
                 "SPEAKING" -> {
-                    tvMicStatus.text = "🔊 Gapirmoqda"
+                    tvMicStatus.text = "🔊 Gapiryapman"
                     tvMicStatus.setTextColor(Color.parseColor("#2563EB"))
+                }
+                "SEARCHING", "THINKING" -> {
+                    tvMicStatus.text = "● O'ylayapman"
+                    tvMicStatus.setTextColor(Color.parseColor("#D97706"))
                 }
                 "MIC_OFF", "IDLE" -> {
                     tvMicStatus.text = "○ Mikrofon o'chiq"
@@ -589,41 +646,85 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun addToChatHistory(speaker: String, text: String) {
-        if (chatHistoryList.isNotEmpty() && chatHistoryList.last().second == text) return
-        chatHistoryList.add(Pair(speaker, text))
-        if (chatHistoryList.size > 8) {
-            chatHistoryList.removeAt(0)
+    // ── Suhbat Tarixi Bottom Sheet (Faqat pastdan tortib ochiladi) ──
+    private fun showChatHistoryBottomSheet() {
+        val sheetDialog = BottomSheetDialog(this)
+        val sheetView = layoutInflater.inflate(R.layout.dialog_chat_history, null)
+        sheetDialog.setContentView(sheetView)
+
+        val rv = sheetView.findViewById<RecyclerView>(R.id.rvChatHistory)
+        val tvEmpty = sheetView.findViewById<TextView>(R.id.tvEmptyHistory)
+        val btnClear = sheetView.findViewById<TextView>(R.id.btnClearHistory)
+
+        if (fullChatHistory.isEmpty()) {
+            tvEmpty?.visibility = View.VISIBLE
+            rv?.visibility = View.GONE
+        } else {
+            tvEmpty?.visibility = View.GONE
+            rv?.visibility = View.VISIBLE
+            rv?.layoutManager = LinearLayoutManager(this).apply {
+                stackFromEnd = true
+            }
+            rv?.adapter = ChatHistoryAdapter(fullChatHistory)
         }
-        updateChatHistoryUi()
+
+        btnClear?.setOnClickListener {
+            fullChatHistory.clear()
+            tvEmpty?.visibility = View.VISIBLE
+            rv?.visibility = View.GONE
+            Toast.makeText(this, "Suhbat tarixi tozalandi", Toast.LENGTH_SHORT).show()
+        }
+
+        sheetDialog.show()
     }
 
-    private fun updateChatHistoryUi() {
+    private fun handlePcConnectionFailed(errorMsg: String) {
         runOnUiThread {
-            val count = chatHistoryList.size
-            if (count >= 2) {
-                val item1 = chatHistoryList[count - 2]
-                val prefix1 = if (item1.first == "user") "👤 Siz: " else "🤖 JARVIS: "
-                tvHistoryItem1.text = "$prefix1${item1.second}"
-                tvHistoryItem1.visibility = View.VISIBLE
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("🖥️ Kompyuterga ulanib bo'lmadi")
+                .setMessage("PC Bridge serveriga (${prefs.serverAddress}) ulanishda xatolik yuz berdi:\n\n$errorMsg\n\nMustaqil Gemini Live (telefonda to'g'ridan-to'g'ri) rejimiga o'tishni xohlaysizmi?")
+                .setPositiveButton("⚡ Gemini AI rejimiga o'tish") { _, _ ->
+                    prefs.connectionMode = "GEMINI_DIRECT"
+                    Toast.makeText(this, "Gemini Live rejimi yoqildi", Toast.LENGTH_SHORT).show()
+                    startJarvisService()
+                }
+                .setNegativeButton("Sozlamalar") { _, _ ->
+                    openSettingsDialog()
+                }
+                .setNeutralButton("Yopish", null)
+                .show()
+        }
+    }
 
-                val item2 = chatHistoryList[count - 1]
-                val prefix2 = if (item2.first == "user") "👤 Siz: " else "🤖 JARVIS: "
-                tvHistoryItem2.text = "$prefix2${item2.second}"
-                tvHistoryItem2.visibility = View.VISIBLE
+    class ChatHistoryAdapter(private val messages: List<ChatHistoryMessage>) :
+        RecyclerView.Adapter<ChatHistoryAdapter.ViewHolder>() {
 
-                layoutChatHistory.visibility = View.VISIBLE
-            } else if (count == 1) {
-                val item1 = chatHistoryList[0]
-                val prefix1 = if (item1.first == "user") "👤 Siz: " else "🤖 JARVIS: "
-                tvHistoryItem1.text = "$prefix1${item1.second}"
-                tvHistoryItem1.visibility = View.VISIBLE
-                tvHistoryItem2.visibility = View.GONE
-                layoutChatHistory.visibility = View.VISIBLE
+        class ViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+            val userContainer: View = v.findViewById(R.id.containerUserMessage)
+            val tvUser: TextView = v.findViewById(R.id.tvUserMessage)
+            val jarvisContainer: View = v.findViewById(R.id.containerJarvisMessage)
+            val tvJarvis: TextView = v.findViewById(R.id.tvJarvisMessage)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_chat_history, parent, false)
+            return ViewHolder(v)
+        }
+
+        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+            val msg = messages[position]
+            if (msg.speaker.equals("user", ignoreCase = true)) {
+                holder.userContainer.visibility = View.VISIBLE
+                holder.tvUser.text = msg.text
+                holder.jarvisContainer.visibility = View.GONE
             } else {
-                layoutChatHistory.visibility = View.GONE
+                holder.userContainer.visibility = View.GONE
+                holder.jarvisContainer.visibility = View.VISIBLE
+                holder.tvJarvis.text = msg.text
             }
         }
+
+        override fun getItemCount(): Int = messages.size
     }
 
     private fun getShortDomainName(domain: JarvisDomain): String {
@@ -1227,7 +1328,8 @@ class MainActivity : AppCompatActivity() {
             applyDomain(detected, speakAnnouncement = false)
         }
 
-        showCaption("«$cmd»")
+        showInputTranscript(cmd)
+        fullChatHistory.add(ChatHistoryMessage("user", cmd))
         try {
             webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('scan');", null)
         } catch (_: Exception) {}
@@ -1631,6 +1733,9 @@ class MainActivity : AppCompatActivity() {
             addAction(JarvisForegroundService.BROADCAST_QURON_UPDATE)
             addAction(JarvisForegroundService.BROADCAST_RMS)
             addAction(JarvisForegroundService.BROADCAST_INPUT_TRANSCRIPT)
+            addAction(JarvisForegroundService.BROADCAST_CAPTION)
+            addAction(JarvisForegroundService.BROADCAST_TURN_COMPLETE)
+            addAction(JarvisForegroundService.BROADCAST_PC_CONNECTION_FAILED)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)

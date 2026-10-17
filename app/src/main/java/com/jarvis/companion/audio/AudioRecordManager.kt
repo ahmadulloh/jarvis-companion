@@ -165,7 +165,9 @@ class AudioRecordManager(
             isRecording = true
 
             recordingThread = Thread {
-                val buffer = ByteArray(3200) // 100 ms at 16000 Hz, 16-bit mono
+                // 30 ms slices at 16000 Hz, 16-bit mono = 480 samples = 960 bytes
+                val chunkSize = 960
+                val buffer = ByteArray(chunkSize)
                 var secBytes = 0
                 var lastLogTime = System.currentTimeMillis()
                 var totalBytesRead = 0L
@@ -183,7 +185,7 @@ class AudioRecordManager(
 
                         val now = System.currentTimeMillis()
                         if (now - lastLogTime >= 1000L) {
-                            Log.i(TAG, "🎙️ [AudioRecord] RMS: ${String.format("%.1f", rms)} | Oqim: $secBytes bayt/sek (Jami: $totalBytesRead bayt)")
+                            Log.i(TAG, "🎙️ [AudioRecord] Rate: $sampleRate Hz | Source: $chosenSource | Bufer: $bufferSize | RMS: ${String.format("%.1f", rms)} | Oqim: $secBytes bayt/sek (Jami: $totalBytesRead bayt)")
                             secBytes = 0
                             lastLogTime = now
                         }
