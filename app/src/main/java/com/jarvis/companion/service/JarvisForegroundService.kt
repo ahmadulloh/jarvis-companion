@@ -108,7 +108,7 @@ class JarvisForegroundService : Service() {
     private lateinit var geminiLiveClient: GeminiLiveWebSocketClient
     private lateinit var callSecretary: CallSecretaryManager
 
-    private var currentAudioRoute: AudioRoute = AudioRoute.EARBUDS
+    private var currentAudioRoute: AudioRoute = AudioRoute.PHONE
     private var isMicStreaming = false
     private var isConnected = false
     private var isSpeaking = false
@@ -123,7 +123,7 @@ class JarvisForegroundService : Service() {
         currentAudioRoute = try {
             AudioRoute.valueOf(prefs.audioRoute)
         } catch (_: Exception) {
-            AudioRoute.EARBUDS
+            AudioRoute.PHONE
         }
 
         acquireLocks()

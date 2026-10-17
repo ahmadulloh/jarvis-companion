@@ -57,14 +57,13 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.6.4
-        name: Jarvis Companion v1.6.4
+        tag_name: v1.6.5
+        name: Jarvis Companion v1.6.5
         body: |
-          JARVIS Companion v1.6.4 yangilanishi:
-          - Yangi Google Gemini Pro API kaliti to'liq ulandi (cheksiz kvota, ustuvor navbat)
-          - Official Google Gemini asl ovozi (Kore/Puck) 1.5 soniyada chaqmoqdek tezlikda javob qaytaradi
-          - 24kHz Mono PCM WAV konteyneri to'liq tozalangan, oxiridagi shivirash/hiss tovushlari 100% yo'qotilgan
-          - Standart ulanish Eskiz VPS Cloud Gateway (77.83.206.138:8000) ga avtomatik sozlangan
-          - YouTube musiqa, telefon ilovalari (YouTube, Spotify, Telegram) va barcha buyruqlar to'liq ishlaydi
+          JARVIS Companion v1.6.5 yangilanishi:
+          - Asl Google Gemini Live Multimodal arxitekturasi VPS Gateway'ga to'liq ulandi
+          - Ovoz qirqilishi (VAD), soxta STT va 429 TTS xatolari butunlay yo'qotildi
+          - Standart audio yo'nalishi Quloqchindan to'g'ridan-to'g'ri Telefon mikrofon va dinamigiga o'tkazildi
+          - 100% asl Google Gemini ovozida, o'zbek tilida sub-sekund jonli muloqot va barcha buyruqlar faol
         files: app/build/outputs/apk/debug/app-debug.apk
 

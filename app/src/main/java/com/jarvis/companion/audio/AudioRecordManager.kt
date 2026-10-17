@@ -41,7 +41,7 @@ class AudioRecordManager(
     // Software digital gain boost (2.5x = ~8dB) for Bluetooth SCO earbuds
     var gainBoost: Float = 2.5f
 
-    var currentRoute: AudioRoute = AudioRoute.EARBUDS
+    var currentRoute: AudioRoute = AudioRoute.PHONE
         private set
 
     fun isBluetoothHeadsetConnected(): Boolean {

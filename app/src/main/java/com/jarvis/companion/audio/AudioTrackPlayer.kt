@@ -55,7 +55,7 @@ class AudioTrackPlayer(
         }
     }
 
-    var currentRoute: AudioRoute = AudioRoute.EARBUDS
+    var currentRoute: AudioRoute = AudioRoute.PHONE
     private var discardUntil = 0L
     var lastAudioWriteTime = 0L
         private set
