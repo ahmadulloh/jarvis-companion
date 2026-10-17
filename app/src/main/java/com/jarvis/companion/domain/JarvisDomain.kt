@@ -368,22 +368,42 @@ object JarvisDomainRegistry {
 
     val YURIST = JarvisDomain(
         id = "YURIST",
-        titleUz = "Yurist / Huquqshunos",
+        titleUz = "Yurist & Soliq Maslahatchisi",
         icon = "⚖️",
-        category = "Huquq",
+        category = "Huquq va Soliq",
         primaryColor = Color.parseColor("#D4AF37"),
         glowColor = Color.parseColor("#FFD700"),
-        secondaryColor = Color.parseColor("#FFF8E1"),
-        description = "Shartnoma shabloni va xavfli bandlarni belgilash; muddatlar kalendari; uzun hujjat qisqartirish; mijoz uchrashuvlari.",
-        motto = "Huquqiy tahlil rejimi faol. Shartnomalar va qonuniy normalar nazoratda.",
-        keywords = listOf("yurist", "advokat", "huquq", "shartnoma", "qonun", "sud", "hujjat"),
+        secondaryColor = Color.parseColor("#1E3A8A"),
+        description = "Korxona shartnomalari auditi, sud va da'vo arizalari, O'zbekiston Soliq Kodeksi (QQS, aylanmadan soliq, imtiyozlar), mehnat nizolari va qonuniy himoya.",
+        motto = "Huquqiy va soliq tahlili faol. Shartnomalar, moddalar va soliq normalari nazoratda, Axmadulloh sir!",
+        keywords = listOf("yurist", "advokat", "soliq", "shartnoma", "qonun", "sud", "huquq", "qqs", "aylanma", "soliqchi", "yuridik"),
         actions = listOf(
             DomainAction("act_contract_audit", "Shartnoma Auditi", "⚖️", "Ushbu shartnomadagi xavfli va noaniq bandlarni top"),
-            DomainAction("act_doc_summary", "Hujjat Qisqartirish", "📄", "15 varaqli hujjatning eng muhim 5 bandini ajrat"),
-            DomainAction("act_deadline_law", "Sud / Muddatlar", "📅", "Apellatsiya va da'vo muddatlarini hisobla"),
-            DomainAction("act_legal_draft", "Shablon Yaratish", "📑", "Oldi-sotdi va kafolat shartnoma shablonini tuz")
+            DomainAction("act_tax_plan", "Soliq Tizimi (QQS)", "💰", "Qaysi soliq rejimi korxonamga foydali: QQS yoki aylanma?"),
+            DomainAction("act_labor_law", "Mehnat Nizolari", "👥", "Xodimni qonuniy ishdan bo'shatish yoki intizomiy jazo tartibi"),
+            DomainAction("act_court_draft", "Sudga Da'vo", "📑", "Iqtisodiy sudga qarzdorlikni undirish bo'yicha da'vo arizasi tuz")
         ),
-        systemPersonaPrompt = "You are JARVIS Legal Counsel. Audit contracts for risk factors, parse legal clauses, summarize voluminous briefs, and organize statutory deadlines for Axmadulloh sir."
+        systemPersonaPrompt = "You are JARVIS Legal & Tax Advisor for Axmadulloh sir. Provide sharp counsel on Uzbek law (Civil, Labor, Tax codes), evaluate contract clauses for risks, optimize tax regimes (VAT vs turnover tax), and format court petitions."
+    )
+
+    val TADBIRKOR = JarvisDomain(
+        id = "TADBIRKOR",
+        titleUz = "Tadbirkorlik & Firma Ochish",
+        icon = "🚀",
+        category = "Biznes",
+        primaryColor = Color.parseColor("#059669"),
+        glowColor = Color.parseColor("#10B981"),
+        secondaryColor = Color.parseColor("#047857"),
+        description = "O'zbekistonda MChJ yoki YaTT ochish (fo.birdarcha.uz), ustav fondi, E-imzo, bank hisob raqami, soliq rejimini tanlash va biznes-reja.",
+        motto = "Tadbirkorlik rejimi faol. Firma ochish va biznes yo'l-yo'riqlari tayyor, Axmadulloh sir!",
+        keywords = listOf("tadbirkor", "tadbirkorlik", "firma", "firma ochish", "mchj", "yatt", "biznes", "startap", "birdarcha", "hisob raqam"),
+        actions = listOf(
+            DomainAction("act_open_mchj", "MChJ Ochish Bosqichlari", "🚀", "O'zbekistonda MChJ ochish uchun nimalar kerak va tartibi qanday?"),
+            DomainAction("act_mchj_vs_yatt", "MChJ yoki YaTT?", "⚖️", "Mening biznesim uchun MChJ ma'qulmi yoki YaTT?"),
+            DomainAction("act_biz_plan", "Biznes Reja Tuzish", "📊", "Yangi loyiha uchun 1 yillik biznes-reja va xarajatlar smetasini tuz"),
+            DomainAction("act_bank_eimzo", "Bank & E-imzo", "🏦", "Firmaga bank hisob raqami va E-imzo olish qadamlari")
+        ),
+        systemPersonaPrompt = "You are JARVIS Business Startup Mentor for Axmadulloh sir. Guide him step-by-step in launching enterprises in Uzbekistan: registration via fo.birdarcha.uz, drafting charters, opening corporate bank accounts, choosing tax brackets, and structuring financial plans."
     )
 
     val IT_ADMIN = JarvisDomain(
@@ -666,11 +686,11 @@ object JarvisDomainRegistry {
         systemPersonaPrompt = "You are JARVIS Pet Care & Veterinary Assistant. Schedule feedings, track immunization calendars, record weight dynamics, and maintain walk routines for Axmadulloh sir."
     )
 
-    // Complete list of all 31 domains in order
+    // Complete list of all domains in order
     private val allDomainsList: List<JarvisDomain> = listOf(
         TALABA, OQITUVCHI, TIL, DOKON, ONLAYN_SAVDO,
         KAFE, SALON, HAYDOVCHI, AVTOUSTA, USTA,
-        MULK, FRILANSER, MENEJER, HR, YURIST,
+        MULK, FRILANSER, MENEJER, HR, YURIST, TADBIRKOR,
         DASTURCHI, IT_ADMIN, KONTENT, FOTO_VIDEO, MUSIQA,
         GAMER, FERMER, MOLIYA, UY, OILA,
         KEKSA, SALOMATLIK, SPORT, SAYOHAT, DIN,
@@ -685,25 +705,41 @@ object JarvisDomainRegistry {
 
     /**
      * Automatic Voice Detection: Matches spoken Uzbek commands like:
-     * "haydovchi rejimiga o't", "talaba rejimi", "dasturchi", "din rejimi"
+     * "haydovchi rejimiga o't", "yurist rejimini yoq", "tadbirkorlik", "talaba", "dasturchi"
      */
     fun findDomainByVoice(transcript: String): JarvisDomain? {
         val clean = transcript.lowercase().trim()
 
-        // Check if user is asking to switch mode / rejim
+        if (clean.contains("asosiy") || clean.contains("bosh sahifa") || clean.contains("standart")) {
+            return ASOSIY
+        }
+        if (clean.contains("haydovchi") || clean.contains("mashina") || clean.contains("shofyor") || clean.contains("taksi") || clean.contains("rul")) {
+            return HAYDOVCHI
+        }
+        if (clean.contains("yurist") || clean.contains("advokat") || clean.contains("soliq") || clean.contains("shartnoma") || clean.contains("sud")) {
+            return YURIST
+        }
+        if (clean.contains("tadbirkor") || clean.contains("firma") || clean.contains("mchj") || clean.contains("yatt") || clean.contains("startap")) {
+            return TADBIRKOR
+        }
+        if (clean.contains("talaba") || clean.contains("student") || clean.contains("dars") || clean.contains("konspekt")) {
+            return TALABA
+        }
+        if (clean.contains("dasturchi") || clean.contains("kod") || clean.contains("programist") || clean.contains("terminal")) {
+            return DASTURCHI
+        }
+        if (clean.contains("din") || clean.contains("quron") || clean.contains("qur'on") || clean.contains("namoz")) {
+            return DIN
+        }
+
         val isSwitchCommand = clean.contains("rejim") || clean.contains("mode") ||
                 clean.contains("o't") || clean.contains("ot") || clean.contains("yoq") ||
                 clean.contains("boshla") || clean.contains("ko'rinish") || clean.contains("korinish")
 
-        if (clean.contains("asosiy") || clean.contains("bosh sahifa") || clean.contains("standart")) {
-            return ASOSIY
-        }
-
-        // Match against all 31 domains
+        // Match against all registered domains
         for (domain in allDomainsList) {
             for (kw in domain.keywords) {
                 if (clean.contains(kw)) {
-                    // Strong match if explicit keyword or rejim command
                     if (isSwitchCommand || clean.length <= kw.length + 8) {
                         return domain
                     }

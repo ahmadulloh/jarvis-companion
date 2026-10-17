@@ -2,6 +2,9 @@ package com.jarvis.companion.util
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,11 +13,13 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.AlarmClock
 import android.provider.ContactsContract
+import android.provider.Settings
 import android.telecom.TelecomManager
 import android.telephony.PhoneStateListener
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.jarvis.companion.service.JarvisNotificationListener
 import org.json.JSONArray
@@ -684,6 +689,157 @@ class PhoneActionManager(private val context: Context) {
     }
 
     /**
+     * Safely launches an intent from foreground service or background,
+     * using SYSTEM_ALERT_WINDOW if available, with PendingIntent and full-screen notification fallback.
+     */
+    fun launchIntentSafely(intent: Intent, appName: String): Boolean {
+        intent.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+            Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+        )
+
+        // 1. Direct startActivity (succeeds if app in foreground or overlay permission granted)
+        try {
+            context.startActivity(intent)
+            Log.d(TAG, "Successfully started activity for $appName via direct startActivity")
+            return true
+        } catch (e: Exception) {
+            Log.w(TAG, "Direct startActivity for $appName failed: ${e.message}, trying fallbacks")
+        }
+
+        // 2. PendingIntent.send() fallback
+        try {
+            val pi = PendingIntent.getActivity(
+                context,
+                (System.currentTimeMillis() % 10000).toInt(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            pi.send()
+            Log.d(TAG, "Successfully triggered $appName via PendingIntent.send()")
+            return true
+        } catch (e2: Exception) {
+            Log.w(TAG, "PendingIntent.send failed: ${e2.message}")
+        }
+
+        // 3. High-priority Heads-up notification with FullScreenIntent
+        try {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            val channelId = "jarvis_app_launcher_channel"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && nm != null) {
+                var chan = nm.getNotificationChannel(channelId)
+                if (chan == null) {
+                    chan = NotificationChannel(
+                        channelId,
+                        "JARVIS Ilovalar Boshqaruvi",
+                        NotificationManager.IMPORTANCE_HIGH
+                    ).apply {
+                        description = "Ilovalarni fondan ekranga chiqarish uchun kanal"
+                    }
+                    nm.createNotificationChannel(chan)
+                }
+            }
+            val pi = PendingIntent.getActivity(
+                context,
+                (System.currentTimeMillis() % 10000).toInt(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val notif = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("$appName ochildi")
+                .setContentText("JARVIS buyrug'i bilan ishga tushirildi")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setFullScreenIntent(pi, true)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .build()
+            nm?.notify(9988, notif)
+            return true
+        } catch (e3: Exception) {
+            Log.e(TAG, "Notification fallback failed: ${e3.message}")
+        }
+        return false
+    }
+
+    /**
+     * Send or compose a Telegram message to a person or group.
+     */
+    fun sendTelegramMessage(recipient: String, message: String): String {
+        val cleanRecipient = recipient.trim()
+        val cleanMsg = message.trim()
+
+        // 1. If recipient is a phone number
+        val digitsOnly = cleanRecipient.replace("+", "").replace(" ", "").replace("-", "")
+        if (digitsOnly.length >= 7 && digitsOnly.all { it.isDigit() }) {
+            val targetNumber = if (cleanRecipient.startsWith("+")) cleanRecipient else "+$cleanRecipient"
+            val tgUri = Uri.parse("tg://msg?to=${Uri.encode(targetNumber)}&text=${Uri.encode(cleanMsg)}")
+            val intent = Intent(Intent.ACTION_VIEW, tgUri)
+            val launched = launchIntentSafely(intent, "Telegram")
+            return if (launched) {
+                "Axmadulloh sir, Telegramda $targetNumber raqamiga '$cleanMsg' xabari ochildi."
+            } else {
+                "Telegram ilovasini ochishda xatolik yuz berdi."
+            }
+        }
+
+        // 2. Search contacts if recipient is a person name
+        if (cleanRecipient.isNotEmpty() && !cleanRecipient.equals("guruh", true) && !cleanRecipient.equals("kanal", true)) {
+            val contact = searchContact(cleanRecipient)
+            if (contact != null) {
+                val (cName, cNumber) = contact
+                val tgUri = Uri.parse("tg://msg?to=${Uri.encode(cNumber)}&text=${Uri.encode(cleanMsg)}")
+                val intent = Intent(Intent.ACTION_VIEW, tgUri)
+                val launched = launchIntentSafely(intent, "Telegram")
+                if (launched) {
+                    return "Axmadulloh sir, Telegramda $cName ($cNumber) uchun '$cleanMsg' xabari tayyorlandi va ochildi."
+                }
+            }
+        }
+
+        // 3. If recipient has @username
+        if (cleanRecipient.startsWith("@")) {
+            val username = cleanRecipient.removePrefix("@")
+            val tgUri = Uri.parse("https://t.me/$username")
+            val intent = Intent(Intent.ACTION_VIEW, tgUri)
+            val launched = launchIntentSafely(intent, "Telegram")
+            return if (launched) {
+                "Axmadulloh sir, Telegramda @$username ochildi. Xabar: '$cleanMsg'"
+            } else {
+                "Telegramda @$username ochib bo'lmadi."
+            }
+        }
+
+        // 4. General / Group share with prefilled text
+        try {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                setPackage("org.telegram.messenger")
+                putExtra(Intent.EXTRA_TEXT, cleanMsg)
+            }
+            val launched = launchIntentSafely(shareIntent, "Telegram")
+            if (launched) {
+                val who = if (cleanRecipient.isNotEmpty()) cleanRecipient else "guruh yoki odam"
+                return "Axmadulloh sir, Telegramda $who uchun '$cleanMsg' xabari tayyorlandi va ochildi."
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Share to Telegram failed: ${e.message}")
+        }
+
+        // 5. Fallback: tg://msg_url
+        val tgUri = Uri.parse("tg://msg_url?url=&text=${Uri.encode(cleanMsg)}")
+        val intent = Intent(Intent.ACTION_VIEW, tgUri)
+        val launched = launchIntentSafely(intent, "Telegram")
+        return if (launched) {
+            "Axmadulloh sir, Telegram ochildi va '$cleanMsg' xabari kiritildi."
+        } else {
+            "Telegram ilovasi topilmadi yoki ochib bo'lmadi."
+        }
+    }
+
+    /**
      * Opens an app on the phone by name or package, with high compatibility for Android 11+.
      */
     fun openApp(query: String, explicitPackage: String? = null): String {
@@ -707,28 +863,15 @@ class PhoneActionManager(private val context: Context) {
 
         // Special system handlers
         if (q.contains("kamera") || q.contains("camera")) {
-            val cameraIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            return try {
-                context.startActivity(cameraIntent)
-                "Axmadulloh sir, Kamera ochildi."
-            } catch (e: Exception) {
-                "Kamerani ochishda xatolik: ${e.message}"
-            }
+            val cameraIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            val ok = launchIntentSafely(cameraIntent, "Kamera")
+            return if (ok) "Axmadulloh sir, Kamera ochildi." else "Kamerani ochishda xatolik yuz berdi."
         }
 
         if (q.contains("galereya") || q.contains("gallery") || q.contains("rasmlar")) {
-            val galleryIntent = Intent(Intent.ACTION_VIEW).apply {
-                type = "image/*"
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            return try {
-                context.startActivity(galleryIntent)
-                "Axmadulloh sir, Galereya ochildi."
-            } catch (e: Exception) {
-                "Galereyani ochishda xatolik: ${e.message}"
-            }
+            val galleryIntent = Intent(Intent.ACTION_VIEW).apply { type = "image/*" }
+            val ok = launchIntentSafely(galleryIntent, "Galereya")
+            return if (ok) "Axmadulloh sir, Galereya ochildi." else "Galereyani ochishda xatolik yuz berdi."
         }
 
         // 1. Try direct package launch
@@ -736,13 +879,8 @@ class PhoneActionManager(private val context: Context) {
             val target = targetPackage(pkg)!!
             val intent = pm.getLaunchIntentForPackage(target)
             if (intent != null) {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-                return try {
-                    context.startActivity(intent)
-                    "Axmadulloh sir, $query ilovasi ochildi."
-                } catch (e: Exception) {
-                    "Ilovani ochishda xatolik: ${e.message}"
-                }
+                val ok = launchIntentSafely(intent, query)
+                return if (ok) "Axmadulloh sir, $query ilovasi ochildi." else "$query ilovasini ochib bo'lmadi."
             }
         }
 
@@ -762,9 +900,8 @@ class PhoneActionManager(private val context: Context) {
                 if (normLabel.contains(cleanQuery) || cleanQuery.contains(normLabel)) {
                     val intent = pm.getLaunchIntentForPackage(packageName)
                     if (intent != null) {
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
-                        context.startActivity(intent)
-                        return "Axmadulloh sir, $appLabel ilovasi ochildi."
+                        val ok = launchIntentSafely(intent, appLabel)
+                        return if (ok) "Axmadulloh sir, $appLabel ilovasi ochildi." else "$appLabel ilovasini ochib bo'lmadi."
                     }
                 }
             }

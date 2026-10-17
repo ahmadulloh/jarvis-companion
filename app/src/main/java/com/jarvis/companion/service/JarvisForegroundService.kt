@@ -91,6 +91,15 @@ class JarvisForegroundService : Service() {
         const val EXTRA_CAPTION = "extra_caption"
 
         const val BROADCAST_TURN_COMPLETE = "com.jarvis.companion.TURN_COMPLETE"
+
+        const val BROADCAST_DOMAIN_CHANGE = "com.jarvis.companion.DOMAIN_CHANGE"
+        const val EXTRA_DOMAIN_ID = "extra_domain_id"
+
+        const val BROADCAST_MEDIA_PLAY = "com.jarvis.companion.MEDIA_PLAY"
+        const val EXTRA_MEDIA_URL = "extra_media_url"
+        const val EXTRA_MEDIA_TITLE = "extra_media_title"
+
+        const val BROADCAST_CONNECTION_GREETING = "com.jarvis.companion.CONNECTION_GREETING"
         private const val TAG = "JarvisService"
     }
 
@@ -227,6 +236,7 @@ class JarvisForegroundService : Service() {
                 Log.d("JarvisService", "Connected to Jarvis PC server")
                 updateNotification()
                 broadcastState("CONNECTED")
+                broadcastConnectionGreeting()
             },
             onDisconnected = {
                 isConnected = false
@@ -268,11 +278,13 @@ class JarvisForegroundService : Service() {
 
                         if (isYouTube) {
                             val ytUrl = if (streamUrlRaw.contains("youtube") || streamUrlRaw.contains("youtu.be")) streamUrlRaw else directUrlRaw
+                            // 1. Broadcast to MainActivity for in-app video rendering if app is open
+                            broadcastMediaPlay(ytUrl, title)
+
+                            // 2. Safely launch intent without background activity restriction blocking
                             try {
-                                val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ytUrl)).apply {
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                }
-                                startActivity(ytIntent)
+                                val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ytUrl))
+                                phoneActionManager.launchIntentSafely(ytIntent, "YouTube")
                                 broadcastActionLog("musiqa", "YouTube ochildi: $title")
                             } catch (e: Exception) {
                                 Log.e(TAG, "Error opening YouTube: ${e.message}")
@@ -298,6 +310,10 @@ class JarvisForegroundService : Service() {
                                 playMediaStream(primaryUrl, fallbackUrl, title)
                             }
                         }
+                    }
+                    "switch_domain" -> {
+                        val domainId = json.optString("domain", json.optString("query", "ASOSIY"))
+                        broadcastDomainChange(domainId)
                     }
                     "media_mute" -> {
                         val muted = json.optBoolean("muted", false)
@@ -361,6 +377,15 @@ class JarvisForegroundService : Service() {
                             "call" -> phoneActionManager.makeCall(query)
                             "search_contact" -> phoneActionManager.searchContactDetailed(query)
                             "sms" -> phoneActionManager.sendSms(query, message)
+                            "telegram_send", "send_telegram" -> {
+                                val recipient = json.optString("recipient", query)
+                                phoneActionManager.sendTelegramMessage(recipient, message)
+                            }
+                            "switch_domain" -> {
+                                val dId = if (query.isNotEmpty()) query else json.optString("domain", "ASOSIY")
+                                broadcastDomainChange(dId)
+                                "Axmadulloh sir, $dId rejimiga o'tildi."
+                            }
                             "reminder" -> phoneActionManager.setReminder(query, time)
                             "telegram_messages" -> phoneActionManager.getTelegramMessages(limit)
                             else -> "Noma'lum amal: $act"
@@ -1025,9 +1050,25 @@ class JarvisForegroundService : Service() {
         sendBroadcast(intent)
     }
 
-    private fun broadcastPcConnectionFailed(errorMsg: String) {
-        val intent = Intent(BROADCAST_PC_CONNECTION_FAILED).apply {
-            putExtra(EXTRA_PC_ERROR, errorMsg)
+    private fun broadcastDomainChange(domainId: String) {
+        val intent = Intent(BROADCAST_DOMAIN_CHANGE).apply {
+            putExtra(EXTRA_DOMAIN_ID, domainId)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastMediaPlay(url: String, title: String) {
+        val intent = Intent(BROADCAST_MEDIA_PLAY).apply {
+            putExtra(EXTRA_MEDIA_URL, url)
+            putExtra(EXTRA_MEDIA_TITLE, title)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastConnectionGreeting() {
+        val intent = Intent(BROADCAST_CONNECTION_GREETING).apply {
             setPackage(packageName)
         }
         sendBroadcast(intent)

@@ -702,6 +702,23 @@
                 app:strokeColor="#CBD5E1"
                 app:strokeWidth="1dp" />
 
+            <!-- Boshqa ilovalar ustida ko'rinish ruxsati (Overlay) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGrantOverlayAccess"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="#F1F5F9"
+                android:fontFamily="sans-serif-medium"
+                android:text="🪟 Boshqa ilovalar ustida ko'rinish ruxsati"
+                android:textAllCaps="false"
+                android:textColor="#334155"
+                android:textSize="12sp"
+                app:cornerRadius="10dp"
+                app:strokeColor="#CBD5E1"
+                app:strokeWidth="1dp" />
+
+
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

@@ -159,4 +159,8 @@ class PreferencesHelper(context: Context) {
     var elevenLabsVoiceId: String
         get() = prefs.getString("eleven_labs_voice_id", "21m00Tcm4TlvDq8ikWAM") ?: "21m00Tcm4TlvDq8ikWAM"
         set(value) = prefs.edit().putString("eleven_labs_voice_id", value.trim()).apply()
+
+    var lastWelcomeTimestamp: Long
+        get() = prefs.getLong("last_welcome_timestamp", 0L)
+        set(value) = prefs.edit().putLong("last_welcome_timestamp", value).apply()
 }

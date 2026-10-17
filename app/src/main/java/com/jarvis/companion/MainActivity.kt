@@ -218,6 +218,25 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+                JarvisForegroundService.BROADCAST_DOMAIN_CHANGE -> {
+                    val dId = intent.getStringExtra(JarvisForegroundService.EXTRA_DOMAIN_ID) ?: "ASOSIY"
+                    val target = JarvisDomainRegistry.getDomainById(dId)
+                    runOnUiThread {
+                        applyDomain(target, speakAnnouncement = true)
+                    }
+                }
+                JarvisForegroundService.BROADCAST_MEDIA_PLAY -> {
+                    val url = intent.getStringExtra(JarvisForegroundService.EXTRA_MEDIA_URL) ?: ""
+                    val title = intent.getStringExtra(JarvisForegroundService.EXTRA_MEDIA_TITLE) ?: "YouTube"
+                    runOnUiThread {
+                        playInAppYouTube(url, title)
+                    }
+                }
+                JarvisForegroundService.BROADCAST_CONNECTION_GREETING -> {
+                    runOnUiThread {
+                        triggerWelcomeGreetingIfNeeded()
+                    }
+                }
             }
         }
     }
@@ -1848,6 +1867,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        val btnGrantOverlay = dialog.findViewById<MaterialButton>(R.id.btnGrantOverlayAccess)
+        fun updateOverlayBtnState() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                btnGrantOverlay?.text = "✅ Boshqa ilovalar ustida ruxsat berilgan"
+                btnGrantOverlay?.isEnabled = false
+                btnGrantOverlay?.alpha = 0.7f
+            } else {
+                btnGrantOverlay?.text = "🪟 Boshqa ilovalar ustida ko'rinish ruxsati"
+                btnGrantOverlay?.isEnabled = true
+                btnGrantOverlay?.alpha = 1.0f
+            }
+        }
+        updateOverlayBtnState()
+
+        btnGrantOverlay?.setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                        android.net.Uri.parse("package:$packageName")
+                    )
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Ruxsatlar oynasini ochib bo'lmadi", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+
         // Sticky Bottom Save Bar
         val tvSaveFeedback = dialog.findViewById<TextView>(R.id.tvSaveFeedback)
         val btnSave = dialog.findViewById<MaterialButton>(R.id.btnDialogSave)
@@ -1897,7 +1945,7 @@ class MainActivity : AppCompatActivity() {
         startService(intent)
     }
 
-    // ── In-App WebView (Qur'on yoki Havolalar) ──────────────────────────────
+    // ── In-App WebView (Qur'on, YouTube yoki Havolalar) ────────────────────
     @SuppressLint("SetJavaScriptEnabled")
     private fun openQuronLesson(url: String) {
         containerWebView.visibility = View.VISIBLE
@@ -1912,6 +1960,43 @@ class MainActivity : AppCompatActivity() {
         webViewDashboard.webViewClient = WebViewClient()
         webViewDashboard.webChromeClient = WebChromeClient()
         webViewDashboard.loadUrl(url)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    fun playInAppYouTube(urlOrQuery: String, title: String) {
+        runOnUiThread {
+            try {
+                containerWebView.visibility = View.VISIBLE
+                tvWebTitle.text = "YouTube: $title"
+                val playUrl = when {
+                    urlOrQuery.startsWith("http://") || urlOrQuery.startsWith("https://") -> urlOrQuery
+                    else -> "https://m.youtube.com/results?search_query=" + Uri.encode(urlOrQuery)
+                }
+                quronWebUrl = playUrl
+                webViewDashboard.settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    mediaPlaybackRequiresUserGesture = false
+                    cacheMode = WebSettings.LOAD_DEFAULT
+                    userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                }
+                webViewDashboard.webViewClient = WebViewClient()
+                webViewDashboard.webChromeClient = WebChromeClient()
+                webViewDashboard.loadUrl(playUrl)
+                showCaption("▶ Ijro: $title")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "playInAppYouTube error: ${e.message}")
+            }
+        }
+    }
+
+    private fun triggerWelcomeGreetingIfNeeded() {
+        val now = System.currentTimeMillis()
+        if (now - prefs.lastWelcomeTimestamp > 120_000L) { // 2 minutes interval
+            prefs.lastWelcomeTimestamp = now
+            val greeting = "Salom Axmadulloh sir! Jarvis xizmatingizda. Buyrug'ingizni kutyapman."
+            deliverJarvisResponseToUi(greeting, currentDomain.icon)
+        }
     }
 
     // ── Ruxsatlar va Xizmatni Ishga Tushirish ──────────────────────────────
@@ -1937,6 +2022,23 @@ class MainActivity : AppCompatActivity() {
                 perms.add(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+
+        // Boshqa ilovalar ustida ko'rinish ruxsati (Android 10+ Background Activity Start uchun zarur)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            try {
+                val reqOverlay = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(reqOverlay)
+                Toast.makeText(
+                    this,
+                    "Axmadulloh sir, boshqa ilovalarda turganda ham YouTube va ilovalarni ochish uchun 'Boshqa ilovalar ustida ko'rinish' ruxsatini yoqing.",
+                    Toast.LENGTH_LONG
+                ).show()
+            } catch (_: Exception) {}
+        }
+
         if (perms.isNotEmpty()) {
             permissionLauncher.launch(perms.toTypedArray())
         } else {
@@ -1972,6 +2074,9 @@ class MainActivity : AppCompatActivity() {
             addAction(JarvisForegroundService.BROADCAST_CAPTION)
             addAction(JarvisForegroundService.BROADCAST_TURN_COMPLETE)
             addAction(JarvisForegroundService.BROADCAST_PC_CONNECTION_FAILED)
+            addAction(JarvisForegroundService.BROADCAST_DOMAIN_CHANGE)
+            addAction(JarvisForegroundService.BROADCAST_MEDIA_PLAY)
+            addAction(JarvisForegroundService.BROADCAST_CONNECTION_GREETING)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
