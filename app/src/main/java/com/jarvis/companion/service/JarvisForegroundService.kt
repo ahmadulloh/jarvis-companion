@@ -1074,6 +1074,15 @@ class JarvisForegroundService : Service() {
         sendBroadcast(intent)
     }
 
+    private fun broadcastPcConnectionFailed(errorMsg: String) {
+        val intent = Intent(BROADCAST_PC_CONNECTION_FAILED).apply {
+            putExtra(EXTRA_PC_ERROR, errorMsg)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+
     override fun onDestroy() {
         isForegroundStarted = false
         prefs.isServiceRunning = false
