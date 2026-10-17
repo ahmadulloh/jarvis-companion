@@ -57,15 +57,14 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.6.8
-        name: Jarvis Companion v1.6.8
+        tag_name: v1.6.9
+        name: Jarvis Companion v1.6.9
         body: |
-          JARVIS Companion v1.6.8 yangilanishi:
-          - YouTube va musiqa ijrosi faqat ilova ichidagi inline pleerda ochiladi; faqat foydalanuvchi "YouTube ilovasini och" deganida tashqi ilova ochiladi.
-          - Professional hujjatlar generatsiyasi: Word (.docx yuridik shartnomalar, arizalar), Excel (.xlsx formulali hisob-kitoblar), PDF (.pdf) va to'g'ridan-to'g'ri Telegram botga yuborish.
-          - Kamera va galereyadan hujjat suratini yuklab yuridik va biznes tahlil olish (multimodal audit).
-          - Gemini Live 5 ta asl ovozlari (Charon, Puck, Kore, Fenrir, Aoede) tanlovi va sozlamalar bo'limining toza tartiblangan dizayni.
-          - Telegram yoki boshqa ilovada turganda fondan turib ilovalarni ochish va Telegram xabar yuborish imkoniyati.
-          - Ilova ishga tushganda avtomatik qisqa salomlashish va ekran qorayishidan doimiy himoya.
+          JARVIS Companion v1.6.9 yangilanishi:
+          - Gemini Live 5 ta haqiqiy ovozlari (Charon, Puck, Kore, Fenrir, Aoede) to'liq ishga tushirildi va sinov tugmasi bosilganda har birining o'ziga xos jonli ovozi yangraydi.
+          - Yordamchi nomi (Assistant Name) Sozlamalarda faqat va faqat JARVIS nomiga doimiy qulflab qo'yildi (hech kim o'zgartira olmaydi).
+          - YouTube musiqa va videolari to'g'ridan-to'g'ri ilova ichida avtomatik ijro etiladi (tashqi ilovaga chiqib ketish to'xtatildi).
+          - Hujjat skanerlash va tahlil qilishdagi 429 RESOURCE_EXHAUSTED kvota xatosi ko'p modelli kaskad (gemini-3.5-flash, gemini-3.7-flash, gemini-3.1-flash-lite) orqali to'liq bartaraf etildi.
+          - Sozlamalarda ovoz tanlangach, saqlash tugmasi bosilishi bilan servis yangi tanlangan ovoz bilan darhol qayta ulanadi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

@@ -34,6 +34,7 @@ import android.view.WindowManager
 import android.widget.ImageView
 import android.view.inputmethod.EditorInfo
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -1468,6 +1469,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun playVoiceAsset(voiceName: String, onDone: () -> Unit = {}) {
+        stopCurrentAudio()
+        ensureAudioVolume()
+        try {
+            val fileName = "voices/${voiceName.lowercase().trim()}.wav"
+            val afd = assets.openFd(fileName)
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                setOnPreparedListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                        jarvisParticleView.setSpeechLevel(0.85f)
+                    }
+                    player.start()
+                }
+                setOnCompletionListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                }
+                setOnErrorListener { player, what, extra ->
+                    Log.e("MainActivity", "playVoiceAsset error: what=$what, extra=$extra")
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                    true
+                }
+                prepareAsync()
+            }
+            mediaPlayer = mp
+        } catch (e: Exception) {
+            Log.w("MainActivity", "playVoiceAsset local error: ${e.message}, falling back to VPS preview endpoint")
+            val fallbackUrl = "${getHttpBaseUrl()}/api/preview-voice?voice=${voiceName.lowercase().trim()}"
+            playAudioFromUrl(fallbackUrl) {
+                onDone()
+            }
+        }
+    }
+
     private fun speakWithDeviceTts(text: String) {
         if (!isTtsReady || tts == null) {
             return
@@ -1803,10 +1860,10 @@ class MainActivity : AppCompatActivity() {
             applyAudioRoute(activeRoute)
         }
 
-        // Assistant Name, User Name & Gemini Live Voice (Image 2 style)
-        val etDialogAssistantName = dialog.findViewById<EditText>(R.id.etDialogAssistantName)
+        // Assistant Name, User Name & Gemini Live Voice (Permanently locked assistant name)
+        val etDialogAssistantName = dialog.findViewById<TextView>(R.id.etDialogAssistantName)
         val etDialogUserName = dialog.findViewById<EditText>(R.id.etDialogUserName)
-        etDialogAssistantName?.setText(prefs.assistantName)
+        etDialogAssistantName?.text = "JARVIS"
         etDialogUserName?.setText(prefs.userName)
 
         val btnVoiceCharon = dialog.findViewById<TextView>(R.id.btnVoiceCharon)
@@ -1834,18 +1891,22 @@ class MainActivity : AppCompatActivity() {
         }
         updateVoiceUi(selectedVoice)
 
+        // Test buttons
+        val btnTestVoice = dialog.findViewById<MaterialButton>(R.id.btnTestVoice)
+        val btnTestMic = dialog.findViewById<MaterialButton>(R.id.btnTestMic)
+        val tvAudioTestStatus = dialog.findViewById<TextView>(R.id.tvAudioTestStatus)
+
         voiceMap.forEach { (name, btn) ->
             btn?.setOnClickListener {
                 selectedVoice = name
                 updateVoiceUi(selectedVoice)
                 vibrateBrief(20)
+                tvAudioTestStatus?.visibility = View.VISIBLE
+                tvAudioTestStatus?.setTextColor(Color.parseColor("#12A550"))
+                tvAudioTestStatus?.text = "🔊 $selectedVoice ovozi..."
+                playVoiceAsset(selectedVoice)
             }
         }
-
-        // Test buttons
-        val btnTestVoice = dialog.findViewById<MaterialButton>(R.id.btnTestVoice)
-        val btnTestMic = dialog.findViewById<MaterialButton>(R.id.btnTestMic)
-        val tvAudioTestStatus = dialog.findViewById<TextView>(R.id.tvAudioTestStatus)
 
         btnTestConnection?.setOnClickListener {
             tvTestConnectionStatus?.visibility = View.VISIBLE
@@ -1906,10 +1967,10 @@ class MainActivity : AppCompatActivity() {
 
         btnTestVoice?.setOnClickListener {
             tvAudioTestStatus?.visibility = View.VISIBLE
-            tvAudioTestStatus?.setTextColor(Color.parseColor("#3B82F6"))
-            tvAudioTestStatus?.text = "🔊 Ovoz sinovi yangramoqda..."
+            tvAudioTestStatus?.setTextColor(Color.parseColor("#12A550"))
+            tvAudioTestStatus?.text = "🔊 $selectedVoice ovozi yangramoqda..."
             prefs.assistantVoice = selectedVoice
-            speakJarvis("Salom Axmadulloh sir! Men Jarvisman, sizning universal sun'iy intellekt yordamchingizman.")
+            playVoiceAsset(selectedVoice)
         }
 
         btnTestMic?.setOnClickListener {
@@ -2024,7 +2085,7 @@ class MainActivity : AppCompatActivity() {
             prefs.autoStartOnBoot = cbBoot?.isChecked == true
             prefs.quronCardVisible = cbQuron?.isChecked == true
 
-            prefs.assistantName = etDialogAssistantName?.text?.toString()?.trim()?.ifBlank { "JARVIS" } ?: "JARVIS"
+            prefs.assistantName = "JARVIS"
             prefs.userName = etDialogUserName?.text?.toString()?.trim()?.ifBlank { "Axmadulloh sir" } ?: "Axmadulloh sir"
             prefs.assistantVoice = selectedVoice
 
@@ -2034,10 +2095,8 @@ class MainActivity : AppCompatActivity() {
 
             applyAudioRoute(activeRoute)
 
-            // Re-apply settings & restart service
-            if (selectedMode == "PC_BRIDGE") {
-                startJarvisService()
-            }
+            // Re-apply settings & restart service with newly selected voice
+            startJarvisService()
 
             tvSaveFeedback?.visibility = View.VISIBLE
             tvSaveFeedback?.postDelayed({
@@ -2101,11 +2160,6 @@ class MainActivity : AppCompatActivity() {
                 isMediaPlaying = true
                 btnMediaPlayPause.setImageResource(R.drawable.ic_media_pause)
 
-                val playUrl = when {
-                    urlOrQuery.startsWith("http://") || urlOrQuery.startsWith("https://") -> urlOrQuery
-                    else -> "https://m.youtube.com/results?search_query=" + Uri.encode(urlOrQuery)
-                }
-
                 webViewInlineVideo.settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
@@ -2113,9 +2167,46 @@ class MainActivity : AppCompatActivity() {
                     cacheMode = WebSettings.LOAD_DEFAULT
                     userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
-                webViewInlineVideo.webViewClient = WebViewClient()
+                webViewInlineVideo.webViewClient = object : WebViewClient() {
+                    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                        return false
+                    }
+                }
                 webViewInlineVideo.webChromeClient = WebChromeClient()
-                webViewInlineVideo.loadUrl(playUrl)
+
+                val videoIdRegex = Regex("(?:v=|/embed/|youtu\\.be/|/v/|watch\\?v=|^)([a-zA-Z0-9_-]{11})")
+                val match = videoIdRegex.find(urlOrQuery)
+                val videoId = match?.groupValues?.get(1)
+
+                if (!videoId.isNullOrBlank() && !videoId.startsWith("http")) {
+                    val html = """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                            <style>
+                                * { margin:0; padding:0; box-sizing:border-box; }
+                                html, body { width:100%; height:100%; background:#000000; overflow:hidden; }
+                                iframe { width:100%; height:100%; border:none; }
+                            </style>
+                        </head>
+                        <body>
+                            <iframe 
+                                src="https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1&enablejsapi=1&rel=0&controls=1" 
+                                allow="autoplay; encrypted-media; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </body>
+                        </html>
+                    """.trimIndent()
+                    webViewInlineVideo.loadDataWithBaseURL("https://www.youtube-nocookie.com", html, "text/html", "UTF-8", null)
+                } else {
+                    val playUrl = when {
+                        urlOrQuery.startsWith("http://") || urlOrQuery.startsWith("https://") -> urlOrQuery
+                        else -> "https://m.youtube.com/results?search_query=" + Uri.encode(urlOrQuery)
+                    }
+                    webViewInlineVideo.loadUrl(playUrl)
+                }
 
                 showCaption("▶ Ijro: $songName")
             } catch (e: Exception) {

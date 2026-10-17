@@ -12,8 +12,11 @@ class PreferencesHelper(context: Context) {
         set(value) = prefs.edit().putString("server_address", value.trim()).apply()
 
     var authToken: String
-        get() = prefs.getString("auth_token", "jarvis-phone-companion-token") ?: "jarvis-phone-companion-token"
-        set(value) = prefs.edit().putString("auth_token", value.trim()).apply()
+        get() = prefs.getString("auth_token", "jarvis-phone-companion-token")?.ifBlank { "jarvis-phone-companion-token" } ?: "jarvis-phone-companion-token"
+        set(value) {
+            val token = value.trim().ifBlank { "jarvis-phone-companion-token" }
+            prefs.edit().putString("auth_token", token).apply()
+        }
 
     var autoStartOnBoot: Boolean
         get() = prefs.getBoolean("auto_start_boot", true)
@@ -165,10 +168,12 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getLong("last_welcome_timestamp", 0L)
         set(value) = prefs.edit().putLong("last_welcome_timestamp", value).apply()
 
-    // Assistant Name (default: "JARVIS")
+    // Assistant Name (Permanently Locked: "JARVIS" - No one can change it)
     var assistantName: String
-        get() = prefs.getString("assistant_name", "JARVIS") ?: "JARVIS"
-        set(value) = prefs.edit().putString("assistant_name", value.trim()).apply()
+        get() = "JARVIS"
+        set(_) {
+            prefs.edit().putString("assistant_name", "JARVIS").apply()
+        }
 
     // Assistant Voice: "Charon", "Puck", "Kore", "Fenrir", "Aoede" (default: "Kore")
     var assistantVoice: String

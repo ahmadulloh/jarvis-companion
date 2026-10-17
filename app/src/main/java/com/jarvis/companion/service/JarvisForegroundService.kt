@@ -277,16 +277,22 @@ class JarvisForegroundService : Service() {
                         audioPlayer.flush()
                     }
                     "media_play", "play" -> {
+                        val embedUrl = json.optString("embed_url", "")
                         val streamUrlRaw = json.optString("stream_url", json.optString("url", ""))
                         val directUrlRaw = json.optString("direct_url", json.optString("fallback_url", ""))
                         val title = json.optString("title", "Musiqa")
                         currentMediaTitle = title
 
-                        val isYouTube = streamUrlRaw.contains("youtube.com") || streamUrlRaw.contains("youtu.be") ||
+                        val isYouTube = embedUrl.isNotEmpty() ||
+                                streamUrlRaw.contains("youtube.com") || streamUrlRaw.contains("youtu.be") ||
                                 directUrlRaw.contains("youtube.com") || directUrlRaw.contains("youtu.be")
 
                         if (isYouTube) {
-                            val ytUrl = if (streamUrlRaw.contains("youtube") || streamUrlRaw.contains("youtu.be")) streamUrlRaw else directUrlRaw
+                            val ytUrl = when {
+                                embedUrl.isNotEmpty() -> embedUrl
+                                streamUrlRaw.contains("youtube") || streamUrlRaw.contains("youtu.be") -> streamUrlRaw
+                                else -> directUrlRaw
+                            }
                             // Render inside in-app inline player without kicking user out of Jarvis
                             broadcastMediaPlay(ytUrl, title)
                             broadcastActionLog("musiqa", "Ijro: $title")

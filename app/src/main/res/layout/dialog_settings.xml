@@ -349,15 +349,36 @@
                 android:textColor="#0F172A"
                 android:textSize="12.5sp" />
 
-            <!-- Assistant Name -->
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- Assistant Name (Locked - Permanently Immutable) -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:fontFamily="sans-serif-bold"
-                android:text="YORDAMCHI NOMI (ASSISTANT NAME):"
-                android:textColor="#475569"
-                android:textSize="11.5sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:fontFamily="sans-serif-bold"
+                    android:text="YORDAMCHI NOMI (ASSISTANT NAME):"
+                    android:textColor="#475569"
+                    android:textSize="11.5sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_settings_badge_locked"
+                    android:fontFamily="sans-serif-bold"
+                    android:paddingStart="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="8dp"
+                    android:paddingBottom="2dp"
+                    android:text="🔒 QULFLANGAN"
+                    android:textColor="#DC2626"
+                    android:textSize="10sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -369,18 +390,26 @@
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp">
 
-                <EditText
+                <TextView
                     android:id="@+id/etDialogAssistantName"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:background="@null"
-                    android:fontFamily="sans-serif-bold"
-                    android:hint="JARVIS"
+                    android:fontFamily="sans-serif-black"
+                    android:gravity="center_vertical"
                     android:singleLine="true"
                     android:text="JARVIS"
-                    android:textColor="#0F172A"
+                    android:textColor="#1E293B"
                     android:textSize="13sp" />
             </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:fontFamily="sans-serif"
+                android:text="Xavfsizlik talabiga binoan AI yordamchi nomi faqat JARVIS bo'lib qoladi."
+                android:textColor="#94A3B8"
+                android:textSize="10.5sp" />
 
             <!-- User Name -->
             <TextView
