@@ -699,16 +699,18 @@ class PhoneActionManager(private val context: Context) {
             Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
         )
 
-        // 1. Direct startActivity (succeeds if app in foreground or overlay permission granted)
+        var started = false
+
+        // 1. Direct startActivity (works when app is in foreground or SYSTEM_ALERT_WINDOW granted)
         try {
             context.startActivity(intent)
-            Log.d(TAG, "Successfully started activity for $appName via direct startActivity")
-            return true
+            Log.d(TAG, "Successfully invoked context.startActivity for $appName")
+            started = true
         } catch (e: Exception) {
-            Log.w(TAG, "Direct startActivity for $appName failed: ${e.message}, trying fallbacks")
+            Log.w(TAG, "Direct startActivity for $appName failed: ${e.message}")
         }
 
-        // 2. PendingIntent.send() fallback
+        // 2. PendingIntent.send() (bypasses service context restrictions on many Android OEM devices)
         try {
             val pi = PendingIntent.getActivity(
                 context,
@@ -718,50 +720,54 @@ class PhoneActionManager(private val context: Context) {
             )
             pi.send()
             Log.d(TAG, "Successfully triggered $appName via PendingIntent.send()")
-            return true
+            started = true
         } catch (e2: Exception) {
             Log.w(TAG, "PendingIntent.send failed: ${e2.message}")
         }
 
-        // 3. High-priority Heads-up notification with FullScreenIntent
-        try {
-            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            val channelId = "jarvis_app_launcher_channel"
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && nm != null) {
-                var chan = nm.getNotificationChannel(channelId)
-                if (chan == null) {
-                    chan = NotificationChannel(
-                        channelId,
-                        "JARVIS Ilovalar Boshqaruvi",
-                        NotificationManager.IMPORTANCE_HIGH
-                    ).apply {
-                        description = "Ilovalarni fondan ekranga chiqarish uchun kanal"
+        // 3. High-priority Heads-up notification with FullScreenIntent (guaranteed switch on Android 10+ background)
+        val hasOverlay = Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(context)
+        if (!hasOverlay || !started) {
+            try {
+                val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                val channelId = "jarvis_app_launcher_channel"
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && nm != null) {
+                    var chan = nm.getNotificationChannel(channelId)
+                    if (chan == null) {
+                        chan = NotificationChannel(
+                            channelId,
+                            "JARVIS Ilovalar Boshqaruvi",
+                            NotificationManager.IMPORTANCE_HIGH
+                        ).apply {
+                            description = "Ilovalarni fondan ekranga chiqarish uchun kanal"
+                        }
+                        nm.createNotificationChannel(chan)
                     }
-                    nm.createNotificationChannel(chan)
                 }
+                val pi = PendingIntent.getActivity(
+                    context,
+                    (System.currentTimeMillis() % 10000).toInt(),
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                )
+                val notif = NotificationCompat.Builder(context, channelId)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .setContentTitle("$appName ochilmoqda")
+                    .setContentText("JARVIS orqali ochish uchun bosing")
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setCategory(NotificationCompat.CATEGORY_CALL)
+                    .setFullScreenIntent(pi, true)
+                    .setContentIntent(pi)
+                    .setAutoCancel(true)
+                    .build()
+                nm?.notify(9988, notif)
+                started = true
+            } catch (e3: Exception) {
+                Log.e(TAG, "Notification fallback failed: ${e3.message}")
             }
-            val pi = PendingIntent.getActivity(
-                context,
-                (System.currentTimeMillis() % 10000).toInt(),
-                intent,
-                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-            )
-            val notif = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("$appName ochildi")
-                .setContentText("JARVIS buyrug'i bilan ishga tushirildi")
-                .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .setFullScreenIntent(pi, true)
-                .setContentIntent(pi)
-                .setAutoCancel(true)
-                .build()
-            nm?.notify(9988, notif)
-            return true
-        } catch (e3: Exception) {
-            Log.e(TAG, "Notification fallback failed: ${e3.message}")
         }
-        return false
+
+        return started
     }
 
     /**

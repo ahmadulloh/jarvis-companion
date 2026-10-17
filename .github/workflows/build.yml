@@ -57,15 +57,15 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.6.7
-        name: Jarvis Companion v1.6.7
+        tag_name: v1.6.8
+        name: Jarvis Companion v1.6.8
         body: |
-          JARVIS Companion v1.6.7 yangilanishi:
-          - Ilhomlantiruvchi inline YouTube musiqa/video pleer (16:9 ramka, qo'shiq nomi, ijrochi, yurakcha, orqaga/oldinga, yashil ijro tugmasi)
-          - Fondan eshitish muammosi to'liq hal etildi (VOICE_COMMUNICATION audio manbasi - Telegram ochilganda ham Jarvis eshitadi)
-          - Javob qaytarish kechikishi va qotib qolish bartaraf etildi (Echo gate va isSpeaking audioTrack to'xtashi bilan zudlik bilan ochiladi)
-          - Ekran qorayishi va o'chib qolishini oldini olish (FLAG_KEEP_SCREEN_ON)
-          - Sevinch ovozi olib tashlandi, faqat Jarvisning o'z asl ovozi gapiradi
-          - 31 ta soha tugmalari qirqilmaydigan 2 qatorli markazlashgan toza UI dizayni
+          JARVIS Companion v1.6.8 yangilanishi:
+          - YouTube va musiqa ijrosi faqat ilova ichidagi inline pleerda ochiladi; faqat foydalanuvchi "YouTube ilovasini och" deganida tashqi ilova ochiladi.
+          - Professional hujjatlar generatsiyasi: Word (.docx yuridik shartnomalar, arizalar), Excel (.xlsx formulali hisob-kitoblar), PDF (.pdf) va to'g'ridan-to'g'ri Telegram botga yuborish.
+          - Kamera va galereyadan hujjat suratini yuklab yuridik va biznes tahlil olish (multimodal audit).
+          - Gemini Live 5 ta asl ovozlari (Charon, Puck, Kore, Fenrir, Aoede) tanlovi va sozlamalar bo'limining toza tartiblangan dizayni.
+          - Telegram yoki boshqa ilovada turganda fondan turib ilovalarni ochish va Telegram xabar yuborish imkoniyati.
+          - Ilova ishga tushganda avtomatik qisqa salomlashish va ekran qorayishidan doimiy himoya.
         files: app/build/outputs/apk/debug/app-debug.apk
 

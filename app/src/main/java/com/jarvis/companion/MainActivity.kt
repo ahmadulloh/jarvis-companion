@@ -79,6 +79,17 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.media.MediaPlayer
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.core.app.ActivityCompat
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
@@ -119,10 +130,32 @@ class MainActivity : AppCompatActivity() {
     // Always-Visible Bottom Text Input Bar
     private lateinit var bottomBarContainer: View
     private lateinit var btnChatHistory: ImageButton
+    private lateinit var btnAttachDocument: ImageButton
     private lateinit var etCommandInput: EditText
     private lateinit var btnToggleMic: ImageButton
     private lateinit var btnSendCommand: ImageButton
     private lateinit var btnFloatingKeyboard: ImageButton
+
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            handleDocumentImage(bitmap)
+        }
+    }
+
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            try {
+                val inputStream = contentResolver.openInputStream(uri)
+                val bitmap = BitmapFactory.decodeStream(inputStream)
+                inputStream?.close()
+                if (bitmap != null) {
+                    handleDocumentImage(bitmap)
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this, "Rasmni yuklab bo'lmadi: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // In-App WebView
     private lateinit var containerWebView: View
@@ -310,6 +343,10 @@ class MainActivity : AppCompatActivity() {
         applyDomain(savedDomain, speakAnnouncement = false)
 
         checkPermissionsAndStart()
+
+        window.decorView.postDelayed({
+            triggerWelcomeGreetingIfNeeded()
+        }, 1200)
     }
 
     private fun checkStartupCrashLog() {
@@ -346,6 +383,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun initViews() {
         rootContainer = findViewById(R.id.rootContainer)
+        rootContainer.keepScreenOn = true
         topBar = findViewById(R.id.topBar)
         jarvisParticleView = findViewById(R.id.jarvisParticleView)
         webViewLivingParticle = findViewById(R.id.webViewLivingParticle)
@@ -381,10 +419,16 @@ class MainActivity : AppCompatActivity() {
         // Bottom Bar & Controls
         bottomBarContainer = findViewById(R.id.bottomBarContainer)
         btnChatHistory = findViewById(R.id.btnChatHistory)
+        btnAttachDocument = findViewById(R.id.btnAttachDocument)
         etCommandInput = findViewById(R.id.etCommandInput)
         btnToggleMic = findViewById(R.id.btnToggleMic)
         btnSendCommand = findViewById(R.id.btnSendCommand)
         btnFloatingKeyboard = findViewById(R.id.btnFloatingKeyboard)
+
+        btnAttachDocument.setOnClickListener {
+            vibrateBrief(15)
+            showDocumentAnalysisOptions()
+        }
 
         // WindowInsets for bottomBarContainer: adjust for navigation bar and IME keyboard
         ViewCompat.setOnApplyWindowInsetsListener(bottomBarContainer) { v, insets ->
@@ -921,6 +965,15 @@ class MainActivity : AppCompatActivity() {
         currentDomain = domain
         prefs.activeDomain = domain.id
 
+        // Notify Foreground Service to update domain on server
+        try {
+            val domainIntent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_SET_DOMAIN
+                putExtra(JarvisForegroundService.EXTRA_DOMAIN_ID, domain.id)
+            }
+            startService(domainIntent)
+        } catch (_: Exception) {}
+
         // Webview va Native Zarralar tizimini yangi soha rangiga o'tkazish
         try {
             webViewLivingParticle.evaluateJavascript("window.jarvisSetModeById('${domain.id}');", null)
@@ -947,11 +1000,12 @@ class MainActivity : AppCompatActivity() {
         }
         viewChipDot.background = dotBg
 
-        if (speakAnnouncement) {
+        showJarvisTurnCaption("⚡ $shortName rejimi faol")
+
+        // Agar PC_BRIDGE rejimida bo'lsa, server (Gemini Live) o'zi gapiradi (ikkita ovoz to'qnashmasligi uchun)
+        if (speakAnnouncement && prefs.connectionMode != "PC_BRIDGE") {
             val announcement = buildDomainAnnouncement(domain)
             deliverJarvisResponseToUi(announcement, domain.icon)
-        } else {
-            showCaption("")
         }
     }
 
@@ -1749,52 +1803,43 @@ class MainActivity : AppCompatActivity() {
             applyAudioRoute(activeRoute)
         }
 
-        // TTS Engine & Voice Configuration
-        val btnTtsUzbekVoice = dialog.findViewById<LinearLayout>(R.id.btnTtsUzbekVoice)
-        val btnTtsElevenLabs = dialog.findViewById<LinearLayout>(R.id.btnTtsElevenLabs)
-        val btnTtsDevice = dialog.findViewById<LinearLayout>(R.id.btnTtsDevice)
-        val layoutUzbekVoice = dialog.findViewById<View>(R.id.layoutUzbekVoiceSettings)
-        val layoutElevenLabs = dialog.findViewById<View>(R.id.layoutElevenLabsSettings)
-        val etDialogUzbekVoiceKey = dialog.findViewById<EditText>(R.id.etDialogUzbekVoiceKey)
-        val btnToggleUzbekVoiceKeyEye = dialog.findViewById<ImageButton>(R.id.btnToggleUzbekVoiceKeyEye)
-        val etDialogElevenLabsKey = dialog.findViewById<EditText>(R.id.etDialogElevenLabsKey)
-        val btnToggleElevenLabsKeyEye = dialog.findViewById<ImageButton>(R.id.btnToggleElevenLabsKeyEye)
+        // Assistant Name, User Name & Gemini Live Voice (Image 2 style)
+        val etDialogAssistantName = dialog.findViewById<EditText>(R.id.etDialogAssistantName)
+        val etDialogUserName = dialog.findViewById<EditText>(R.id.etDialogUserName)
+        etDialogAssistantName?.setText(prefs.assistantName)
+        etDialogUserName?.setText(prefs.userName)
 
-        setupPasswordToggle(etDialogUzbekVoiceKey, btnToggleUzbekVoiceKeyEye)
-        setupPasswordToggle(etDialogElevenLabsKey, btnToggleElevenLabsKeyEye)
+        val btnVoiceCharon = dialog.findViewById<TextView>(R.id.btnVoiceCharon)
+        val btnVoicePuck = dialog.findViewById<TextView>(R.id.btnVoicePuck)
+        val btnVoiceKore = dialog.findViewById<TextView>(R.id.btnVoiceKore)
+        val btnVoiceFenrir = dialog.findViewById<TextView>(R.id.btnVoiceFenrir)
+        val btnVoiceAoede = dialog.findViewById<TextView>(R.id.btnVoiceAoede)
 
-        etDialogUzbekVoiceKey?.setText(prefs.uzbekVoiceApiKey)
-        etDialogElevenLabsKey?.setText(prefs.elevenLabsApiKey)
+        val voiceMap = mapOf(
+            "Charon" to btnVoiceCharon,
+            "Puck" to btnVoicePuck,
+            "Kore" to btnVoiceKore,
+            "Fenrir" to btnVoiceFenrir,
+            "Aoede" to btnVoiceAoede
+        )
 
-        var selectedTtsEngine = prefs.ttsEngine
+        var selectedVoice = prefs.assistantVoice.ifBlank { "Kore" }
 
-        fun updateTtsEngineUi(engine: String) {
-            btnTtsUzbekVoice?.setBackgroundResource(if (engine == "UZBEKVOICE_AI") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            (btnTtsUzbekVoice?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "UZBEKVOICE_AI") "#12A550" else "#334155"))
-
-            btnTtsElevenLabs?.setBackgroundResource(if (engine == "ELEVENLABS") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            (btnTtsElevenLabs?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "ELEVENLABS") "#12A550" else "#334155"))
-
-            btnTtsDevice?.setBackgroundResource(if (engine == "DEVICE_TTS") R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            (btnTtsDevice?.getChildAt(0) as? TextView)?.setTextColor(Color.parseColor(if (engine == "DEVICE_TTS") "#12A550" else "#334155"))
-
-            layoutUzbekVoice?.visibility = if (engine == "UZBEKVOICE_AI") View.VISIBLE else View.GONE
-            layoutElevenLabs?.visibility = if (engine == "ELEVENLABS") View.VISIBLE else View.GONE
+        fun updateVoiceUi(chosen: String) {
+            voiceMap.forEach { (name, btn) ->
+                val isSel = name.equals(chosen, ignoreCase = true)
+                btn?.setBackgroundResource(if (isSel) R.drawable.bg_voice_pill_selected else R.drawable.bg_voice_pill_normal)
+                btn?.setTextColor(Color.parseColor(if (isSel) "#12A550" else "#475569"))
+            }
         }
+        updateVoiceUi(selectedVoice)
 
-        updateTtsEngineUi(selectedTtsEngine)
-
-        btnTtsUzbekVoice?.setOnClickListener {
-            selectedTtsEngine = "UZBEKVOICE_AI"
-            updateTtsEngineUi(selectedTtsEngine)
-        }
-        btnTtsElevenLabs?.setOnClickListener {
-            selectedTtsEngine = "ELEVENLABS"
-            updateTtsEngineUi(selectedTtsEngine)
-        }
-        btnTtsDevice?.setOnClickListener {
-            selectedTtsEngine = "DEVICE_TTS"
-            updateTtsEngineUi(selectedTtsEngine)
+        voiceMap.forEach { (name, btn) ->
+            btn?.setOnClickListener {
+                selectedVoice = name
+                updateVoiceUi(selectedVoice)
+                vibrateBrief(20)
+            }
         }
 
         // Test buttons
@@ -1863,10 +1908,8 @@ class MainActivity : AppCompatActivity() {
             tvAudioTestStatus?.visibility = View.VISIBLE
             tvAudioTestStatus?.setTextColor(Color.parseColor("#3B82F6"))
             tvAudioTestStatus?.text = "🔊 Ovoz sinovi yangramoqda..."
-            prefs.ttsEngine = selectedTtsEngine
-            prefs.uzbekVoiceApiKey = etDialogUzbekVoiceKey?.text?.toString()?.trim() ?: prefs.uzbekVoiceApiKey
-            prefs.elevenLabsApiKey = etDialogElevenLabsKey?.text?.toString()?.trim() ?: prefs.elevenLabsApiKey
-            speakJarvis("Salom Axmadulloh sir! Jarvis ovoz tizimi sinovdan o'tmoqda.")
+            prefs.assistantVoice = selectedVoice
+            speakJarvis("Salom Axmadulloh sir! Men Jarvisman, sizning universal sun'iy intellekt yordamchingizman.")
         }
 
         btnTestMic?.setOnClickListener {
@@ -1981,9 +2024,9 @@ class MainActivity : AppCompatActivity() {
             prefs.autoStartOnBoot = cbBoot?.isChecked == true
             prefs.quronCardVisible = cbQuron?.isChecked == true
 
-            prefs.ttsEngine = selectedTtsEngine
-            prefs.uzbekVoiceApiKey = etDialogUzbekVoiceKey?.text?.toString()?.trim() ?: prefs.uzbekVoiceApiKey
-            prefs.elevenLabsApiKey = etDialogElevenLabsKey?.text?.toString()?.trim() ?: prefs.elevenLabsApiKey
+            prefs.assistantName = etDialogAssistantName?.text?.toString()?.trim()?.ifBlank { "JARVIS" } ?: "JARVIS"
+            prefs.userName = etDialogUserName?.text?.toString()?.trim()?.ifBlank { "Axmadulloh sir" } ?: "Axmadulloh sir"
+            prefs.assistantVoice = selectedVoice
 
             val showBar = prefs.showTextInputBar
             bottomBarContainer.visibility = if (showBar) View.VISIBLE else View.GONE
@@ -1991,6 +2034,7 @@ class MainActivity : AppCompatActivity() {
 
             applyAudioRoute(activeRoute)
 
+            // Re-apply settings & restart service
             if (selectedMode == "PC_BRIDGE") {
                 startJarvisService()
             }
@@ -2083,11 +2127,137 @@ class MainActivity : AppCompatActivity() {
 
     private fun triggerWelcomeGreetingIfNeeded() {
         val now = System.currentTimeMillis()
-        if (now - prefs.lastWelcomeTimestamp > 120_000L) { // 2 minutes interval
+        if (now - prefs.lastWelcomeTimestamp > 60_000L) { // 1 minute interval
             prefs.lastWelcomeTimestamp = now
-            val greeting = "Salom Axmadulloh sir! Jarvis xizmatingizda. Buyrug'ingizni kutyapman."
-            deliverJarvisResponseToUi(greeting, currentDomain.icon)
+            val greeting = "Salom Axmadulloh sir! Jarvis xizmatingizda. Qanday yordam bera olaman?"
+            showJarvisTurnCaption(greeting)
+            speakJarvis(greeting)
         }
+    }
+
+    private fun getHttpBaseUrl(): String {
+        var raw = prefs.serverAddress.trim()
+        if (raw.startsWith("ws://")) raw = raw.removePrefix("ws://")
+        if (raw.startsWith("wss://")) raw = raw.removePrefix("wss://")
+        if (raw.startsWith("http://")) raw = raw.removePrefix("http://")
+        if (raw.startsWith("https://")) raw = raw.removePrefix("https://")
+        val hostPort = raw.split("/")[0]
+        return "http://$hostPort"
+    }
+
+    private fun showDocumentAnalysisOptions() {
+        val items = arrayOf(
+            "📸 Kameradan rasmga olish",
+            "🖼️ Galereyadan rasm tanlash"
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle("📋 Hujjat tahlili (Yurist / Tadbirkor)")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> {
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 101)
+                        } else {
+                            takePictureLauncher.launch(null)
+                        }
+                    }
+                    1 -> {
+                        pickImageLauncher.launch("image/*")
+                    }
+                }
+            }
+            .setNegativeButton("Bekor qilish", null)
+            .show()
+    }
+
+    private fun handleDocumentImage(bitmap: Bitmap) {
+        if (currentDomain.id != "YURIST" && currentDomain.id != "TADBIRKOR") {
+            applyDomain(JarvisDomainRegistry.YURIST, speakAnnouncement = true)
+        }
+
+        tvJarvisCaption.text = "🔍 Hujjat skanerlanmoqda va tahlil qilinmoqda..."
+        tvMicStatus.text = "⏳ Hujjat tahlil qilinmoqda..."
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+                val imageBytes = baos.toByteArray()
+
+                val url = "${getHttpBaseUrl()}/api/analyze-document"
+                val requestBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "file",
+                        "doc_${System.currentTimeMillis()}.jpg",
+                        imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
+                    )
+                    .addFormDataPart("prompt", "Ushbu hujjatni sinchiklab tahlil qilib, huquqiy va amaliy xulosangizni bering.")
+                    .addFormDataPart("domain", currentDomain.id)
+                    .build()
+
+                val request = Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .build()
+
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+
+                val response = client.newCall(request).execute()
+                val respStr = response.body?.string() ?: ""
+                val json = JSONObject(respStr)
+
+                if (json.has("analysis")) {
+                    val analysis = json.getString("analysis")
+                    withContext(Dispatchers.Main) {
+                        showJarvisTurnCaption("✅ Hujjat tahlili tayyorlandi")
+                        fullChatHistory.add(ChatHistoryMessage("user", "📷 Hujjat fotosurati yuklandi"))
+                        fullChatHistory.add(ChatHistoryMessage("JARVIS", analysis))
+                        val firstLines = analysis.lines().filter { it.isNotBlank() }.take(2).joinToString(". ")
+                        speakJarvis("Hujjat tahlili tayyorlandi, Axmadulloh sir. ${firstLines.take(150)}. To'liq tahlilni Telegram botingizga ham yubordim.")
+                        showAnalysisResultDialog(analysis)
+                    }
+                } else {
+                    val err = json.optString("error", "Tahlil xatosi")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "Xatolik: $err", Toast.LENGTH_LONG).show()
+                        tvJarvisCaption.text = "❌ $err"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@MainActivity, "Aloqa xatosi: ${e.message}", Toast.LENGTH_SHORT).show()
+                    tvJarvisCaption.text = "❌ Tahlil xatosi: ${e.message?.take(50)}"
+                }
+            }
+        }
+    }
+
+    private fun showAnalysisResultDialog(analysis: String) {
+        val scrollView = android.widget.ScrollView(this)
+        val tv = TextView(this).apply {
+            text = analysis
+            textSize = 15f
+            setTextColor(Color.parseColor("#E2E8F0"))
+            setPadding(40, 30, 40, 30)
+            setTextIsSelectable(true)
+        }
+        scrollView.addView(tv)
+
+        MaterialAlertDialogBuilder(this)
+            .setTitle("📋 Hujjat yuridik tahlili")
+            .setView(scrollView)
+            .setPositiveButton("Tushundim", null)
+            .setNeutralButton("Telegram botni ochish") { _, _ ->
+                phoneActionManager.launchIntentSafely(
+                    Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=JarvisSecretaryBot")),
+                    "Telegram"
+                )
+            }
+            .show()
     }
 
     // ── Ruxsatlar va Xizmatni Ishga Tushirish ──────────────────────────────

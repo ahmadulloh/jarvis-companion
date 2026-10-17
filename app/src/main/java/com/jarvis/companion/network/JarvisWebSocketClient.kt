@@ -39,7 +39,7 @@ class JarvisWebSocketClient(
     private var currentUrl: String = ""
     private var reconnectAttempts = 0
 
-    fun connect(serverAddress: String, authToken: String) {
+    fun connect(serverAddress: String, authToken: String, voice: String = "Kore", domain: String = "ASOSIY") {
         isManuallyStopped.set(false)
         reconnectAttempts = 0
 
@@ -63,7 +63,7 @@ class JarvisWebSocketClient(
 
                 val scheme = if (raw.startsWith("https://") || raw.startsWith("wss://")) "wss" else "ws"
                 val httpEquivalent = if (scheme == "wss") "https" else "http"
-                val testHttpUrl = "$httpEquivalent://$host/ws/jarvis-audio?token=$authToken".toHttpUrlOrNull()
+                val testHttpUrl = "$httpEquivalent://$host/ws/jarvis-audio?token=$authToken&voice=$voice&domain=$domain".toHttpUrlOrNull()
 
                 if (testHttpUrl == null) {
                     val err = "Noto'g'ri server manzili formati: '$raw'. Masalan: 192.168.1.5:8000"
@@ -73,7 +73,7 @@ class JarvisWebSocketClient(
                     return@execute
                 }
 
-                currentUrl = "$scheme://$host/ws/jarvis-audio?token=$authToken"
+                currentUrl = "$scheme://$host/ws/jarvis-audio?token=$authToken&voice=$voice&domain=$domain"
                 Log.i(TAG, "Connecting to PC Bridge: $currentUrl...")
 
                 val request = Request.Builder()

@@ -348,12 +348,24 @@
         <!-- History Button (Opens pull-up Bottom Sheet for full conversation) -->
         <ImageButton
             android:id="@+id/btnChatHistory"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Suhbat tarixi"
             android:scaleType="centerInside"
             app:srcCompat="@drawable/ic_history"
+            app:tint="#64748B" />
+
+        <!-- Camera / Document Scanner Button -->
+        <ImageButton
+            android:id="@+id/btnAttachDocument"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Hujjatni tahlil qilish uchun rasm olish"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_camera"
             app:tint="#64748B" />
 
         <EditText

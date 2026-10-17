@@ -83,6 +83,7 @@ class JarvisForegroundService : Service() {
 
         const val ACTION_INTERRUPT = "com.jarvis.companion.ACTION_INTERRUPT"
         const val ACTION_SET_SECRETARY = "com.jarvis.companion.ACTION_SET_SECRETARY"
+        const val ACTION_SET_DOMAIN = "com.jarvis.companion.ACTION_SET_DOMAIN"
 
         const val BROADCAST_PC_CONNECTION_FAILED = "com.jarvis.companion.PC_CONNECTION_FAILED"
         const val EXTRA_PC_ERROR = "extra_pc_error"
@@ -124,6 +125,7 @@ class JarvisForegroundService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var currentMediaTitle: String = ""
+    private var currentDomainId: String = "ASOSIY"
 
     override fun onCreate() {
         super.onCreate()
@@ -285,17 +287,9 @@ class JarvisForegroundService : Service() {
 
                         if (isYouTube) {
                             val ytUrl = if (streamUrlRaw.contains("youtube") || streamUrlRaw.contains("youtu.be")) streamUrlRaw else directUrlRaw
-                            // 1. Broadcast to MainActivity for in-app video rendering if app is open
+                            // Render inside in-app inline player without kicking user out of Jarvis
                             broadcastMediaPlay(ytUrl, title)
-
-                            // 2. Safely launch intent without background activity restriction blocking
-                            try {
-                                val ytIntent = Intent(Intent.ACTION_VIEW, Uri.parse(ytUrl))
-                                phoneActionManager.launchIntentSafely(ytIntent, "YouTube")
-                                broadcastActionLog("musiqa", "YouTube ochildi: $title")
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error opening YouTube: ${e.message}")
-                            }
+                            broadcastActionLog("musiqa", "Ijro: $title")
                         } else {
                             val host = prefs.serverAddress.trim()
                                 .removePrefix("http://")
@@ -605,7 +599,7 @@ class JarvisForegroundService : Service() {
                     }
                 } else {
                     try { geminiLiveClient.disconnect() } catch (_: Exception) {}
-                    try { wsClient.connect(prefs.serverAddress, prefs.authToken) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
+                    try { wsClient.connect(prefs.serverAddress, prefs.authToken, prefs.assistantVoice, currentDomainId) } catch (e: Exception) { Log.e("JarvisService", "wsClient.connect error: ${e.message}") }
                 }
 
                 // Only start audio recording if RECORD_AUDIO permission is granted
@@ -677,6 +671,16 @@ class JarvisForegroundService : Service() {
                 val reason = intent?.getStringExtra("reason") ?: prefs.aiSecretaryReason
                 prefs.aiSecretaryEnabled = enabled
                 prefs.aiSecretaryReason = reason
+            }
+            ACTION_SET_DOMAIN -> {
+                val dId = intent?.getStringExtra(EXTRA_DOMAIN_ID) ?: "ASOSIY"
+                currentDomainId = dId
+                if (isConnected && prefs.connectionMode != "GEMINI_DIRECT") {
+                    wsClient.sendControl(org.json.JSONObject().apply {
+                        put("type", "domain_change")
+                        put("domain", dId)
+                    })
+                }
             }
             ACTION_STOP -> {
                 stopSelf()
@@ -1058,6 +1062,7 @@ class JarvisForegroundService : Service() {
     }
 
     private fun broadcastDomainChange(domainId: String) {
+        currentDomainId = domainId
         val intent = Intent(BROADCAST_DOMAIN_CHANGE).apply {
             putExtra(EXTRA_DOMAIN_ID, domainId)
             setPackage(packageName)
