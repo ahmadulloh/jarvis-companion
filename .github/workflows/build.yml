@@ -52,3 +52,18 @@ jobs:
       with:
         name: JarvisCompanion-APK
         path: app/build/outputs/apk/debug/app-debug.apk
+
+    - name: Release Latest APK
+      if: success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.6.3
+        name: Jarvis Companion v1.6.3
+        body: |
+          JARVIS Companion v1.6.3 yangilanishi:
+          - Android 11+ da barcha ilovalarni (YouTube, Spotify, Telegram, va barcha ilovalar) to'liq ochish qo'llab-quvvatlandi
+          - YouTube musiqa va videolarni to'g'ridan-to'g'ri YouTube orqali ijro etish
+          - 30 soniyalik barqaror ping va uzilishlarda xavotirsiz fonda tiklanish (exponential backoff)
+          - Eskiz VPS Cloud Gateway bilan to'liq integratsiya
+        files: app/build/outputs/apk/debug/app-debug.apk
+
