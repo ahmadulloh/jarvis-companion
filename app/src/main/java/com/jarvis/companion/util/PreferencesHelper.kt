@@ -170,11 +170,6 @@ class PreferencesHelper(context: Context) {
         get() = prefs.getString("assistant_name", "JARVIS") ?: "JARVIS"
         set(value) = prefs.edit().putString("assistant_name", value.trim()).apply()
 
-    // User Name (default: "Axmadulloh sir")
-    var userName: String
-        get() = prefs.getString("user_name", "Axmadulloh sir") ?: "Axmadulloh sir"
-        set(value) = prefs.edit().putString("user_name", value.trim()).apply()
-
     // Assistant Voice: "Charon", "Puck", "Kore", "Fenrir", "Aoede" (default: "Kore")
     var assistantVoice: String
         get() = prefs.getString("assistant_voice", "Kore") ?: "Kore"
