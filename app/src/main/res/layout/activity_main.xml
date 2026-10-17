@@ -161,6 +161,174 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Inline Media Player Card (Image 1 Style) -->
+    <LinearLayout
+        android:id="@+id/cardInlineMedia"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottomBarContainer"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="10dp"
+        android:background="@drawable/bg_media_player_card"
+        android:elevation="8dp"
+        android:orientation="vertical"
+        android:padding="8dp"
+        android:visibility="gone">
+
+        <!-- 16:9 Rounded Video Container -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="195dp"
+            android:background="@drawable/bg_video_player_rounded">
+
+            <WebView
+                android:id="@+id/webViewInlineVideo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#000000" />
+
+            <!-- Top Overlay with Title and Close -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_media_top_gradient"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
+
+                <TextView
+                    android:id="@+id/tvMediaVideoTitle"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-medium"
+                    android:singleLine="true"
+                    android:text="🎵 Hurshid Rasulov - Bo'laverdi"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btnCloseInlineMedia"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="✕"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Track Info Row (Thumbnail, Title, Artist, Like) -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <ImageView
+                android:id="@+id/ivMediaThumb"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_media_thumb_rounded"
+                android:padding="6dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_jarvis" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_toStartOf="@+id/btnMediaLike"
+                android:layout_toEndOf="@id/ivMediaThumb"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvMediaSongTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-black"
+                    android:singleLine="true"
+                    android:text="Bo'laverdi"
+                    android:textColor="#0F172A"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvMediaArtist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif"
+                    android:singleLine="true"
+                    android:text="Hurshid Rasulov"
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btnMediaLike"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:src="@drawable/ic_heart_outline" />
+        </RelativeLayout>
+
+        <!-- Player Controls (Prev, Big Green Play/Pause, Next) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="4dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnMediaPrev"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_media_round_btn"
+                android:contentDescription="Oldingi"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_media_prev" />
+
+            <ImageButton
+                android:id="@+id/btnMediaPlayPause"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="24dp"
+                android:background="@drawable/bg_media_play_btn"
+                android:contentDescription="Ijro / To'xtatish"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_media_pause" />
+
+            <ImageButton
+                android:id="@+id/btnMediaNext"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_media_round_btn"
+                android:contentDescription="Keyingi"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_media_next" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- Always-Visible Text Input Bar (Kamida 52dp balandlik, 16sp matn, klaviatura ustida adjustResize) -->
     <LinearLayout
         android:id="@+id/bottomBarContainer"

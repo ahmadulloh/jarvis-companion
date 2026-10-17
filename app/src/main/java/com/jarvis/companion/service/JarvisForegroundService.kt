@@ -194,9 +194,15 @@ class JarvisForegroundService : Service() {
 
         audioRecorder = AudioRecordManager(this, sampleRate = 16000) { pcmChunk ->
             if (isMicStreaming) {
-                // Echo Gate: if Jarvis is actively playing audio through the phone speaker, DO NOT send mic to Gemini
-                if (audioPlayer.isActivelyPlaying() || isSpeaking) {
+                // Echo Gate: if AudioTrack is physically outputting sound, suppress mic to avoid echo.
+                // If audioTrack has stopped playing, auto-release isSpeaking so user can reply immediately!
+                val activelyPlaying = audioPlayer.isActivelyPlaying()
+                if (activelyPlaying) {
                     return@AudioRecordManager
+                }
+                if (isSpeaking && !activelyPlaying) {
+                    isSpeaking = false
+                    broadcastState("LISTENING")
                 }
                 if (prefs.connectionMode == "GEMINI_DIRECT") {
                     geminiLiveClient.sendAudio(pcmChunk)
@@ -205,6 +211,7 @@ class JarvisForegroundService : Service() {
                         wsClient.sendAudio(pcmChunk)
                     }
                 }
+
             }
         }
         audioRecorder.onRmsListener = { rms, norm ->

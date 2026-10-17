@@ -98,22 +98,14 @@ class AudioRecordManager(
                 onRouteFallback?.invoke("Quloqchin ulanmagan, telefon mikrofoniga o'tildi")
             }
 
-            // Priority based on route:
-            // PHONE: VOICE_RECOGNITION / MIC (avoids telecom echo cancellation muting normal mic)
-            // EARBUDS: VOICE_COMMUNICATION (for Bluetooth SCO AEC)
-            val sources = if (currentRoute == AudioRoute.PHONE) {
-                listOf(
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                    MediaRecorder.AudioSource.MIC,
-                    MediaRecorder.AudioSource.VOICE_COMMUNICATION
-                )
-            } else {
-                listOf(
-                    MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                    MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                    MediaRecorder.AudioSource.MIC
-                )
-            }
+            // Priority: VOICE_COMMUNICATION must be #1 because Android 10+ silences MIC/VOICE_RECOGNITION
+            // when the app is in the background (e.g. inside Telegram or home screen).
+            val sources = listOf(
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION,
+                MediaRecorder.AudioSource.MIC
+            )
+
 
             var record: AudioRecord? = null
             var chosenSource = -1

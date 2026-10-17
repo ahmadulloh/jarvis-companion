@@ -57,15 +57,15 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.6.6
-        name: Jarvis Companion v1.6.6
+        tag_name: v1.6.7
+        name: Jarvis Companion v1.6.7
         body: |
-          JARVIS Companion v1.6.6 yangilanishi:
-          - Fondan ilovalarni (Telegram, YouTube) ishonchli ochish (SYSTEM_ALERT_WINDOW va Fullscreen intent)
-          - Telegram xabarlarini to'g'ridan-to'g'ri odamlarga va guruhlarga ovoz orqali yozish va yuborish
-          - Dastur ishga tushganda Axmadulloh sirga avtomatik samimiy salomlashish
-          - Ovoz orqali 31 ta sohaga (Haydovchi, Yurist, Tadbirkor va b.) zudlik bilan o'tish va interfeys o'zgarishi
-          - YouTube qidiruv va videolarni bevosita Jarvis APK ichida to'liq ko'rsatish
-          - Rasmiy Andijon davlat texnika instituti formati bo'yicha 15 slaydli taqdimot yaratish va Telegramga yuborish
+          JARVIS Companion v1.6.7 yangilanishi:
+          - Ilhomlantiruvchi inline YouTube musiqa/video pleer (16:9 ramka, qo'shiq nomi, ijrochi, yurakcha, orqaga/oldinga, yashil ijro tugmasi)
+          - Fondan eshitish muammosi to'liq hal etildi (VOICE_COMMUNICATION audio manbasi - Telegram ochilganda ham Jarvis eshitadi)
+          - Javob qaytarish kechikishi va qotib qolish bartaraf etildi (Echo gate va isSpeaking audioTrack to'xtashi bilan zudlik bilan ochiladi)
+          - Ekran qorayishi va o'chib qolishini oldini olish (FLAG_KEEP_SCREEN_ON)
+          - Sevinch ovozi olib tashlandi, faqat Jarvisning o'z asl ovozi gapiradi
+          - 31 ta soha tugmalari qirqilmaydigan 2 qatorli markazlashgan toza UI dizayni
         files: app/build/outputs/apk/debug/app-debug.apk
 

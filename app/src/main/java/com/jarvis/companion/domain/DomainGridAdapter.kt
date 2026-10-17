@@ -41,33 +41,71 @@ class DomainGridAdapter(
 
         fun bind(domain: JarvisDomain, isSelected: Boolean) {
             tvIcon.text = domain.icon
-            tvTitle.text = domain.titleUz
+            tvTitle.text = formatDomainGridTitle(domain)
 
             val density = itemView.resources.displayMetrics.density
 
             if (isSelected) {
                 val activeBg = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
-                    cornerRadius = 16f * density
-                    setColor(Color.WHITE)
-                    setStroke((1.8f * density).toInt(), domain.primaryColor)
+                    cornerRadius = 18f * density
+                    setColor(Color.parseColor("#F0FDF4")) // Soft green tint
+                    setStroke((2f * density).toInt(), domain.primaryColor)
                 }
                 container.background = activeBg
                 tvTitle.setTextColor(domain.primaryColor)
             } else {
                 val normalBg = GradientDrawable().apply {
                     shape = GradientDrawable.RECTANGLE
-                    cornerRadius = 16f * density
-                    setColor(Color.parseColor("#F7FBF8"))
-                    setStroke((1.4f * density).toInt(), Color.parseColor("#E1ECE5"))
+                    cornerRadius = 18f * density
+                    setColor(Color.parseColor("#F8FAFC"))
+                    setStroke((1.2f * density).toInt(), Color.parseColor("#E2E8F0"))
                 }
                 container.background = normalBg
-                tvTitle.setTextColor(Color.parseColor("#0B2A18"))
+                tvTitle.setTextColor(Color.parseColor("#0F172A"))
             }
 
             container.setOnClickListener {
                 onDomainSelected(domain)
             }
         }
+
+        private fun formatDomainGridTitle(domain: JarvisDomain): String {
+            return when (domain.id.uppercase()) {
+                "ASOSIY" -> "Asosiy"
+                "TALABA" -> "Talaba"
+                "OQITUVCHI", "O'QITUVCHI" -> "O'qituvchi"
+                "TIL" -> "Til O'rganish"
+                "DOKON", "DO'KON" -> "Do'kon"
+                "ONLAYN_SAVDO" -> "Onlayn Savdo"
+                "KAFE" -> "Kafe & Restoran"
+                "SALON" -> "Go'zallik Saloni"
+                "HAYDOVCHI" -> "Haydovchi (Taxi)"
+                "AVTOUSTA" -> "Avtoservis"
+                "USTA" -> "Qurilish / Ta'mir"
+                "MULK" -> "Ko'chmas Mulk"
+                "FRILANSER" -> "Frilanser"
+                "MENEJER" -> "Menejment"
+                "HR" -> "HR & Xodimlar"
+                "YURIST" -> "Yurist & Soliq"
+                "TADBIRKOR" -> "Tadbirkorlik"
+                "DIN" -> "Din & Qur'on"
+                "DASTURCHI" -> "Dasturchi"
+                "MOLIYA" -> "Moliya & Audit"
+                "UY" -> "Aqlli Uy"
+                "SALOMATLIK" -> "Salomatlik"
+                "IT_ADMIN" -> "IT-Admin"
+                "KONTENT" -> "Media / Kontent"
+                "GAMER" -> "Geymer"
+                "FERMER" -> "Agro / Fermer"
+                "SPORT" -> "Sport & Fitnes"
+                "SAYOHAT" -> "Sayohat"
+                "OILA" -> "Oila"
+                "KEKSA" -> "Keksa Parvarishi"
+                "HAYVON" -> "Uy Hayvonlari"
+                else -> domain.titleUz.split(" / ", " · ").firstOrNull()?.trim() ?: domain.titleUz
+            }
+        }
+
     }
 }

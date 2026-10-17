@@ -30,6 +30,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
+import android.view.WindowManager
+import android.widget.ImageView
 import android.view.inputmethod.EditorInfo
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
@@ -130,6 +132,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnCloseWebView: TextView
     private var quronWebUrl: String = ""
 
+
+    // Inline Media Player Views (Image 1 Style)
+    private lateinit var cardInlineMedia: LinearLayout
+    private lateinit var webViewInlineVideo: WebView
+    private lateinit var tvMediaVideoTitle: TextView
+    private lateinit var btnCloseInlineMedia: TextView
+    private lateinit var tvMediaSongTitle: TextView
+    private lateinit var tvMediaArtist: TextView
+    private lateinit var btnMediaLike: ImageView
+    private lateinit var btnMediaPrev: ImageButton
+    private lateinit var btnMediaPlayPause: ImageButton
+    private lateinit var btnMediaNext: ImageButton
+    private var isMediaPlaying = true
+    private var isMediaLiked = false
+
+
     // Active Domain & Route
     private var currentDomain: JarvisDomain = JarvisDomainRegistry.ASOSIY
     private var activeRoute: AudioRoute = AudioRoute.EARBUDS
@@ -195,7 +213,7 @@ class MainActivity : AppCompatActivity() {
                             val detectedDomain = JarvisDomainRegistry.findDomainByVoice(text)
                             if (detectedDomain != null && detectedDomain.id != currentDomain.id) {
                                 runOnUiThread {
-                                    applyDomain(detectedDomain, speakAnnouncement = true)
+                                    applyDomain(detectedDomain, speakAnnouncement = false)
                                 }
                             }
                         }
@@ -223,9 +241,10 @@ class MainActivity : AppCompatActivity() {
                     val dId = intent.getStringExtra(JarvisForegroundService.EXTRA_DOMAIN_ID) ?: "ASOSIY"
                     val target = JarvisDomainRegistry.getDomainById(dId)
                     runOnUiThread {
-                        applyDomain(target, speakAnnouncement = true)
+                        applyDomain(target, speakAnnouncement = false)
                     }
                 }
+
                 JarvisForegroundService.BROADCAST_MEDIA_PLAY -> {
                     val url = intent.getStringExtra(JarvisForegroundService.EXTRA_MEDIA_URL) ?: ""
                     val title = intent.getStringExtra(JarvisForegroundService.EXTRA_MEDIA_TITLE) ?: "YouTube"
@@ -273,8 +292,10 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         window.statusBarColor = Color.TRANSPARENT
         WindowCompat.getInsetsController(window, window.decorView)?.isAppearanceLightStatusBars = true
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setContentView(R.layout.activity_main)
+
 
         prefs = PreferencesHelper(this)
         phoneActionManager = PhoneActionManager(this)
@@ -468,7 +489,55 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }
+
+        // Inline Media Player nazorati (Image 1 Style)
+        cardInlineMedia = findViewById(R.id.cardInlineMedia)
+        webViewInlineVideo = findViewById(R.id.webViewInlineVideo)
+        tvMediaVideoTitle = findViewById(R.id.tvMediaVideoTitle)
+        btnCloseInlineMedia = findViewById(R.id.btnCloseInlineMedia)
+        tvMediaSongTitle = findViewById(R.id.tvMediaSongTitle)
+        tvMediaArtist = findViewById(R.id.tvMediaArtist)
+        btnMediaLike = findViewById(R.id.btnMediaLike)
+        btnMediaPrev = findViewById(R.id.btnMediaPrev)
+        btnMediaPlayPause = findViewById(R.id.btnMediaPlayPause)
+        btnMediaNext = findViewById(R.id.btnMediaNext)
+
+        btnCloseInlineMedia.setOnClickListener {
+            vibrateBrief(20)
+            cardInlineMedia.visibility = View.GONE
+            webViewInlineVideo.loadUrl("about:blank")
+        }
+
+        btnMediaPlayPause.setOnClickListener {
+            vibrateBrief(25)
+            isMediaPlaying = !isMediaPlaying
+            btnMediaPlayPause.setImageResource(if (isMediaPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play)
+            webViewInlineVideo.evaluateJavascript(
+                "(function(){ var v = document.querySelector('video'); if (v) { if (v.paused) v.play(); else v.pause(); } })()", null
+            )
+        }
+
+        btnMediaLike.setOnClickListener {
+            vibrateBrief(25)
+            isMediaLiked = !isMediaLiked
+            btnMediaLike.setImageResource(if (isMediaLiked) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline)
+        }
+
+        btnMediaPrev.setOnClickListener {
+            vibrateBrief(20)
+            webViewInlineVideo.evaluateJavascript(
+                "(function(){ var v = document.querySelector('video'); if (v) v.currentTime = Math.max(0, v.currentTime - 10); })()", null
+            )
+        }
+
+        btnMediaNext.setOnClickListener {
+            vibrateBrief(20)
+            webViewInlineVideo.evaluateJavascript(
+                "(function(){ var v = document.querySelector('video'); if (v) v.currentTime = v.currentTime + 10; })()", null
+            )
+        }
     }
+
 
     private fun toggleMicFromUi() {
         vibrateBrief(25)
@@ -1967,29 +2036,50 @@ class MainActivity : AppCompatActivity() {
     fun playInAppYouTube(urlOrQuery: String, title: String) {
         runOnUiThread {
             try {
-                containerWebView.visibility = View.VISIBLE
-                tvWebTitle.text = "YouTube: $title"
+                // Parse Song title and Artist from title (e.g. "Hurshid Rasulov - Bo'laverdi")
+                var songName = title.trim()
+                var artistName = "YouTube Musiqa"
+                if (title.contains("-")) {
+                    val parts = title.split("-", limit = 2)
+                    artistName = parts[0].trim()
+                    songName = parts[1].trim()
+                } else if (title.contains("–")) {
+                    val parts = title.split("–", limit = 2)
+                    artistName = parts[0].trim()
+                    songName = parts[1].trim()
+                }
+
+                tvMediaSongTitle.text = songName.ifEmpty { "Musiqa ijrosi" }
+                tvMediaArtist.text = artistName.ifEmpty { "JARVIS Player" }
+                tvMediaVideoTitle.text = "🎵 $songName"
+
+                cardInlineMedia.visibility = View.VISIBLE
+                isMediaPlaying = true
+                btnMediaPlayPause.setImageResource(R.drawable.ic_media_pause)
+
                 val playUrl = when {
                     urlOrQuery.startsWith("http://") || urlOrQuery.startsWith("https://") -> urlOrQuery
                     else -> "https://m.youtube.com/results?search_query=" + Uri.encode(urlOrQuery)
                 }
-                quronWebUrl = playUrl
-                webViewDashboard.settings.apply {
+
+                webViewInlineVideo.settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
                     mediaPlaybackRequiresUserGesture = false
                     cacheMode = WebSettings.LOAD_DEFAULT
                     userAgentString = "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                 }
-                webViewDashboard.webViewClient = WebViewClient()
-                webViewDashboard.webChromeClient = WebChromeClient()
-                webViewDashboard.loadUrl(playUrl)
-                showCaption("▶ Ijro: $title")
+                webViewInlineVideo.webViewClient = WebViewClient()
+                webViewInlineVideo.webChromeClient = WebChromeClient()
+                webViewInlineVideo.loadUrl(playUrl)
+
+                showCaption("▶ Ijro: $songName")
             } catch (e: Exception) {
                 Log.e("MainActivity", "playInAppYouTube error: ${e.message}")
             }
         }
     }
+
 
     private fun triggerWelcomeGreetingIfNeeded() {
         val now = System.currentTimeMillis()

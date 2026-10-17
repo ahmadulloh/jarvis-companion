@@ -127,8 +127,9 @@ class PreferencesHelper(context: Context) {
 
     // TTS Voice Engine: "UZBEKVOICE_AI", "ELEVENLABS", "DEVICE_TTS"
     var ttsEngine: String
-        get() = prefs.getString("tts_engine", "UZBEKVOICE_AI") ?: "UZBEKVOICE_AI"
+        get() = prefs.getString("tts_engine", "DEVICE_TTS") ?: "DEVICE_TTS"
         set(value) = prefs.edit().putString("tts_engine", value.trim()).apply()
+
 
     // UzbekVoice.ai Credentials (Encrypted storage)
     var uzbekVoiceApiKey: String
