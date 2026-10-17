@@ -25,11 +25,11 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:processDebugMainManifest
 > Task :app:processDebugManifest
 > Task :app:javaPreCompileDebug
+> Task :app:processDebugManifestForPackage
 > Task :app:mergeDebugShaders
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
-> Task :app:processDebugManifestForPackage
 > Task :app:desugarDebugFileDependencies
 > Task :app:compressDebugAssets
 > Task :app:processDebugResources
@@ -39,9 +39,17 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:mergeExtDexDebug
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1973:77 Unresolved reference: Uri
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2031:21 Unresolved reference: Uri
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/service/JarvisForegroundService.kt:431:17 Unresolved reference: broadcastPcConnectionFailed
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1623:34 Overload resolution ambiguity: 
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1810:41 Overload resolution ambiguity: 
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2028:19 Overload resolution ambiguity: 
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+public final var userName: String defined in com.jarvis.companion.util.PreferencesHelper
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/util/PreferencesHelper.kt:42:9 Conflicting declarations: public final var userName: String, public final var userName: String
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/util/PreferencesHelper.kt:174:9 Conflicting declarations: public final var userName: String, public final var userName: String
 
 FAILURE: Build failed with an exception.
 
@@ -250,5 +258,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 2m 16s
+BUILD FAILED in 2m
 23 actionable tasks: 23 executed
