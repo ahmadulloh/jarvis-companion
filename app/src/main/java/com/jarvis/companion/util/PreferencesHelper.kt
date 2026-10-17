@@ -8,7 +8,7 @@ class PreferencesHelper(context: Context) {
         context.getSharedPreferences("jarvis_companion_prefs", Context.MODE_PRIVATE)
 
     var serverAddress: String
-        get() = prefs.getString("server_address", "100.112.86.116:8000") ?: "100.112.86.116:8000"
+        get() = prefs.getString("server_address", "77.83.206.138:8000") ?: "77.83.206.138:8000"
         set(value) = prefs.edit().putString("server_address", value.trim()).apply()
 
     var authToken: String
@@ -69,7 +69,7 @@ class PreferencesHelper(context: Context) {
 
     // Hybrid Connection Mode: "GEMINI_DIRECT" or "PC_BRIDGE"
     var connectionMode: String
-        get() = prefs.getString("connection_mode", "GEMINI_DIRECT") ?: "GEMINI_DIRECT"
+        get() = prefs.getString("connection_mode", "PC_BRIDGE") ?: "PC_BRIDGE"
         set(value) = prefs.edit().putString("connection_mode", value.trim()).apply()
 
     // Encryption helper for sensitive API keys
