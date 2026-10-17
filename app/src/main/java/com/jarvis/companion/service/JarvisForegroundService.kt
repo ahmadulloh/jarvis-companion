@@ -91,6 +91,7 @@ class JarvisForegroundService : Service() {
         const val EXTRA_CAPTION = "extra_caption"
 
         const val BROADCAST_TURN_COMPLETE = "com.jarvis.companion.TURN_COMPLETE"
+        private const val TAG = "JarvisService"
     }
 
     private val mainHandler = Handler(Looper.getMainLooper())
