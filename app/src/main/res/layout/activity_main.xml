@@ -529,12 +529,12 @@
         app:srcCompat="@drawable/ic_keyboard"
         app:tint="#12A550" />
 
-    <!-- 5. In-App Web View Container (Hidden by default, used for Quran recitation or web links) -->
+    <!-- 5. In-App Web View Container (Full bleed unified UI without overlapping headers) -->
     <RelativeLayout
         android:id="@+id/containerWebView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#FFFFFF"
+        android:background="#040812"
         android:clickable="true"
         android:focusable="true"
         android:visibility="gone">
@@ -542,55 +542,33 @@
         <RelativeLayout
             android:id="@+id/headerWebView"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:background="#F8FAFC"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp">
+            android:layout_height="0dp"
+            android:visibility="gone">
 
             <TextView
                 android:id="@+id/tvWebTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:fontFamily="sans-serif-bold"
-                android:text="Qur'on Ustozi"
-                android:textColor="#0B2A18"
-                android:textSize="16sp" />
+                android:text="JARVIS" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/btnOpenExternalBrowser"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:orientation="horizontal">
+                android:text="Brauzerda ochish" />
 
-                <TextView
-                    android:id="@+id/btnOpenExternalBrowser"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:padding="8dp"
-                    android:text="Brauzerda ochish"
-                    android:textColor="#12A550"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/btnCloseWebView"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:padding="8dp"
-                    android:text="Yopish ✕"
-                    android:textColor="#64748B"
-                    android:textSize="12sp" />
-            </LinearLayout>
+            <TextView
+                android:id="@+id/btnCloseWebView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Yopish ✕" />
         </RelativeLayout>
 
         <WebView
             android:id="@+id/webViewDashboard"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/headerWebView" />
+            android:background="#040812" />
     </RelativeLayout>
 
 </RelativeLayout>

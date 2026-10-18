@@ -57,15 +57,15 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.4
-        name: Jarvis Companion v1.7.4
+        tag_name: v1.7.5
+        name: Jarvis Companion v1.7.5
         body: |
-          JARVIS Companion v1.7.4 yangilanishi — JARVIS World Hologram TV & 3D Globus (Famelack & Global Live TV):
-          - 3D Interaktiv Kiber Globus: Three.js orqali fazoda aylanuvchi 3D Yer shari, kiber HUD vizualizatsiyasi, neon atmosfera va davlatlar joylashuvi.
-          - 173+ Davlat Jonli Telekanallari: O'zbekiston (BIZ TV, Sevimli TV, Zo'r TV, MY5, Aqlvoy, Bolajon, Dunyo bo'ylab, Futbol TV va 34 ta kanal), Turkiya, AQSH, Rossiya, Saudiya Arabistoni, BAA va butun jahon jonli efirlari.
-          - HLS Kiber Pleer (hls.js): Jonli efir indikatori (● LIVE), to'liq ekran (Fullscreen), kichik oyna (Picture-in-Picture) va kanal almashtirish tugmalari.
-          - Kategoriyalar va Filmlar: Famelack.com/tv/movies kabi to'liq Kinolar (Movies), Yangiliklar (News), Sport, Musiqa va Bolalar toifalari.
-          - Tasodifiy Kanal (🎲 Lucky Dice): Tasodifiy tugma orqali globusni aylantirib, dunyoning istalgan davlatidan jonli telekanal ochish.
-          - Ovozli Boshqaruv & Integratsiya: "BIZ TV ni qo'y", "Jonli telekanallarni och", "Turkiya kanallarini ko'rsat", "Kinolar telekanalini qo'y" buyruqlari Gemini Live va mahalliy darajada ishlaydi.
+          JARVIS Companion v1.7.5 yangilanishi — Yangi 4-Tabli Yagona UI & Jonli TV / 3D Globus (1, 2, 3-rasmlar dizayni asosida):
+          - 1-rasm (Asosiy / Home): 3D rangli Yer globusi, Jonli TV (O'zbekiston 24) prevyu kartasi, 2-ustunli kanallar (Aqlvoy, BIZ Cinema, BIZ TV, Bolajon, Cheksiz TV, Dasturxon TV, Dunyo bo'ylab, Farg'ona MTRK, Sport TV, Sevimli TV, Zo'r TV).
+          - 3-rasm (TV Tab): 16:9 Jonli HD video pleer, soxta 0:12/0:30 taymersiz haqiqiy jonli boshqaruv (Pauza/Play, Ovoz slayderi, ● LIVE qizil yorug'lik, HD, To'liq ekran), kanal ma'lumot banneri va ⭐ Sevimlilar, toifalar (Barchasi, Sport, Kino, Yangiliklar, Bolalar, Musiqa, Dunyo) va 2-ustunli brendli logotipli kanallar kartalari.
+          - 3-tab (Musiqa): Yaratuvchan Spotify-uslubidagi musiqa pleeri, aylanuvchi vinil disk, chastotali audio vizualizator, O'zbekiston xitlari (Hurshid Rasulov, Shohruhxon, Yulduz Usmonova, Munisa Rizayeva, Rayhon) va haqiqiy vaqtli progress bar.
+          - 4-tab (Chat): ChatGPT uslubidagi qulay interaktiv AI muloqot oynasi, tezkor taklif chipchalari (Bugungi yangiliklar, Ob-havo, Sport TV, Qur'on darsi) va Markdown formatlash.
+          - Status Bar to'qnashuvi tuzatildi: Telefonning soat va batareya paneli bilan xunuk ustma-ust tushgan sarlavha olib tashlandi, safe area insets to'liq moslashtirildi.
+          - Yagona pastki panel (Dock + Input Bar): Qayerda bo'lishingizdan qat'i nazar 4 ta tab va 📎 Fayl biriktirish, Buyruq yozish, 🎙️ Mikrofon va ➤ Yuborish tugmalari hamisha bir teginishda mavjud.
         files: app/build/outputs/apk/debug/app-debug.apk
 

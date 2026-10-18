@@ -1246,6 +1246,12 @@ class MainActivity : AppCompatActivity() {
             if (scrollOnScreenChat.visibility == View.VISIBLE) {
                 addJarvisChatBubble(replyText)
             }
+            if (containerWebView.visibility == View.VISIBLE) {
+                try {
+                    val qReply = JSONObject.quote(replyText)
+                    webViewDashboard.evaluateJavascript("if (window.onJarvisReply) window.onJarvisReply($qReply);", null)
+                } catch (_: Exception) {}
+            }
             onTurnCompleted()
             val clean = replyText.replace("'", "\\'").replace("\"", "\\\"").replace("\n", " ").trim()
             val js = "window.jarvisDeliverResponse('$clean', '$shapeEmoji');"
@@ -1296,6 +1302,12 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             tvInputTranscript.text = clean
             tvInputTranscript.visibility = View.VISIBLE
+            if (containerWebView.visibility == View.VISIBLE) {
+                try {
+                    val qTranscript = JSONObject.quote(clean)
+                    webViewDashboard.evaluateJavascript("if (window.onJarvisSpeechTranscript) window.onJarvisSpeechTranscript($qTranscript);", null)
+                } catch (_: Exception) {}
+            }
         }
     }
 
@@ -2199,7 +2211,27 @@ class MainActivity : AppCompatActivity() {
 
         val lower = cmd.lowercase().trim()
 
-        // 0. Mahalliy tezkor musiqa/video boshqaruvi (Pauza, davom ettirish, yopish, to'xtatish)
+        // 0. Mahalliy tezkor musiqa/video/TV boshqaruvi (Pauza, davom ettirish, yopish, to'xtatish)
+        if (containerWebView.visibility == View.VISIBLE) {
+            if (lower == "yop" || lower == "yopish" || lower == "o'chir" || lower == "chiq" || lower == "to'xtat") {
+                containerWebView.visibility = View.GONE
+                webViewDashboard.loadUrl("about:blank")
+                showCaption("⏹ Telekanal yopildi")
+                deliverJarvisResponseToUi("Axmadulloh sir, telekanal yopildi.", "📺")
+                return
+            }
+            if (lower == "pauza" || lower == "pauza qil" || lower == "to'xtatib tur" || lower == "stop") {
+                webViewDashboard.evaluateJavascript("if (window.togglePlayPause) window.togglePlayPause();", null)
+                showCaption("⏸ Pauza qilindi")
+                return
+            }
+            if (lower == "davom et" || lower == "davom ettir" || lower == "play") {
+                webViewDashboard.evaluateJavascript("if (window.togglePlayPause) window.togglePlayPause();", null)
+                showCaption("▶ Ijro davom etmoqda")
+                return
+            }
+        }
+
         if (cardInlineMedia.visibility == View.VISIBLE || isMediaPlaying) {
             if (lower == "pauza" || lower == "pauza qil" || lower == "to'xtatib tur" || lower == "to'xtat" || lower == "stop") {
                 isMediaPlaying = false
@@ -2242,27 +2274,56 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 0. World TV & 3D Globus buyruqlari
-        if (lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") || lower.contains("jonli efir") || lower.contains("famelack") || lower.contains("biz tv") || lower.contains("sevimli") || lower.contains("zo'r tv") || lower.contains("aqlvoy") || lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv")) {
-            if (lower.contains("och") || lower.contains("qo'y") || lower.contains("yoq") || lower.contains("ko'rsat") || lower.contains("ishlat") || lower == "tv" || lower == "televizor" || lower.startsWith("tv ")) {
-                val targetChannel = if (lower.contains("biz tv")) "BIZ TV"
-                                    else if (lower.contains("sevimli")) "Sevimli TV"
-                                    else if (lower.contains("zo'r tv")) "Zo'r TV"
-                                    else if (lower.contains("aqlvoy")) "Aqlvoy"
-                                    else if (lower.contains("dunyo bo'ylab")) "Dunyo bo'ylab"
-                                    else ""
-                val targetCat = if (lower.contains("kino") || lower.contains("film") || lower.contains("movie")) "movies" else ""
-                val targetCountry = if (lower.contains("turkiya")) "tr"
-                                    else if (lower.contains("aqsh") || lower.contains("amerika")) "us"
-                                    else if (lower.contains("rossiya")) "ru"
-                                    else "uz"
-                val tvUrl = if (targetChannel.isNotEmpty()) "http://77.83.206.138:8000/tv?country=$targetCountry&channel=${android.net.Uri.encode(targetChannel)}"
-                            else if (targetCat.isNotEmpty()) "http://77.83.206.138:8000/tv?category=$targetCat"
-                            else "http://77.83.206.138:8000/tv?country=$targetCountry"
-                openWorldTv(tvUrl)
-                deliverJarvisResponseToUi("Axmadulloh sir, JARVIS 3D Kiber Globus va jonli telekanallar xizmatini ochdim! Maroqli tomosha tilayman.", "📺")
-                return
+        // 0. World TV & 3D Globus & Kino buyruqlari (Image 1 & Image 3)
+        val isTvOrMovie = lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") ||
+                lower.contains("jonli efir") || lower.contains("famelack") || lower.contains("biz tv") ||
+                lower.contains("sevimli") || lower.contains("zo'r tv") || lower.contains("aqlvoy") ||
+                lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv") || lower.contains("sport tv") ||
+                lower.contains("milliy tv") || lower.contains("o'zbekiston 24") || lower.contains("bolajon") ||
+                lower.contains("kino ko'r") || lower.contains("film ko'r") || lower.contains("kinolar") ||
+                lower.contains("dasturxon tv") || lower.contains("cheksiz tv") || lower.contains("farg'ona mtrk")
+
+        if (isTvOrMovie) {
+            val targetChannel = when {
+                lower.contains("sport tv") || lower.contains("sport") -> "Sport TV"
+                lower.contains("biz cinema") -> "BIZ Cinema"
+                lower.contains("biz music") -> "BIZ Music"
+                lower.contains("biz tv") || lower.contains("biz") -> "BIZ TV"
+                lower.contains("sevimli") -> "Sevimli TV"
+                lower.contains("zo'r tv") || lower.contains("zor tv") -> "Zo'r TV"
+                lower.contains("aqlvoy") -> "Aqlvoy"
+                lower.contains("dunyo bo'ylab") -> "Dunyo bo'ylab"
+                lower.contains("bolajon") -> "Bolajon"
+                lower.contains("milliy") -> "Milliy TV"
+                lower.contains("o'zbekiston 24") || lower.contains("uzbekiston 24") -> "O'zbekiston 24"
+                lower.contains("dasturxon") -> "Dasturxon TV"
+                lower.contains("cheksiz") -> "Cheksiz TV"
+                lower.contains("farg'ona") -> "Farg'ona MTRK"
+                lower.contains("kinoteatr") -> "Kinoteatr"
+                lower.contains("futbol") -> "Futbol TV"
+                lower.contains("yoshlar") -> "Yoshlar"
+                lower.contains("mahalla") -> "Mahalla"
+                lower.contains("madaniyat") -> "Madaniyat va ma'rifat"
+                lower.contains("navo") -> "Navo"
+                else -> ""
             }
+            val targetCat = if (lower.contains("kino") || lower.contains("film") || lower.contains("movie")) "movies" else ""
+            val targetCountry = when {
+                lower.contains("turkiya") -> "tr"
+                lower.contains("aqsh") || lower.contains("amerika") -> "us"
+                lower.contains("rossiya") -> "ru"
+                else -> "uz"
+            }
+            val tvUrl = when {
+                targetChannel.isNotEmpty() -> "http://77.83.206.138:8000/tv?country=$targetCountry&channel=${android.net.Uri.encode(targetChannel)}&tab=tv"
+                targetCat.isNotEmpty() -> "http://77.83.206.138:8000/tv?category=$targetCat&tab=tv"
+                else -> "http://77.83.206.138:8000/tv?country=$targetCountry&tab=home"
+            }
+            openWorldTv(tvUrl)
+            val ackMsg = if (targetChannel.isNotEmpty()) "Labbay Axmadulloh sir, «$targetChannel» telekanalini jonli efirda qo'ydim!"
+                         else "Axmadulloh sir, JARVIS 3D Kiber Globus va jonli telekanallar xizmatini ochdim! Maroqli tomosha tilayman."
+            deliverJarvisResponseToUi(ackMsg, "📺")
+            return
         }
 
         // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
@@ -2878,10 +2939,60 @@ class MainActivity : AppCompatActivity() {
         webViewDashboard.loadUrl(targetUrl)
     }
 
+    inner class TvBridge {
+        @android.webkit.JavascriptInterface
+        fun startListening() {
+            runOnUiThread {
+                toggleMicFromUi()
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun sendCommand(text: String) {
+            runOnUiThread {
+                vibrateBrief(20)
+                sendJarvisCommand(text, "📺")
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun openAttachmentPicker() {
+            runOnUiThread {
+                showAttachmentOptionsBottomSheet()
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun closeTv() {
+            runOnUiThread {
+                containerWebView.visibility = View.GONE
+                webViewDashboard.loadUrl("about:blank")
+                showCaption("⏹ Telekanal yopildi")
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun openExternalBrowser(url: String) {
+            runOnUiThread {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    startActivity(intent)
+                } catch (_: Exception) {}
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun speakText(text: String) {
+            runOnUiThread {
+                speakJarvis(text)
+            }
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     fun openWorldTv(url: String) {
         containerWebView.visibility = View.VISIBLE
-        tvWebTitle.text = "JARVIS World TV & 3D Globus"
+        headerWebView.visibility = View.GONE
 
         webViewDashboard.settings.apply {
             javaScriptEnabled = true
@@ -2891,7 +3002,13 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
         }
-        webViewDashboard.webViewClient = WebViewClient()
+        webViewDashboard.webViewClient = object : WebViewClient() {
+            override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                if (failingUrl?.contains("77.83.206.138") == true) {
+                    view?.loadUrl("file:///android_asset/tv/index.html")
+                }
+            }
+        }
         webViewDashboard.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest?) {
                 runOnUiThread {
@@ -2899,9 +3016,27 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
+
         val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/tv"
         quronWebUrl = targetUrl
-        webViewDashboard.loadUrl(targetUrl)
+
+        val currentLoaded = webViewDashboard.url ?: ""
+        if (currentLoaded.contains("/tv") || currentLoaded.contains("tv/index.html")) {
+            val uri = Uri.parse(targetUrl)
+            val chName = uri.getQueryParameter("channel")
+            val tabName = uri.getQueryParameter("tab") ?: if (!chName.isNullOrEmpty()) "tv" else "home"
+            val js = buildString {
+                append("if (window.switchTab) window.switchTab('$tabName');")
+                if (!chName.isNullOrEmpty()) {
+                    append("if (window.playChannelByName) window.playChannelByName(${JSONObject.quote(chName)});")
+                }
+            }
+            webViewDashboard.evaluateJavascript(js, null)
+        } else {
+            webViewDashboard.loadUrl(targetUrl)
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
