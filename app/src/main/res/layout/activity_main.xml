@@ -178,6 +178,7 @@
 
         <!-- 16:9 Rounded Video Container -->
         <FrameLayout
+            android:id="@+id/layoutVideoContainer"
             android:layout_width="match_parent"
             android:layout_height="195dp"
             android:background="@drawable/bg_video_player_rounded">
@@ -188,7 +189,7 @@
                 android:layout_height="match_parent"
                 android:background="#000000" />
 
-            <!-- Top Overlay with Title and Close -->
+            <!-- Top Overlay with Title, Expand and Close -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="32dp"
@@ -209,6 +210,19 @@
                     android:text="🎵 Hurshid Rasulov - Bo'laverdi"
                     android:textColor="#FFFFFF"
                     android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/btnExpandInlineMedia"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center"
+                    android:text="⛶"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp" />
 
                 <TextView
                     android:id="@+id/btnCloseInlineMedia"

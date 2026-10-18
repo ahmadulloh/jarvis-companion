@@ -169,9 +169,11 @@ class MainActivity : AppCompatActivity() {
 
     // Inline Media Player Views (Image 1 Style)
     private lateinit var cardInlineMedia: LinearLayout
+    private lateinit var layoutVideoContainer: FrameLayout
     private lateinit var webViewInlineVideo: WebView
     private lateinit var tvMediaVideoTitle: TextView
     private lateinit var btnCloseInlineMedia: TextView
+    private lateinit var btnExpandInlineMedia: TextView
     private lateinit var tvMediaSongTitle: TextView
     private lateinit var tvMediaArtist: TextView
     private lateinit var btnMediaLike: ImageView
@@ -180,6 +182,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnMediaNext: ImageButton
     private var isMediaPlaying = true
     private var isMediaLiked = false
+    private var isVideoExpanded = false
 
 
     // Active Domain & Route
@@ -537,9 +540,11 @@ class MainActivity : AppCompatActivity() {
 
         // Inline Media Player nazorati (Image 1 Style)
         cardInlineMedia = findViewById(R.id.cardInlineMedia)
+        layoutVideoContainer = findViewById(R.id.layoutVideoContainer)
         webViewInlineVideo = findViewById(R.id.webViewInlineVideo)
         tvMediaVideoTitle = findViewById(R.id.tvMediaVideoTitle)
         btnCloseInlineMedia = findViewById(R.id.btnCloseInlineMedia)
+        btnExpandInlineMedia = findViewById(R.id.btnExpandInlineMedia)
         tvMediaSongTitle = findViewById(R.id.tvMediaSongTitle)
         tvMediaArtist = findViewById(R.id.tvMediaArtist)
         btnMediaLike = findViewById(R.id.btnMediaLike)
@@ -547,8 +552,28 @@ class MainActivity : AppCompatActivity() {
         btnMediaPlayPause = findViewById(R.id.btnMediaPlayPause)
         btnMediaNext = findViewById(R.id.btnMediaNext)
 
+        btnExpandInlineMedia.setOnClickListener {
+            vibrateBrief(20)
+            isVideoExpanded = !isVideoExpanded
+            val density = resources.displayMetrics.density
+            val newHeightDp = if (isVideoExpanded) 360 else 195
+            val newHeightPx = (newHeightDp * density).toInt()
+            val params = layoutVideoContainer.layoutParams
+            params.height = newHeightPx
+            layoutVideoContainer.layoutParams = params
+            btnExpandInlineMedia.text = if (isVideoExpanded) "🗗" else "⛶"
+        }
+
         btnCloseInlineMedia.setOnClickListener {
             vibrateBrief(20)
+            if (isVideoExpanded) {
+                isVideoExpanded = false
+                val density = resources.displayMetrics.density
+                val params = layoutVideoContainer.layoutParams
+                params.height = (195 * density).toInt()
+                layoutVideoContainer.layoutParams = params
+                btnExpandInlineMedia.text = "⛶"
+            }
             cardInlineMedia.visibility = View.GONE
             webViewInlineVideo.loadUrl("about:blank")
         }
@@ -1525,6 +1550,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun playWelcomeAsset(voiceName: String, onDone: () -> Unit = {}) {
+        stopCurrentAudio()
+        ensureAudioVolume()
+        try {
+            val fileName = "voices/welcome_${voiceName.lowercase().trim()}.wav"
+            val afd = assets.openFd(fileName)
+            val mp = MediaPlayer().apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
+                setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                afd.close()
+                setOnPreparedListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setState(JarvisParticleState.SPEAKING)
+                        jarvisParticleView.setSpeechLevel(0.85f)
+                    }
+                    player.start()
+                }
+                setOnCompletionListener { player ->
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.RELEASE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                }
+                setOnErrorListener { player, what, extra ->
+                    Log.e("MainActivity", "playWelcomeAsset error: what=$what, extra=$extra")
+                    runOnUiThread {
+                        jarvisParticleView.setSpeechLevel(0f)
+                        jarvisParticleView.setState(JarvisParticleState.IDLE)
+                        onDone()
+                    }
+                    player.reset()
+                    player.release()
+                    mediaPlayer = null
+                    true
+                }
+                prepareAsync()
+            }
+            mediaPlayer = mp
+        } catch (e: Exception) {
+            Log.w("MainActivity", "playWelcomeAsset local error: ${e.message}, falling back to VPS welcome endpoint")
+            val fallbackUrl = "${getHttpBaseUrl()}/api/welcome-voice?voice=${voiceName.lowercase().trim()}"
+            playAudioFromUrl(fallbackUrl) {
+                onDone()
+            }
+        }
+    }
+
     private fun speakWithDeviceTts(text: String) {
         if (!isTtsReady || tts == null) {
             return
@@ -2174,9 +2255,16 @@ class MainActivity : AppCompatActivity() {
                 }
                 webViewInlineVideo.webChromeClient = WebChromeClient()
 
-                val videoIdRegex = Regex("(?:v=|/embed/|youtu\\.be/|/v/|watch\\?v=|^)([a-zA-Z0-9_-]{11})")
-                val match = videoIdRegex.find(urlOrQuery)
-                val videoId = match?.groupValues?.get(1)
+                val videoId = when {
+                    urlOrQuery.contains("embed/") -> urlOrQuery.substringAfter("embed/").substringBefore("?").substringBefore("&").substringBefore("/").trim()
+                    urlOrQuery.contains("watch?v=") -> urlOrQuery.substringAfter("watch?v=").substringBefore("&").substringBefore("#").trim()
+                    urlOrQuery.contains("youtu.be/") -> urlOrQuery.substringAfter("youtu.be/").substringBefore("?").substringBefore("&").trim()
+                    urlOrQuery.length == 11 && urlOrQuery.matches(Regex("[a-zA-Z0-9_-]{11}")) -> urlOrQuery
+                    else -> {
+                        val m = Regex("(?:v=|/embed/|youtu\\.be/|/v/|watch\\?v=)([a-zA-Z0-9_-]{11})").find(urlOrQuery)
+                        m?.groupValues?.get(1)
+                    }
+                }
 
                 if (!videoId.isNullOrBlank() && !videoId.startsWith("http")) {
                     val html = """
@@ -2222,7 +2310,7 @@ class MainActivity : AppCompatActivity() {
             prefs.lastWelcomeTimestamp = now
             val greeting = "Salom Axmadulloh sir! Jarvis xizmatingizda. Qanday yordam bera olaman?"
             showJarvisTurnCaption(greeting)
-            speakJarvis(greeting)
+            playWelcomeAsset(prefs.assistantVoice)
         }
     }
 

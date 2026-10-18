@@ -57,14 +57,13 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.6.9
-        name: Jarvis Companion v1.6.9
+        tag_name: v1.7.0
+        name: Jarvis Companion v1.7.0
         body: |
-          JARVIS Companion v1.6.9 yangilanishi:
-          - Gemini Live 5 ta haqiqiy ovozlari (Charon, Puck, Kore, Fenrir, Aoede) to'liq ishga tushirildi va sinov tugmasi bosilganda har birining o'ziga xos jonli ovozi yangraydi.
-          - Yordamchi nomi (Assistant Name) Sozlamalarda faqat va faqat JARVIS nomiga doimiy qulflab qo'yildi (hech kim o'zgartira olmaydi).
-          - YouTube musiqa va videolari to'g'ridan-to'g'ri ilova ichida avtomatik ijro etiladi (tashqi ilovaga chiqib ketish to'xtatildi).
-          - Hujjat skanerlash va tahlil qilishdagi 429 RESOURCE_EXHAUSTED kvota xatosi ko'p modelli kaskad (gemini-3.5-flash, gemini-3.7-flash, gemini-3.1-flash-lite) orqali to'liq bartaraf etildi.
-          - Sozlamalarda ovoz tanlangach, saqlash tugmasi bosilishi bilan servis yangi tanlangan ovoz bilan darhol qayta ulanadi.
+          JARVIS Companion v1.7.0 yangilanishi:
+          - Salomlashish ovozi (Welcome Greeting) to'liq haqiqiy Gemini Live ovoziga o'tkazildi (Charon, Puck, Kore, Fenrir, Aoede). Android tizimining sun'iy robotik ovozi butunlay to'xtatildi!
+          - YouTube musiqa va videolarni to'g'ridan-to'g'ri ijro etish: qidiruv sahifasiga o'tib ketish xatosi bartaraf etildi, klip avtomatik tarzda ilova ichida darhol qo'yiladi.
+          - Inline videopleyer uchun ekranda kattalashtirish (⛶ / 🗗) tugmasi qo'shildi: videoni 360dp balandlikda qulay tomosha qilish imkoni yaratildi.
+          - Eskiz VPS serverdagi WebSocket ulanish parametrlarini tozalash va YouTube video ID ajratish kuchaytirildi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

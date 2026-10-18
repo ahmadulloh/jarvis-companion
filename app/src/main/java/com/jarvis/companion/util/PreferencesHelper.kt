@@ -12,10 +12,14 @@ class PreferencesHelper(context: Context) {
         set(value) = prefs.edit().putString("server_address", value.trim()).apply()
 
     var authToken: String
-        get() = prefs.getString("auth_token", "jarvis-phone-companion-token")?.ifBlank { "jarvis-phone-companion-token" } ?: "jarvis-phone-companion-token"
+        get() {
+            val raw = prefs.getString("auth_token", "jarvis-phone-companion-token") ?: "jarvis-phone-companion-token"
+            val clean = raw.split("&")[0].split("?")[0].trim()
+            return if (clean.isBlank()) "jarvis-phone-companion-token" else clean
+        }
         set(value) {
-            val token = value.trim().ifBlank { "jarvis-phone-companion-token" }
-            prefs.edit().putString("auth_token", token).apply()
+            val clean = value.split("&")[0].split("?")[0].trim().ifBlank { "jarvis-phone-companion-token" }
+            prefs.edit().putString("auth_token", clean).apply()
         }
 
     var autoStartOnBoot: Boolean
