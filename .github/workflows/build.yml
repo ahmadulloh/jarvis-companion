@@ -57,14 +57,15 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.2
-        name: Jarvis Companion v1.7.2
+        tag_name: v1.7.3
+        name: Jarvis Companion v1.7.3
         body: |
-          JARVIS Companion v1.7.2 yangilanishi:
-          - O'zbekcha ovozli media boshqaruvi: "Pauza", "Pauza qil", "To'xtat", "Davom ettir", "Qo'shiqni yop", "Videoni yop", "Musiqani o'chir", "Qo'shiqdan chiq" buyruqlari Gemini Live va mahalliy darajada 100% zudlik bilan ishlaydi.
-          - 18+ va odobsiz videolar filtri: 18+, kattalar uchun va behayo videolar qat'iyan taqiqlanadi va bloklanadi.
-          - O'zbekistonda taqiqlangan domlalar filtri va Fatvo.uz integratsiyasi: Oliy Sud taqiqlagan shaxslar videolari bloklangan, diniy savollarda faqat Hanafiy mazhabi va https://fatvo.uz/ rasmiy ma'lumotlariga tayaniladi.
-          - ChatGPT uslubidagi yangi chat interfeysi: Matn yozilganda zamonaviy, silliq chat oynasi ochiladi va Markdown (qalin matn, kursiv, ro'yxatlar, kod bloklari) qo'llab-quvvatlanadi.
-          - Ovozli muloqot paytida avtomatik tozalanish: Foydalanuvchi matn yozishni to'xtatib gapira boshlaganda yoki Jarvis gapirganda, chat oynasi silliq so'nib (fade-out) ekranni to'liq markaziy animatsion orbga bo'shatadi!
+          JARVIS Companion v1.7.3 yangilanishi — Qur'on Ustozi AI (Tarteel & Quran.ai):
+          - Qur'on Ustozi interfeysi: 114 ta sura, Usmoniy xati, Shayx Muhammad Sodiq Muhammad Yusuf o'zbekcha ma'nolari tarjimasi, Tajvid ranglari.
+          - Qorilar tilovati va Takrorlash: Mashhur qorilar (Al-Husariy Muallim, Mishariy Alafasiy, Abdulbosit Mujavvad, Sa'd Al-G'omdiy) qiroati va tinglab takrorlash rejimi.
+          - Real vaqt qiroat tahlili va Xatolarni aniqlash: Foydalanuvchi qiroat qilganda mikrofon orqali eshitib, tushib qolgan yoki adashilgan so'zlarni qizil to'lqinli chiziq bilan belgilash, aniqlik foizi (masalan 98.4%) va "Missed words" oynasi bilan o'zbekcha ustoz tavsiyasi.
+          - 0 dan Arab alifbosi (Muallimi Soniy): 28 ta arab harfi, maxrajlari (chiqish o'rni), 4 xil yozilish shakli (alohida, boshida, o'rtasida, oxirida) va audio talaffuzi bilan.
+          - Kamera orqali Qog'oz Mushaf kuzatuvi: Foydalanuvchi qog'oz Mushafni kameraga qaratganda sahifani tanib olish va tilovatni kuzatib borish.
+          - Din / Qur'on sohasi: Tezkor tugmalar va to'liq avtonom tajvid ustozi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

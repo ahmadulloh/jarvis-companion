@@ -39,6 +39,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.PermissionRequest
 import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
@@ -285,7 +286,9 @@ class MainActivity : AppCompatActivity() {
                     } catch (_: Exception) {}
                 }
                 JarvisForegroundService.BROADCAST_QURON_UPDATE -> {
-                    val url = intent.getStringExtra("url") ?: ""
+                    val url = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_URL)
+                        ?: intent.getStringExtra("url")
+                        ?: "http://77.83.206.138:8000/quron"
                     if (url.isNotEmpty()) {
                         quronWebUrl = url
                         runOnUiThread {
@@ -2214,6 +2217,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 0. Qur'on AI ochish buyruqlari
+        if (lower.contains("qur'on") || lower.contains("quron")) {
+            if (lower.contains("och") || lower.contains("ustoz") || lower.contains("o'rgan") || lower.contains("dars") || lower.contains("alifbo") || lower.contains("harf") || lower.contains("mushaf") || lower.contains("qiroat")) {
+                if (currentDomain.id != "DIN") {
+                    applyDomain(JarvisDomainRegistry.DIN, speakAnnouncement = false)
+                }
+                val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
+                           else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
+                           else "recite"
+                openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
+                deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.")
+                return
+            }
+        }
+
         // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
         if (pendingSecretaryTarget != null) {
             val target = pendingSecretaryTarget!!
@@ -2792,15 +2810,39 @@ class MainActivity : AppCompatActivity() {
         containerWebView.visibility = View.VISIBLE
         tvWebTitle.text = "Qur'on Ustozi"
 
+        // Ruxsatlarni tekshirish (Kamera va Ovoz yozish)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            val permsNeeded = mutableListOf<String>()
+            if (checkSelfPermission(Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                permsNeeded.add(Manifest.permission.CAMERA)
+            }
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                permsNeeded.add(Manifest.permission.RECORD_AUDIO)
+            }
+            if (permsNeeded.isNotEmpty()) {
+                requestPermissions(permsNeeded.toTypedArray(), 1013)
+            }
+        }
+
         webViewDashboard.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_DEFAULT
+            allowFileAccess = true
+            allowContentAccess = true
         }
         webViewDashboard.webViewClient = WebViewClient()
-        webViewDashboard.webChromeClient = WebChromeClient()
-        webViewDashboard.loadUrl(url)
+        webViewDashboard.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                runOnUiThread {
+                    request?.grant(request.resources)
+                }
+            }
+        }
+        val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/quron"
+        quronWebUrl = targetUrl
+        webViewDashboard.loadUrl(targetUrl)
     }
 
     @SuppressLint("SetJavaScriptEnabled")

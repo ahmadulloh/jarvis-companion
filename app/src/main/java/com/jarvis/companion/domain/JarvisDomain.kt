@@ -94,16 +94,16 @@ object JarvisDomainRegistry {
         primaryColor = Color.parseColor("#00E5FF"),
         glowColor = Color.parseColor("#00E676"),
         secondaryColor = Color.parseColor("#69F0AE"),
-        description = "Namoz vaqtlari va qibla; Qur'on tilovati va tajvid; zikr hisoblagich; ro'za kalendari; ma'sur duolar.",
+        description = "Qur'on ustozi: tajvid, real vaqt xatolarni topish, 0 dan arab alifbosi, qog'oz Mushaf kamera nazorati; namoz vaqtlari.",
         motto = "Din va Qur'on rejimi faol. Qalblar zikr ila orom olur.",
-        keywords = listOf("din", "quron", "qur'on", "namoz", "islom", "azon", "zikr", "roza", "ro'za"),
+        keywords = listOf("din", "quron", "qur'on", "namoz", "islom", "azon", "zikr", "roza", "ro'za", "mushaf", "tajvid", "alifbo"),
         actions = listOf(
-            DomainAction("act_namoz", "Namoz Vaqtlari", "🕌", "Bugungi Toshkent namoz vaqtlarini ayt"),
-            DomainAction("act_quran", "Qur'on Tilovati", "📖", "Qur'on ustozi darsini boshlaymiz"),
-            DomainAction("act_qibla", "Qibla / Zikr", "🧭", "Qibla yo'nalishi va zikr hisoblagich"),
-            DomainAction("act_dua", "Kunlik Duolar", "🌙", "Ertalabki va kechki ma'sur duolarni ayt")
+            DomainAction("act_quron_open", "Qur'on Ustozi", "📖", "Qur'on ustozi ilovasini och"),
+            DomainAction("act_quron_0dan", "0 dan Harflar", "🔤", "Qur'onni 0 dan harflardan boshlab o'rganamiz"),
+            DomainAction("act_quron_takror", "Qiroat & Xatolar", "🎙️", "Fotiha surasini qiroat qilib xatolarimni tekshir"),
+            DomainAction("act_quron_kamera", "Kamerada Mushaf", "📷", "Kamerani yoqib qog'oz Mushafimni kuzatib xatolarni aytib tur")
         ),
-        systemPersonaPrompt = "You are JARVIS Spiritual Companion. Assist Axmadulloh sir with Quran recitations, tajweed practice, accurate prayer times, and supplications with utmost respect and serenity."
+        systemPersonaPrompt = "You are JARVIS Spiritual Companion and Quran Teacher for Axmadulloh sir. Assist with Quran recitations, tajweed error detection, 0-dan Arabic alphabet learning, and camera tracking for physical Mushaf."
     )
 
     val DASTURCHI = JarvisDomain(
