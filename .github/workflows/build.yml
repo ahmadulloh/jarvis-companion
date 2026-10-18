@@ -57,21 +57,24 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.7
-        name: Jarvis Companion v1.7.7
+        tag_name: v1.7.8
+        name: Jarvis Companion v1.7.8
         body: |
-          JARVIS Companion v1.7.7 — Kiber Globus va Jonli TV UI Mukammalligi (2, 3 va 4-rasmlar dizayni asosida):
-          - 1-rasm kamchiliklari to'liq bartaraf etildi:
-            • 3D Rangli Kiber Globus: Qora bo'shliq butunlay yo'q qilindi! Kosmik yulduzlar fonida ko'p rangli siyosiy mamlakatlar chegaralari, yashil-ko'k neon atmosfera halqasi va orbital aylanishi bilan 100% oflayn ishlaydigan Yer globusi (2 va 3-rasmlar bilan 1-ga-1 bir xil).
-            • Sarlavha paneli tuzatildi: "J · A · R · V · I · S" yozuvi bir qatorda chiroyli joylashdi, "S" harfi pastga tushib ketishi to'xtatildi, ortiqcha menyu tugmasi olib tashlandi, o'ngda ⚙️ sozlamalar tugmasi va status bar safe area to'liq moslashtirildi.
-            • "Kanallar" 2-ustunli ro'yxati: Qora bo'shliq o'rniga 10 ta o'zbek telekanali (Aqlvoy, BIZ Cinema, BIZ Music, BIZ TV, Bolajon, Cheksiz TV, Dasturxon TV, Dunyo bo'ylab, Farg'ona MTRK, Sport TV) O'zbekiston bayrog'i aylana nishonlari bilan 2 ustunda to'liq chiqadi.
-            • "Jonli TV" kartasi: Yashil TV nishoni, "Jonli TV", "O'zbekiston kanallari", ● Online nishoni va O'zbekiston 24 16:9 tungi teleminora prevyusi hamda ((•)) Jonli efir indikatori.
-          - 4-rasm (TV Tab & Jonli Efir):
-            • 16:9 formatdagi jonli HLS video pleer, jonli boshqaruv (Pauza/Play, Ovoz slayderi, ● LIVE qizil yorug'lik, HD, To'liq ekran).
-            • Kanal axborot banneri: Kanal nomi (Sport TV), "Jonli · O'zbekiston kanallari", ● LIVE va ⭐ Sevimlilar tugmasi.
-            • Toifalar chipchalari: 📺 Barchasi, ⚽ Sport, 🎬 Kino, 📰 Yangiliklar, 👶 Bolalar, 🎵 Musiqa, 🌍 Dunyo (famelack.com integratsiyasi).
-            • 2-ustunli brend logotipli kanallar kartalari: Sport TV, ITV HD, O'zbekiston 24, Zo'r TV, MTRK Sport, Sevimli TV, Milliy TV, Yoshlar TV.
-          - Yagona pastki panel (Dock + Input Bar): 4 ta tab (Asosiy, TV, Musiqa, Chat) va 📎 Fayl biriktirish, Buyruq yozish, 🎙️ Mikrofon va ➤ Yuborish tugmalari hamisha mavjud.
-          - 100% Oflayn va tezkor: Barcha teksturalar va ma'lumotlar APK ichida mujassam, internet zaif bo'lsa ham bir soniyada yuklanadi.
+          JARVIS Companion v1.7.8 — 100% To'liq Ekran TV, Famelack Kiber Globus va Mukammal Qur'on AI:
+          - TV Video To'liq Ekran (100% Fullscreen Immersive):
+            • HTML5 requestFullscreen va WebChromeClient.onShowCustomView hamda Android.toggleFullscreen orqali video gorizontal (landscape) holatda telefon ekranini 100% to'liq egallaydi, qora bo'shliqlar butunlay yo'qotildi.
+          - 3D Globusda Davlat Tanlash (famelack.com/tv/td uslubida):
+            • Globus ustidagi davlat nishonlari (Chad, Saudiya Arabistoni, O'zbekiston, Turkiya, AQSH, Rossiya, BAA, Misr, Qozog'iston) bosilganda Famelack uslubidagi maxsus yon panel ochiladi.
+            • Har bir davlatning poytaxti, mahalliy vaqti va jonli telekanallari ro'yxati chiqadi. Kanal bosilganda darhol jonli efir ishga tushadi.
+          - UI Tozalandi va Siqilishlar Yo'qotildi:
+            • Foydalanuvchi qat'iy talabiga ko'ra Chat bo'limi va pastki matn kiritish (input) paneli butunlay olib tashlandi.
+            • Toza, erkin va nafis 4 ta tab: Asosiy, TV, Qur'on AI, Musiqa.
+          - Qur'on AI Tubdan Soddalashtirildi va Poklandi:
+            • Foydalanuvchi talabiga ko'ra ortiqcha tarjimalar va tafsirlar butunlay olib tashlandi.
+            • Faqat sof Qur'on o'qish, Usmoniy xat, tajvid qoidalari va qorilar qiroati.
+            • 10 ta qisqa suralar (Al-Fotiha, Al-Ixlos, Al-Falaq, An-Nos, Al-Kavsar, Al-Asr, An-Nasr, Al-Masad, Al-Kofirun, Oyatul Kursiy) ravon ochiladi, brauzerning xom alertlari yo'qotildi.
+          - JARVIS Ovozli Yordamchisi Aralashuvi To'xtatildi:
+            • Qur'on saboqlari ochilganda JARVIS fon ovozli tanib olishi avtomatik o'chiriladi, qiroat paytida foydalanuvchi ustiga gapirib yubormaydi.
+            • 3-oyatdagi asossiz qizil xatolik olib tashlandi, har bir oyat toza va xolis tekshiriladi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>J · A · R · V · I · S</title>
+  <title>J · A · R · V · I · S — World Hologram TV</title>
   
   <!-- HLS.js for Live Streaming -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
@@ -19,7 +19,6 @@
       --bg-surface: rgba(9, 21, 33, 0.85);
       --bg-card: rgba(12, 26, 42, 0.8);
       --bg-card-hover: rgba(18, 38, 60, 0.9);
-      --bg-input: rgba(8, 20, 32, 0.9);
       --border-subtle: rgba(0, 229, 255, 0.18);
       --border-active: #00E5FF;
       --accent-green: #00E676;
@@ -30,8 +29,8 @@
       --text-primary: #FFFFFF;
       --text-secondary: #94A3B8;
       --text-muted: #64748B;
-      --dock-bg: rgba(6, 16, 26, 0.92);
-      --dock-border: rgba(0, 229, 255, 0.2);
+      --dock-bg: rgba(6, 16, 26, 0.94);
+      --dock-border: rgba(0, 229, 255, 0.25);
       --player-bg: #000000;
     }
 
@@ -40,20 +39,19 @@
       --bg-surface: rgba(255, 255, 255, 0.96);
       --bg-card: #FFFFFF;
       --bg-card-hover: #F1F5F9;
-      --bg-input: #FFFFFF;
       --border-subtle: rgba(18, 165, 80, 0.18);
       --border-active: #12A550;
       --accent-green: #12A550;
-      --accent-green-glow: rgba(18, 165, 80, 0.25);
+      --accent-green-glow: rgba(18, 165, 80, 0.3);
       --accent-cyan: #0284C7;
       --accent-cyan-glow: rgba(2, 132, 199, 0.25);
-      --accent-red: #E11D48;
+      --accent-red: #DC2626;
       --text-primary: #0F172A;
       --text-secondary: #475569;
       --text-muted: #94A3B8;
-      --dock-bg: rgba(255, 255, 255, 0.96);
+      --dock-bg: rgba(255, 255, 255, 0.95);
       --dock-border: rgba(18, 165, 80, 0.25);
-      --player-bg: #0F172A;
+      --player-bg: #000000;
     }
 
     * {
@@ -61,76 +59,77 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
-    body {
-      background-color: var(--bg-main);
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-main);
       color: var(--text-primary);
-      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       overflow-x: hidden;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow-y: auto;
+      transition: background 0.3s ease, color 0.3s ease;
     }
 
     .app-shell {
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
-      max-width: 680px;
-      margin: 0 auto;
-      width: 100%;
       position: relative;
-      padding-bottom: 140px; /* Space for dock + input */
+      padding-bottom: 90px;
     }
 
-    /* ── 1. TOP HEADER (NO HAMBURGER, SINGLE LINE TITLE) ────── */
+    /* ── 1. TOP HEADER ── */
     .app-header {
-      padding-top: max(env(safe-area-inset-top, 0px), 32px);
-      padding-left: 20px;
-      padding-right: 20px;
-      padding-bottom: 6px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 8px 16px;
+      padding-top: max(env(safe-area-inset-top, 0px), 8px);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-shrink: 0;
-      z-index: 100;
-      background: transparent;
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-subtle);
     }
 
     .brand-container {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       cursor: pointer;
     }
+
     .spiral-orb {
       width: 32px;
       height: 32px;
-      animation: rotateOrb 12s linear infinite;
-      filter: drop-shadow(0 0 10px var(--accent-green-glow));
+      animation: spinOrb 24s linear infinite;
     }
-    @keyframes rotateOrb {
+
+    @keyframes spinOrb {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
     .brand-title {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      font-weight: 800;
       font-size: 17px;
-      letter-spacing: 0.24em;
-      color: var(--text-primary);
-      text-transform: uppercase;
+      font-weight: 800;
+      letter-spacing: 3.5px;
       white-space: nowrap;
+      background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .header-btn-settings {
       width: 38px;
       height: 38px;
-      border-radius: 12px;
-      background: var(--bg-surface);
+      border-radius: 50%;
+      background: var(--bg-card);
       border: 1px solid var(--border-subtle);
       color: var(--text-primary);
       display: flex;
@@ -144,7 +143,7 @@
       border-color: var(--accent-green);
     }
 
-    /* ── 2. TAB PANE WRAPPERS ──────────────────────────────── */
+    /* ── 2. TAB PANE WRAPPERS ── */
     .tab-pane {
       display: none;
       flex-direction: column;
@@ -159,7 +158,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* ── 3. 3D EARTH GLOBE HERO (IMAGES 2 & 3) ──────────────── */
+    /* ── 3. 3D EARTH GLOBE HERO ── */
     .globe-hero-section {
       position: relative;
       width: 100%;
@@ -168,7 +167,7 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      margin-top: -6px;
+      margin-top: -4px;
     }
     .cosmic-stars {
       position: absolute;
@@ -184,14 +183,12 @@
       opacity: 0.65;
       pointer-events: none;
     }
-    [data-theme="light"] .cosmic-stars {
-      opacity: 0.15;
-    }
+    [data-theme="light"] .cosmic-stars { opacity: 0.15; }
 
     .globe-wrapper {
       position: relative;
-      width: 250px;
-      height: 250px;
+      width: 240px;
+      height: 240px;
       border-radius: 50%;
       cursor: grab;
       touch-action: none;
@@ -226,26 +223,81 @@
       transform: rotateX(74deg) rotateY(-18deg);
       pointer-events: none;
     }
-    [data-theme="light"] .orbit-ring {
-      border-color: rgba(18, 165, 80, 0.3);
+    [data-theme="light"] .orbit-ring { border-color: rgba(18, 165, 80, 0.3); }
+
+    /* Interactive Country Pins on Globe */
+    .globe-pin {
+      position: absolute;
+      background: #FFFFFF;
+      color: #0F172A;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.45);
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.15s, background 0.15s;
+    }
+    .globe-pin:hover, .globe-pin:active {
+      transform: scale(1.1);
+      background: #00E676;
+      color: #FFFFFF;
+    }
+    .pin-sa { top: 42%; left: 51%; }
+    .pin-td { top: 48%; left: 32%; }
+    .pin-uz { top: 28%; left: 60%; }
+    .pin-tr { top: 32%; left: 44%; }
+
+    /* Country Pills Scroll Bar */
+    .country-pills-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 0 12px 0;
+      scrollbar-width: none;
+    }
+    .country-pills-bar::-webkit-scrollbar { display: none; }
+    .c-pill {
+      flex: 0 0 auto;
+      padding: 7px 14px;
+      border-radius: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .c-pill.active, .c-pill:active {
+      background: var(--accent-green);
+      color: #FFFFFF;
+      border-color: var(--accent-green);
+      box-shadow: 0 3px 12px var(--accent-green-glow);
     }
 
-    /* ── 4. FEATURED "JONLI TV" CARD (IMAGE 2 & 3) ──────────── */
+    /* ── 4. FEATURED "JONLI TV" CARD ── */
     .featured-tv-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: 22px;
-      padding: 16px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+      padding: 14px 16px;
+      margin-top: 4px;
       cursor: pointer;
-      transition: all 0.2s ease;
-      margin-top: 8px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      transition: transform 0.2s, border-color 0.2s;
     }
-    .featured-tv-card:hover {
-      border-color: var(--accent-cyan);
-      transform: translateY(-2px);
+    .featured-tv-card:active {
+      transform: scale(0.98);
+      border-color: var(--accent-green);
     }
     .featured-tv-header {
       display: flex;
@@ -259,21 +311,23 @@
       gap: 12px;
     }
     .tv-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 14px;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
       background: rgba(0, 230, 118, 0.12);
-      border: 1.5px solid var(--accent-green);
+      border: 1px solid rgba(0, 230, 118, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+    }
+    [data-theme="light"] .tv-icon-box {
+      background: rgba(18, 165, 80, 0.12);
+      border-color: rgba(18, 165, 80, 0.25);
     }
     .tv-card-title {
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 800;
       color: var(--text-primary);
-      letter-spacing: -0.2px;
     }
     .tv-card-sub {
       font-size: 12px;
@@ -281,79 +335,65 @@
       margin-top: 1px;
     }
     .online-pill {
-      display: inline-flex;
+      display: flex;
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
       border-radius: 20px;
-      background: rgba(0, 230, 118, 0.12);
-      border: 1px solid var(--accent-green);
-      color: var(--accent-green);
-      font-size: 11px;
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid rgba(0, 230, 118, 0.3);
+      font-size: 11.5px;
       font-weight: 700;
+      color: var(--accent-green);
     }
     .online-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent-green);
-      box-shadow: 0 0 6px var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
     }
 
-    /* 16:9 Live Preview Box inside card */
     .featured-stream-box {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid var(--border-subtle);
+      position: relative;
       border-radius: 16px;
-      padding: 10px 14px;
-    }
-    [data-theme="light"] .featured-stream-box {
-      background: #F8FAFC;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border-subtle);
     }
     .fs-thumb-wrap {
       position: relative;
-      width: 140px;
-      height: 72px;
-      border-radius: 10px;
+      width: 100%;
+      height: 140px;
       overflow: hidden;
-      flex-shrink: 0;
     }
     .fs-thumb-img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      display: block;
+      opacity: 0.88;
     }
     .fs-play-circle {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: 32px;
-      height: 32px;
+      width: 48px; height: 48px;
       border-radius: 50%;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(4px);
+      background: rgba(0, 230, 118, 0.85);
+      box-shadow: 0 0 20px var(--accent-green-glow);
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1.5px solid rgba(255, 255, 255, 0.7);
     }
     .fs-meta {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .fs-name-row {
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      background: var(--bg-card);
     }
     .fs-name {
-      font-size: 14.5px;
+      font-size: 15px;
       font-weight: 800;
       color: var(--text-primary);
     }
@@ -366,37 +406,23 @@
       color: var(--text-muted);
     }
     .fs-live-badge {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 5px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      background: rgba(0, 229, 255, 0.12);
-      border: 1px solid var(--accent-cyan);
-      color: var(--accent-cyan);
-      font-size: 10.5px;
-      font-weight: 700;
-      align-self: flex-start;
-      margin-top: 2px;
-    }
-    [data-theme="light"] .fs-live-badge {
-      background: rgba(18, 165, 80, 0.12);
-      border-color: var(--accent-green);
-      color: var(--accent-green);
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-red);
     }
 
-    /* ── 5. "KANALLAR" SECTION (IMAGE 2 & 3) ─────────────────── */
+    /* ── 5. KANALLAR SECTION (2-COLUMNS) ── */
     .channels-section {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      margin-top: 18px;
     }
     .channels-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 4px;
+      margin-bottom: 12px;
     }
     .ch-title-wrap {
       display: flex;
@@ -406,62 +432,47 @@
     .emerald-bar {
       width: 4px;
       height: 18px;
-      border-radius: 4px;
+      border-radius: 2px;
       background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
     }
     .channels-title {
       font-size: 16px;
       font-weight: 800;
       color: var(--text-primary);
-      letter-spacing: -0.2px;
     }
     .btn-all-channels {
       font-size: 12.5px;
-      color: var(--text-muted);
+      font-weight: 700;
+      color: var(--accent-green);
       cursor: pointer;
-      font-weight: 600;
-      transition: color 0.2s;
-    }
-    .btn-all-channels:hover {
-      color: var(--accent-cyan);
     }
 
-    /* 2-Column Channel Grid */
     .home-channels-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-    .channel-pill-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 11px 14px;
+    .channel-pill-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s;
     }
-    .channel-pill-card:hover {
-      border-color: var(--accent-cyan);
-      transform: translateY(-1px);
-    }
-    .channel-pill-card:active {
+    .channel-pill-item:active {
       transform: scale(0.97);
+      border-color: var(--accent-green);
+      background: var(--bg-card-hover);
     }
     .cp-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       min-width: 0;
-    }
-    .uz-flag-circle {
-      width: 22px;
-      height: 22px;
-      flex-shrink: 0;
-      border-radius: 50%;
     }
     .cp-name {
       font-size: 13px;
@@ -472,13 +483,12 @@
       text-overflow: ellipsis;
     }
     .cp-arrow {
+      font-size: 14px;
       color: var(--text-muted);
-      font-size: 15px;
-      margin-left: 6px;
       flex-shrink: 0;
     }
 
-    /* ── 6. TV TAB (VIDEO PLAYER & 2-COL GRID - IMAGE 4) ────── */
+    /* ── 6. TAB 2: TV LIVE VIDEO PLAYER ── */
     .video-player-container {
       position: relative;
       width: 100%;
@@ -489,13 +499,45 @@
       margin-top: 6px;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
       border: 1px solid var(--border-subtle);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     #liveVideoPlayer {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      background: #000;
     }
+
+    /* FULLSCREEN EXPANDED STYLES (MATCHING USER REQUIREMENT) */
+    :fullscreen #videoContainer,
+    #videoContainer:fullscreen,
+    #videoContainer:-webkit-full-screen,
+    .video-player-container.fullscreen-expanded {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 9999999 !important;
+      border-radius: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #000 !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+    :fullscreen #liveVideoPlayer,
+    #videoContainer:fullscreen #liveVideoPlayer,
+    #videoContainer:-webkit-full-screen #liveVideoPlayer,
+    .video-player-container.fullscreen-expanded #liveVideoPlayer {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain !important;
+      background: #000 !important;
+    }
+
     .player-overlay-bar {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -506,6 +548,9 @@
       justify-content: space-between;
       gap: 10px;
       z-index: 10;
+    }
+    .video-player-container.fullscreen-expanded .player-overlay-bar {
+      padding: 18px 24px;
     }
     .pob-left, .pob-right {
       display: flex;
@@ -574,7 +619,6 @@
       color: #FFFFFF;
     }
 
-    /* Channel info banner directly under video */
     .tv-channel-info-banner {
       display: flex;
       align-items: center;
@@ -621,60 +665,57 @@
       cursor: pointer;
     }
 
-    /* Category horizontal filter pills */
-    .tv-categories-row {
+    .tv-categories-scroll {
       display: flex;
       align-items: center;
       gap: 8px;
       overflow-x: auto;
+      padding: 14px 0 10px 0;
       scrollbar-width: none;
-      padding: 12px 0 6px 0;
     }
-    .tv-categories-row::-webkit-scrollbar { display: none; }
+    .tv-categories-scroll::-webkit-scrollbar { display: none; }
     .tv-cat-pill {
+      flex: 0 0 auto;
       padding: 7px 14px;
       border-radius: 20px;
-      background: var(--bg-surface);
+      background: var(--bg-card);
       border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
+      color: var(--text-secondary);
       cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
     .tv-cat-pill.active {
       background: var(--accent-green);
       color: #FFFFFF;
       border-color: var(--accent-green);
-      box-shadow: 0 3px 10px var(--accent-green-glow);
+      box-shadow: 0 3px 12px var(--accent-green-glow);
     }
 
-    /* 2-Column TV Channels Grid with Official Logos (Image 4) */
     .tv-channels-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-top: 10px;
+      margin-top: 6px;
     }
     .tv-channel-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 16px;
-      padding: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
       cursor: pointer;
-      transition: all 0.15s ease;
+      transition: all 0.2s;
     }
-    .tv-channel-card:hover {
+    .tv-channel-card:active {
+      transform: scale(0.97);
       border-color: var(--accent-green);
-      transform: translateY(-1px);
     }
     .tv-channel-card.active-stream {
       border-color: var(--accent-green);
-      box-shadow: 0 0 12px var(--accent-green-glow);
       background: rgba(0, 230, 118, 0.08);
     }
     .tcc-left {
@@ -684,27 +725,22 @@
       min-width: 0;
     }
     .channel-logo-box {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 11px;
       font-weight: 900;
-      font-size: 10.5px;
       color: #FFFFFF;
       flex-shrink: 0;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .tcc-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
       min-width: 0;
     }
     .tcc-name {
-      font-size: 13px;
+      font-size: 13.5px;
       font-weight: 800;
       color: var(--text-primary);
       white-space: nowrap;
@@ -712,155 +748,254 @@
       text-overflow: ellipsis;
     }
     .tcc-sub {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-muted);
+      margin-top: 1px;
     }
     .tcc-live-text {
-      font-size: 9.5px;
-      font-weight: 700;
-      color: var(--accent-green);
       display: flex;
       align-items: center;
       gap: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #FF3366;
     }
     .tcc-arrow {
+      font-size: 15px;
       color: var(--text-muted);
-      font-size: 14px;
-      margin-left: 4px;
+      flex-shrink: 0;
     }
 
-    /* ── 7. MUSIQA TAB (SPOTIFY STYLE) ──────────────────────── */
+    /* ── 7. FAMELACK COUNTRY DRAWER (MEDIA_1792348252230_38ADD53A.PNG) ── */
+    .country-drawer {
+      position: fixed;
+      top: 0; right: 0;
+      width: 100%;
+      max-width: 380px;
+      height: 100%;
+      background: rgba(13, 17, 23, 0.96);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -10px 0 35px rgba(0,0,0,0.65);
+      border-left: 1px solid rgba(255,255,255,0.08);
+    }
+    .country-drawer.open {
+      transform: translateX(0);
+    }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      padding-top: max(env(safe-area-inset-top, 0px), 18px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      gap: 12px;
+    }
+    .drawer-back-btn {
+      width: 38px; height: 38px;
+      border-radius: 50%;
+      background: #10B981;
+      color: #FFFFFF;
+      border: none;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      flex-shrink: 0;
+    }
+    .drawer-back-btn:active { transform: scale(0.92); }
+    .drawer-meta {
+      flex: 1;
+    }
+    .drawer-country-name {
+      font-size: 21px;
+      font-weight: 800;
+      color: #38BDF8;
+      letter-spacing: -0.3px;
+    }
+    .drawer-country-capital {
+      font-size: 13px;
+      color: #94A3B8;
+      margin-top: 2px;
+    }
+    .drawer-time {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #F8FAFC;
+      background: rgba(255,255,255,0.08);
+      padding: 5px 12px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .drawer-channels-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .drawer-channel-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .drawer-channel-item:hover, .drawer-channel-item:active {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateX(4px);
+    }
+    .dci-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .dci-flag { font-size: 22px; }
+    .dci-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #F8FAFC;
+    }
+    .dci-sub {
+      font-size: 11.5px;
+      color: #94A3B8;
+      margin-top: 1px;
+    }
+    .dci-lang {
+      font-size: 11px;
+      font-weight: 800;
+      color: #94A3B8;
+      background: rgba(255,255,255,0.08);
+      padding: 3px 8px;
+      border-radius: 8px;
+    }
+
+    /* ── 8. TAB 3: MUSIQA (SPOTIFY STYLE) ── */
     .music-player-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
       border-radius: 24px;
-      padding: 20px;
+      padding: 24px 20px;
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      margin-top: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
     .vinyl-disc-wrap {
       width: 170px;
       height: 170px;
       border-radius: 50%;
-      background: radial-gradient(circle, #222 25%, #000 60%, #111 100%);
+      background: radial-gradient(circle, #222 20%, #000 60%, #111 100%);
       border: 4px solid #333;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      box-shadow: 0 0 25px rgba(0, 229, 255, 0.25);
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: spinVinyl 6s linear infinite;
+      margin-bottom: 20px;
+      animation: spinVinyl 12s linear infinite;
     }
-    .vinyl-disc-wrap.paused { animation-play-state: paused; }
-    @keyframes spinVinyl { 100% { transform: rotate(360deg); } }
+    @keyframes spinVinyl {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
     .vinyl-center-label {
-      width: 65px; height: 65px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
-      background: #0E6C45;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; color: #FFF; text-align: center;
+      background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-cyan) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      color: #000;
+      text-align: center;
     }
-    .music-meta-block { text-align: center; }
-    .music-song-title { font-size: 16px; font-weight: 800; color: var(--text-primary); }
-    .music-song-artist { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .music-meta-block {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .music-song-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .music-song-artist {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
     .music-timeline-row {
       width: 100%;
       display: flex;
       align-items: center;
       gap: 10px;
+      margin-bottom: 16px;
     }
     .music-progress-slider {
       flex: 1;
-      height: 5px;
-      border-radius: 3px;
-      background: rgba(255,255,255,0.2);
-      outline: none;
       -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.2);
+      outline: none;
     }
     .music-progress-slider::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 12px; height: 12px;
       border-radius: 50%;
       background: var(--accent-green);
+      cursor: pointer;
     }
     .music-ctrls-row {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
     .m-ctrl-btn {
       background: transparent;
       border: none;
-      font-size: 20px;
       color: var(--text-primary);
+      font-size: 20px;
       cursor: pointer;
     }
     .m-play-btn {
-      width: 52px; height: 52px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       background: var(--accent-green);
+      border: none;
       color: #FFFFFF;
       font-size: 22px;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 14px var(--accent-green-glow);
-    }
-
-    /* ── 8. CHAT TAB (CHATGPT STYLE) ────────────────────────── */
-    .chat-container {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 8px;
-    }
-    .chat-bubble {
-      padding: 12px 16px;
-      border-radius: 18px;
-      font-size: 13.5px;
-      line-height: 1.5;
-      max-width: 88%;
-    }
-    .chat-bubble.assistant {
-      align-self: flex-start;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-bottom-left-radius: 4px;
-    }
-    .chat-bubble.user {
-      align-self: flex-end;
-      background: var(--accent-green);
-      color: #FFFFFF;
-      border-bottom-right-radius: 4px;
-    }
-    .chat-suggestions-row {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding: 6px 0;
-    }
-    .chat-suggestions-row::-webkit-scrollbar { display: none; }
-    .chat-chip {
-      padding: 6px 12px;
-      border-radius: 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-secondary);
-      font-size: 11.5px;
-      font-weight: 600;
-      white-space: nowrap;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      box-shadow: 0 4px 15px var(--accent-green-glow);
     }
 
-    /* ── 9. FLOATING BOTTOM DOCK (4 TABS) ────────────────────── */
+    /* ── 9. FLOATING BOTTOM DOCK (CLEAN 4 TABS - CHAT REMOVED!) ── */
     .bottom-dock-container {
       position: fixed;
-      bottom: 70px;
+      bottom: max(env(safe-area-inset-bottom, 0px), 14px);
       left: 0; right: 0;
       display: flex;
       justify-content: center;
-      z-index: 90;
+      z-index: 1000;
       padding: 0 16px;
       pointer-events: none;
     }
@@ -872,11 +1007,11 @@
       padding: 6px 16px;
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 16px;
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      max-width: 440px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      max-width: 420px;
       width: 100%;
       justify-content: space-around;
     }
@@ -919,88 +1054,12 @@
     .dock-tab-btn.active .dock-active-bar {
       display: block;
     }
-
-    /* ── 10. FIXED BOTTOM INPUT BAR ─────────────────────────── */
-    .bottom-input-container {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      padding: 8px 16px;
-      padding-bottom: max(env(safe-area-inset-bottom, 0px), 10px);
-      z-index: 95;
-      display: flex;
-      justify-content: center;
-      background: transparent;
-      pointer-events: none;
-    }
-    .bottom-input-pill {
-      pointer-events: auto;
-      background: var(--bg-input);
-      border: 1px solid var(--border-subtle);
-      border-radius: 30px;
-      padding: 5px 6px 5px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      max-width: 500px;
-      width: 100%;
-    }
-    .btn-attachment {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 19px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .cmd-text-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text-primary);
-      font-size: 13.5px;
-      font-family: inherit;
-    }
-    .cmd-text-input::placeholder {
-      color: var(--text-muted);
-    }
-    .btn-mic-input {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      color: #FFFFFF;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 3px 10px var(--accent-green-glow);
-    }
-    .btn-send-input {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      color: #FFFFFF;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 3px 10px var(--accent-green-glow);
-    }
   </style>
 </head>
 <body>
   <div class="app-shell">
     
-    <!-- 1. TOP HEADER (NO HAMBURGER, CLEAN CENTERED BRAND) -->
+    <!-- 1. TOP HEADER -->
     <header class="app-header">
       <div class="brand-container" onclick="switchTab('home')">
         <svg class="spiral-orb" viewBox="0 0 100 100">
@@ -1019,7 +1078,7 @@
       </button>
     </header>
 
-    <!-- ── TAB 1: ASOSIY (HOME - IMAGES 2 & 3) ────────────────── -->
+    <!-- ── TAB 1: ASOSIY (HOME) ── -->
     <section class="tab-pane active" id="tab-home">
       
       <!-- 3D Earth Globe Hero -->
@@ -1028,7 +1087,34 @@
         <div class="globe-wrapper" id="globeTouchWrapper">
           <div class="orbit-ring"></div>
           <div class="globe-sphere" id="globeSphere"></div>
+          
+          <!-- Interactive Country Pins on 3D Globe -->
+          <div class="globe-pin pin-sa" onclick="openCountryDrawer('sa')" title="Saudi Arabia">
+            <span>🇸🇦</span> <span>Saudi Arabia</span>
+          </div>
+          <div class="globe-pin pin-td" onclick="openCountryDrawer('td')" title="Chad">
+            <span>🇹🇩</span> <span>Chad</span>
+          </div>
+          <div class="globe-pin pin-uz" onclick="openCountryDrawer('uz')" title="O'zbekiston">
+            <span>🇺🇿</span> <span>Uzbekistan</span>
+          </div>
+          <div class="globe-pin pin-tr" onclick="openCountryDrawer('tr')" title="Turkiya">
+            <span>🇹🇷</span> <span>Turkey</span>
+          </div>
         </div>
+      </div>
+
+      <!-- Quick Country Pills Scroll Bar -->
+      <div class="country-pills-bar">
+        <div class="c-pill active" onclick="openCountryDrawer('uz')">🇺🇿 O'zbekiston</div>
+        <div class="c-pill" onclick="openCountryDrawer('td')">🇹🇩 Chad</div>
+        <div class="c-pill" onclick="openCountryDrawer('sa')">🇸🇦 Saudi Arabia</div>
+        <div class="c-pill" onclick="openCountryDrawer('tr')">🇹🇷 Turkiya</div>
+        <div class="c-pill" onclick="openCountryDrawer('us')">🇺🇸 AQSH</div>
+        <div class="c-pill" onclick="openCountryDrawer('ru')">🇷🇺 Rossiya</div>
+        <div class="c-pill" onclick="openCountryDrawer('ae')">🇦🇪 BAA</div>
+        <div class="c-pill" onclick="openCountryDrawer('eg')">🇪🇬 Misr</div>
+        <div class="c-pill" onclick="openCountryDrawer('kz')">🇰🇿 Qozog'iston</div>
       </div>
 
       <!-- Featured "Jonli TV" Card -->
@@ -1084,13 +1170,13 @@
         </div>
 
         <div class="home-channels-grid" id="homeChannelsGrid">
-          <!-- Dynamically populated 10 channels matching Image 2 & 3 -->
+          <!-- Dynamically populated channels -->
         </div>
       </div>
 
     </section>
 
-    <!-- ── TAB 2: TV (LIVE VIDEO & 2-COL CHANNELS GRID - IMAGE 4) ── -->
+    <!-- ── TAB 2: TV (LIVE VIDEO & 2-COL CHANNELS GRID) ── -->
     <section class="tab-pane" id="tab-tv">
       
       <!-- 16:9 Video Player -->
@@ -1107,7 +1193,7 @@
           <div class="pob-right">
             <span class="live-indicator-pill"><span class="red-pulse-dot"></span> LIVE</span>
             <span class="hd-badge">HD</span>
-            <button class="player-ctrl-btn" id="btnFullscreen" onclick="toggleFullscreen()">⛶</button>
+            <button class="player-ctrl-btn" id="btnFullscreen" onclick="toggleFullscreen()" title="To'liq ekran">⛶</button>
           </div>
         </div>
       </div>
@@ -1122,23 +1208,23 @@
             </svg>
           </div>
           <div>
-            <div class="tcib-title" id="currentChannelTitle">Sport TV</div>
+            <div class="tcib-title" id="currentChannelTitle">O'zbekiston 24</div>
             <div class="tcib-meta">
-              <span id="currentChannelCategory">Jonli · O'zbekiston kanallari</span>
-              <span class="red-mini-badge">● LIVE</span>
+              <span class="red-mini-badge">Jonli</span>
+              <span>·</span>
+              <span id="currentChannelCategory">Yangiliklar efiri</span>
             </div>
           </div>
         </div>
         <button class="btn-favorite-toggle" id="btnFavoriteToggle" onclick="toggleFavorite()">
           <span>⭐</span>
-          <span>Sevimlilar</span>
+          <span>Saqlash</span>
         </button>
       </div>
 
-      <!-- Category Filter Pills -->
-      <div class="tv-categories-row" id="tvCategoriesRow">
-        <div class="tv-cat-pill active" data-cat="all" onclick="filterCategory('all')">📺 Barchasi</div>
-        <div class="tv-cat-pill" data-cat="sport" onclick="filterCategory('sport')">⚽ Sport</div>
+      <!-- Categories Pills -->
+      <div class="tv-categories-scroll">
+        <div class="tv-cat-pill active" data-cat="all" onclick="filterCategory('all')">Barchasi</div>
         <div class="tv-cat-pill" data-cat="movies" onclick="filterCategory('movies')">🎬 Kino</div>
         <div class="tv-cat-pill" data-cat="news" onclick="filterCategory('news')">📰 Yangiliklar</div>
         <div class="tv-cat-pill" data-cat="animation" onclick="filterCategory('animation')">👶 Bolalar</div>
@@ -1146,14 +1232,14 @@
         <div class="tv-cat-pill" data-cat="world" onclick="filterCategory('world')">🌍 Dunyo (famelack)</div>
       </div>
 
-      <!-- 2-Column Channels Grid (Matching Image 4) -->
+      <!-- 2-Column Channels Grid -->
       <div class="tv-channels-grid" id="tvChannelsGrid">
-        <!-- Populated dynamically with official logo badges -->
+        <!-- Populated dynamically -->
       </div>
 
     </section>
 
-    <!-- ── TAB 3: MUSIQA (SPOTIFY STYLE) ──────────────────────── -->
+    <!-- ── TAB 3: MUSIQA (SPOTIFY STYLE) ── -->
     <section class="tab-pane" id="tab-music">
       <div class="music-player-card">
         <div class="vinyl-disc-wrap" id="vinylDisc">
@@ -1176,24 +1262,24 @@
       </div>
     </section>
 
-    <!-- ── TAB 4: CHAT (CHATGPT STYLE) ────────────────────────── -->
-    <section class="tab-pane" id="tab-chat">
-      <div class="chat-container">
-        <div class="chat-bubble assistant">
-          Assalomu alaykum, Axmadulloh sir! Men sizning shaxsiy sun'iy intellekt yordamchingiz JARVIS-man. Jonli telekanallar, kino, musiqa, Qur'on saboqlari yoki har qanday savolingiz bo'yicha xizmatingizdaman.
+    <!-- ── FAMELACK STYLE COUNTRY DRAWER (MATCHING MEDIA_1792348252230_38ADD53A.PNG) ── -->
+    <div class="country-drawer" id="countryDrawer">
+      <div class="drawer-header">
+        <button class="drawer-back-btn" onclick="closeCountryDrawer()" title="Orqaga">←</button>
+        <div class="drawer-meta">
+          <div class="drawer-country-name" id="drawerCountryName">Chad</div>
+          <div class="drawer-country-capital" id="drawerCountryCapital">N'Djamena</div>
         </div>
-        <div class="chat-suggestions-row">
-          <div class="chat-chip" onclick="sendSuggestion('Sport TV ni qo\'y')">⚽ Sport TV</div>
-          <div class="chat-chip" onclick="sendSuggestion('Kino ko\'rmoqchiman')">🎬 BIZ Cinema</div>
-          <div class="chat-chip" onclick="sendSuggestion('Bugungi yangiliklar')">📰 O'zbekiston 24</div>
-          <div class="chat-chip" onclick="sendSuggestion('Qur\'on darsini och')">📖 Qur'on AI</div>
-        </div>
+        <div class="drawer-time" id="drawerCountryTime">7:30 PM</div>
       </div>
-    </section>
+      <div class="drawer-channels-list" id="drawerChannelsList">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
 
   </div>
 
-  <!-- ── 9. FLOATING BOTTOM DOCK (4 TABS) ──────────────────────── -->
+  <!-- ── FLOATING BOTTOM DOCK (CLEAN 4 TABS - CHAT & INPUT BAR REMOVED!) ── -->
   <div class="bottom-dock-container">
     <nav class="floating-dock">
       <button class="dock-tab-btn active" data-tab="home" onclick="switchTab('home')">
@@ -1214,6 +1300,15 @@
         <span class="dock-active-bar"></span>
       </button>
 
+      <button class="dock-tab-btn" data-tab="quron" onclick="openQuronTab()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        <span class="dock-tab-label">Qur'on AI</span>
+        <span class="dock-active-bar"></span>
+      </button>
+
       <button class="dock-tab-btn" data-tab="music" onclick="switchTab('music')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path d="M9 18V5l12-2v13"/>
@@ -1223,29 +1318,11 @@
         <span class="dock-tab-label">Musiqa</span>
         <span class="dock-active-bar"></span>
       </button>
-
-      <button class="dock-tab-btn" data-tab="chat" onclick="switchTab('chat')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-        </svg>
-        <span class="dock-tab-label">Chat</span>
-        <span class="dock-active-bar"></span>
-      </button>
     </nav>
   </div>
 
-  <!-- ── 10. FIXED BOTTOM INPUT BAR ───────────────────────────── -->
-  <div class="bottom-input-container">
-    <div class="bottom-input-pill">
-      <button class="btn-attachment" onclick="triggerAttachment()" title="Fayl biriktirish">📎</button>
-      <input type="text" class="cmd-text-input" id="inpCommand" placeholder="Buyruq yoki savol yozing..." onkeydown="handleInputKey(event)">
-      <button class="btn-mic-input" onclick="triggerMic()" title="Ovozli buyruq">🎙️</button>
-      <button class="btn-send-input" onclick="triggerSend()" title="Yuborish">➤</button>
-    </div>
-  </div>
-
   <script>
-    // ── STATIC CHANNELS DATA (MATCHING IMAGE 2, 3, 4) ────────
+    // ── STATIC CHANNELS DATA ──
     const UZ_FLAG_SVG = `<svg class="uz-flag-circle" width="22" height="22" viewBox="0 0 32 32">
       <defs><clipPath id="cFlag"><circle cx="16" cy="16" r="15"/></clipPath></defs>
       <g clip-path="url(#cFlag)">
@@ -1260,45 +1337,137 @@
       <circle cx="16" cy="16" r="15" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
     </svg>`;
 
-    // 10 Home Channels (Matching Image 2 & 3 exact order)
     const HOME_CHANNELS = [
-      // Column 1 (Left)
-      { id: "Aqlvoy", name: "Aqlvoy", cat: "animation", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8", col: 1 },
-      { id: "BIZ_Cinema", name: "BIZ Cinema", cat: "movies", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8", col: 1 },
-      { id: "BIZ_Music", name: "BIZ Music", cat: "music", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8", col: 1 },
-      { id: "BIZ_TV", name: "BIZ TV", cat: "entertainment", stream: "https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8", col: 1 },
-      { id: "Bolajon", name: "Bolajon", cat: "animation", stream: "https://stream8.cinerama.uz/1007/playlist.m3u8", col: 1 },
-      // Column 2 (Right)
-      { id: "Cheksiz_TV", name: "Cheksiz TV", cat: "movies", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8", col: 2 },
-      { id: "Dasturxon_TV", name: "Dasturxon TV", cat: "entertainment", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8", col: 2 },
-      { id: "Dunyo_boylab", name: "Dunyo bo'ylab", cat: "documentary", stream: "https://stream8.cinerama.uz/1006/tracks-v1a1/playlist.m3u8", col: 2 },
-      { id: "Fargona_MTRK", name: "Farg'ona MTRK", cat: "news", stream: "https://stream8.cinerama.uz/1001/tracks-v1a1/mono.m3u8", col: 2 },
-      { id: "Sport_TV", name: "Sport TV", cat: "sport", stream: "https://stream8.cinerama.uz/1004/tracks-v1a1/mono.m3u8", col: 2 }
+      { id: "Aqlvoy", name: "Aqlvoy", cat: "animation", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" },
+      { id: "BIZ_Cinema", name: "BIZ Cinema", cat: "movies", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+      { id: "BIZ_Music", name: "BIZ Music", cat: "music", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8" },
+      { id: "BIZ_TV", name: "BIZ TV", cat: "entertainment", stream: "https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8" },
+      { id: "Bolajon", name: "Bolajon", cat: "animation", stream: "https://stream8.cinerama.uz/1007/playlist.m3u8" },
+      { id: "Cheksiz_TV", name: "Cheksiz TV", cat: "movies", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+      { id: "Dasturxon_TV", name: "Dasturxon TV", cat: "entertainment", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" },
+      { id: "Dunyo_Boylab", name: "Dunyo Bo'ylab", cat: "news", stream: "https://stream8.cinerama.uz/1007/playlist.m3u8" },
+      { id: "Foreign_Languages", name: "Foreign Languages", cat: "education", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" },
+      { id: "FTV", name: "FTV", cat: "music", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8" }
     ];
 
-    // TV Tab Channels (Matching Image 4)
     const TV_TAB_CHANNELS = [
-      { id: "Sport_TV", name: "Sport TV", sub: "Yangiliklar", cat: "sport", bg: "#C62828", abbr: "SPORT", stream: "https://stream8.cinerama.uz/1004/tracks-v1a1/mono.m3u8" },
-      { id: "ITV_HD", name: "ITV HD", sub: "Ko'ngilochar", cat: "movies", bg: "#0D6938", abbr: "itv", stream: "https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8" },
-      { id: "Uzbekistan_24", name: "O'zbekiston 24", sub: "Yangiliklar", cat: "news", bg: "#0284C7", abbr: "24", stream: "https://stream8.cinerama.uz/1001/tracks-v1a1/mono.m3u8" },
-      { id: "Zor_TV", name: "Zo'r TV", sub: "Ko'ngilochar", cat: "entertainment", bg: "#F59E0B", abbr: "ZO'R", stream: "https://stream8.cinerama.uz/1201/tracks-v1a1/mono.m3u8" },
-      { id: "MTRK_Sport", name: "MTRK Sport", sub: "Sport", cat: "sport", bg: "#1E3A8A", abbr: "MTRK", stream: "https://stream8.cinerama.uz/1004/tracks-v1a1/mono.m3u8" },
-      { id: "Sevimli_TV", name: "Sevimli TV", sub: "Seriallar", cat: "movies", bg: "#0284C7", abbr: "SEVIMLI", stream: "https://stream8.cinerama.uz/1202/tracks-v1a1/mono.m3u8" },
-      { id: "Milliy_TV", name: "Milliy TV", sub: "Milliy dasturlar", cat: "entertainment", bg: "#1E293B", abbr: "MILLIY", stream: "https://stream8.cinerama.uz/1203/tracks-v1a1/mono.m3u8" },
-      { id: "Yoshlar_TV", name: "Yoshlar TV", sub: "Yoshlar", cat: "entertainment", bg: "#DC2626", abbr: "YOSHLAR", stream: "https://stream8.cinerama.uz/1003/tracks-v1a1/mono.m3u8" },
-      { id: "Aqlvoy", name: "Aqlvoy", sub: "Bolalar", cat: "animation", bg: "#06B6D4", abbr: "AQLVOY", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" },
-      { id: "BIZ_Cinema", name: "BIZ Cinema", sub: "Premyeralar", cat: "movies", bg: "#7C3AED", abbr: "CINEMA", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
-      { id: "Dunyo_boylab", name: "Dunyo bo'ylab", sub: "Hujjatli", cat: "documentary", bg: "#059669", abbr: "DUNYO", stream: "https://stream8.cinerama.uz/1006/tracks-v1a1/playlist.m3u8" },
-      { id: "Bolajon", name: "Bolajon", sub: "Multfilmlar", cat: "animation", bg: "#EAB308", abbr: "BOLAJON", stream: "https://stream8.cinerama.uz/1007/playlist.m3u8" }
+      { id: "Uzbekistan_24", name: "O'zbekiston 24", sub: "Yangiliklar", cat: "news", abbr: "UZ24", bg: "#00E676", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+      { id: "BIZ_TV", name: "BIZ TV", sub: "Ko'ngilochar", cat: "entertainment", abbr: "BIZ", bg: "#00E5FF", stream: "https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8" },
+      { id: "BIZ_Cinema", name: "BIZ Cinema", sub: "Filmlar", cat: "movies", abbr: "MOV", bg: "#7C3AED", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+      { id: "BIZ_Music", name: "BIZ Music", sub: "Hit taronalar", cat: "music", abbr: "MUS", bg: "#EC4899", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8" },
+      { id: "Aqlvoy", name: "Aqlvoy", sub: "Bolalar", cat: "animation", abbr: "AQL", bg: "#F59E0B", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" },
+      { id: "Bolajon", name: "Bolajon", sub: "Multfilmlar", cat: "animation", abbr: "BOL", bg: "#10B981", stream: "https://stream8.cinerama.uz/1007/playlist.m3u8" },
+      { id: "Cheksiz_TV", name: "Cheksiz TV", sub: "Kinolar", cat: "movies", abbr: "CHK", bg: "#6366F1", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+      { id: "FTV", name: "FTV", sub: "Kliplar", cat: "music", abbr: "FTV", bg: "#EF4444", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8" }
     ];
 
-    let currentStreamId = "Sport_TV";
+    // ── FAMELACK GLOBAL COUNTRIES DATABASE ──
+    const COUNTRIES_DATA = {
+      td: {
+        name: "Chad",
+        capital: "N'Djamena",
+        flag: "🇹🇩",
+        tz: "Africa/Ndjamena",
+        channels: [
+          { id: "Tele_Tchad", name: "Tele Tchad", lang: "ARA", sub: "Jonli Efir", stream: "https://live-manifest.ted.com/live/manifest.m3u8" },
+          { id: "Tchad_24", name: "Tchad 24", lang: "FRA", sub: "Milliy Xabarlar", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" }
+        ]
+      },
+      sa: {
+        name: "Saudi Arabia",
+        capital: "Ar-Riyod",
+        flag: "🇸🇦",
+        tz: "Asia/Riyadh",
+        channels: [
+          { id: "Saudi_Quran", name: "Saudi Quran TV", lang: "ARA", sub: "Makkah Al-Mukarramah Jonli", stream: "https://win.holol.com/live/quran/playlist.m3u8" },
+          { id: "Saudi_Sunnah", name: "Saudi Sunnah TV", lang: "ARA", sub: "Madinah Al-Munawwarah Jonli", stream: "https://stream.al-eman.tv/quran/index.m3u8" },
+          { id: "Al_Arabiya", name: "Al Arabiya", lang: "ARA", sub: "Xalqaro Yangiliklar", stream: "https://live.alarabiya.net/alarabiapublish/alarabiya.smil/playlist.m3u8" },
+          { id: "Al_Hadath", name: "Al Hadath", lang: "ARA", sub: "Tezkor Xabarlar", stream: "https://live.alarabiya.net/alarabiapublish/alhadath.smil/playlist.m3u8" }
+        ]
+      },
+      uz: {
+        name: "O'zbekiston",
+        capital: "Toshkent",
+        flag: "🇺🇿",
+        tz: "Asia/Tashkent",
+        channels: [
+          { id: "Uzbekistan_24", name: "O'zbekiston 24", lang: "UZB", sub: "Bosh Yangiliklar", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+          { id: "BIZ_TV", name: "BIZ TV", lang: "UZB", sub: "Ko'ngilochar Dasturlar", stream: "https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8" },
+          { id: "BIZ_Cinema", name: "BIZ Cinema", lang: "UZB", sub: "Kino va Seriallar", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+          { id: "BIZ_Music", name: "BIZ Music", lang: "UZB", sub: "Musiqiy Efir", stream: "https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8" },
+          { id: "Aqlvoy", name: "Aqlvoy", lang: "UZB", sub: "Bolalar Ta'limi", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" }
+        ]
+      },
+      tr: {
+        name: "Turkiya",
+        capital: "Anqara",
+        flag: "🇹🇷",
+        tz: "Europe/Istanbul",
+        channels: [
+          { id: "TRT_1", name: "TRT 1", lang: "TUR", sub: "Milliy Efir", stream: "https://tv-trt1.medya.trt.com.tr/master.m3u8" },
+          { id: "TRT_World", name: "TRT World", lang: "ENG", sub: "Global News", stream: "https://tv-trtworld.medya.trt.com.tr/master.m3u8" },
+          { id: "TRT_Haber", name: "TRT Haber", lang: "TUR", sub: "Xabarlar", stream: "https://tv-trthaber.medya.trt.com.tr/master.m3u8" }
+        ]
+      },
+      us: {
+        name: "AQSH (USA)",
+        capital: "Vashington",
+        flag: "🇺🇸",
+        tz: "America/New_York",
+        channels: [
+          { id: "TED_Global", name: "TED Global", lang: "ENG", sub: "Talks & Ideas", stream: "https://live-manifest.ted.com/live/manifest.m3u8" },
+          { id: "NASA_TV", name: "NASA TV HD", lang: "ENG", sub: "Kosmik Missiyalar", stream: "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8" }
+        ]
+      },
+      ru: {
+        name: "Rossiya",
+        capital: "Moskva",
+        flag: "🇷🇺",
+        tz: "Europe/Moscow",
+        channels: [
+          { id: "Perviy_Kanal", name: "Perviy Kanal", lang: "RUS", sub: "Jonli Efir", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+          { id: "Rossiya_24", name: "Rossiya 24", lang: "RUS", sub: "Yangiliklar", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" }
+        ]
+      },
+      ae: {
+        name: "BAA (UAE)",
+        capital: "Abu-Dabi",
+        flag: "🇦🇪",
+        tz: "Asia/Dubai",
+        channels: [
+          { id: "Dubai_TV", name: "Dubai TV", lang: "ARA", sub: "Dubay Efiri", stream: "https://dubaistream.dmmi.ae/dubaishow/smil:dubaishow.smil/playlist.m3u8" },
+          { id: "Abu_Dhabi_TV", name: "Abu Dhabi TV", lang: "ARA", sub: "Abu Dabi Jonli", stream: "https://adtv.ercdn.net/adtv/adtv.m3u8" }
+        ]
+      },
+      eg: {
+        name: "Misr (Egypt)",
+        capital: "Qohira",
+        flag: "🇪🇬",
+        tz: "Africa/Cairo",
+        channels: [
+          { id: "Al_Oula", name: "Al Oula TV", lang: "ARA", sub: "Qohira Markaziy", stream: "https://win.holol.com/live/quran/playlist.m3u8" },
+          { id: "Nile_TV", name: "Nile TV", lang: "ENG", sub: "Nil Daryosi Xabarlari", stream: "https://live-manifest.ted.com/live/manifest.m3u8" }
+        ]
+      },
+      kz: {
+        name: "Qozog'iston",
+        capital: "Ostona",
+        flag: "🇰🇿",
+        tz: "Asia/Almaty",
+        channels: [
+          { id: "Khabar_24", name: "Khabar 24", lang: "KAZ", sub: "Xabarlar", stream: "https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8" },
+          { id: "Qazaqstan", name: "Qazaqstan TV", lang: "KAZ", sub: "Milliy Efir", stream: "https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8" }
+        ]
+      }
+    };
+
     let hlsInstance = null;
+    let currentStreamId = "Uzbekistan_24";
     let isVideoPlaying = false;
     let isMuted = false;
     let currentCategory = "all";
 
-    // ── RENDER HOME CHANNELS GRID (IMAGE 2 & 3) ──────────────
+    // ── RENDER HOME CHANNELS ──
     function renderHomeChannels() {
       const container = document.getElementById('homeChannelsGrid');
       if (!container) return;
@@ -1306,7 +1475,7 @@
 
       HOME_CHANNELS.forEach(ch => {
         const item = document.createElement('div');
-        item.className = 'channel-pill-card';
+        item.className = 'channel-pill-item';
         item.onclick = () => openChannelStream(ch.id);
         item.innerHTML = `
           <div class="cp-left">
@@ -1319,7 +1488,7 @@
       });
     }
 
-    // ── RENDER TV CHANNELS GRID (IMAGE 4) ────────────────────
+    // ── RENDER TV CHANNELS GRID ──
     function renderTvChannels(filterCat = "all") {
       const container = document.getElementById('tvChannelsGrid');
       if (!container) return;
@@ -1351,7 +1520,7 @@
       });
     }
 
-    // ── OPEN & PLAY CHANNEL STREAM ───────────────────────────
+    // ── OPEN CHANNEL STREAM ──
     function openChannelStream(channelId) {
       const ch = TV_TAB_CHANNELS.find(x => x.id === channelId) || HOME_CHANNELS.find(x => x.id === channelId);
       if (!ch) return;
@@ -1424,69 +1593,114 @@
       }
     }
 
+    // ── FULLSCREEN EXPANSION (100% SCREEN FILL) ──
     function toggleFullscreen() {
       const container = document.getElementById('videoContainer');
       if (!container) return;
-      if (!document.fullscreenElement) {
-        if (container.requestFullscreen) container.requestFullscreen();
+      
+      const isExpanded = container.classList.toggle('fullscreen-expanded');
+      if (isExpanded) {
+        if (container.requestFullscreen) {
+          container.requestFullscreen().catch(() => {});
+        } else if (container.webkitRequestFullscreen) {
+          container.webkitRequestFullscreen();
+        }
+        if (window.Android && window.Android.toggleFullscreen) {
+          window.Android.toggleFullscreen(true);
+        }
       } else {
-        if (document.exitFullscreen) document.exitFullscreen();
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+        if (window.Android && window.Android.toggleFullscreen) {
+          window.Android.toggleFullscreen(false);
+        }
       }
     }
 
     function toggleFavorite() {
       const btn = document.getElementById('btnFavoriteToggle');
       btn.classList.toggle('active');
-      alert(`⭐ ${document.getElementById('currentChannelTitle').textContent} sevimlilar ro'yxatiga saqlandi!`);
     }
 
-    // ── FILTER CATEGORIES ────────────────────────────────────
+    // ── FILTER CATEGORIES ──
     function filterCategory(cat) {
       currentCategory = cat;
       document.querySelectorAll('.tv-cat-pill').forEach(p => {
         p.classList.toggle('active', p.dataset.cat === cat);
       });
       if (cat === 'world') {
-        fetchFamelackWorldChannels();
+        openCountryDrawer('td');
       } else {
         renderTvChannels(cat);
       }
     }
 
-    async function fetchFamelackWorldChannels() {
-      const container = document.getElementById('tvChannelsGrid');
-      container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-muted);">🌍 famelack.com dan global kanallar yuklanmoqda...</div>';
+    // ── FAMELACK COUNTRY DRAWER (MEDIA_1792348252230_38ADD53A.PNG) ──
+    function formatCountryTime(tz) {
       try {
-        const resp = await fetch('https://raw.githubusercontent.com/famelack/famelack-data/main/tv/compressed/categories/news.json');
-        // If gzip in browser fetch is handled or fallback to server API
-        container.innerHTML = `
-          <div class="tv-channel-card" onclick="playHlsStream('https://hls.4utv.live/hls/stream.m3u8')">
-            <div class="tcc-left">
-              <div class="channel-logo-box" style="background:#0284C7;">TR</div>
-              <div class="tcc-info">
-                <div class="tcc-name">4U TV (Turkiya)</div>
-                <div class="tcc-sub">famelack · News</div>
-              </div>
-            </div>
-            <span class="tcc-arrow">›</span>
-          </div>
-          <div class="tv-channel-card" onclick="playHlsStream('https://live-manifest.ted.com/live/manifest.m3u8')">
-            <div class="tcc-left">
-              <div class="channel-logo-box" style="background:#E11D48;">TED</div>
-              <div class="tcc-info">
-                <div class="tcc-name">TED Global</div>
-                <div class="tcc-sub">famelack · Talks</div>
-              </div>
-            </div>
-            <span class="tcc-arrow">›</span>
-          </div>
-        `;
-      } catch (e) {
-        renderTvChannels('all');
+        return new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: tz
+        }).format(new Date());
+      } catch(e) {
+        return "7:30 PM";
       }
     }
 
-    // ── TAB NAVIGATION ───────────────────────────────────────
+    function openCountryDrawer(countryCode) {
+      const c = COUNTRIES_DATA[countryCode] || COUNTRIES_DATA['td'];
+      const drawer = document.getElementById('countryDrawer');
+      if (!drawer) return;
+
+      document.getElementById('drawerCountryName').textContent = c.name;
+      document.getElementById('drawerCountryCapital').textContent = c.capital;
+      document.getElementById('drawerCountryTime').textContent = formatCountryTime(c.tz);
+
+      const listContainer = document.getElementById('drawerChannelsList');
+      listContainer.innerHTML = '';
+
+      c.channels.forEach(ch => {
+        const item = document.createElement('div');
+        item.className = 'drawer-channel-item';
+        item.onclick = () => {
+          closeCountryDrawer();
+          document.getElementById('currentChannelTitle').textContent = ch.name;
+          document.getElementById('currentChannelCategory').textContent = `Jonli · ${c.name} (${ch.sub})`;
+          switchTab('tv');
+          playHlsStream(ch.stream);
+        };
+        item.innerHTML = `
+          <div class="dci-left">
+            <span class="dci-flag">${c.flag}</span>
+            <div>
+              <div class="dci-name">${ch.name}</div>
+              <div class="dci-sub">${ch.sub}</div>
+            </div>
+          </div>
+          <span class="dci-lang">${ch.lang}</span>
+        `;
+        listContainer.appendChild(item);
+      });
+
+      drawer.classList.add('open');
+
+      // Update active pill
+      document.querySelectorAll('.c-pill').forEach(p => {
+        p.classList.toggle('active', p.textContent.includes(c.name));
+      });
+    }
+
+    function closeCountryDrawer() {
+      const drawer = document.getElementById('countryDrawer');
+      if (drawer) drawer.classList.remove('open');
+    }
+
+    // ── TAB NAVIGATION ──
     function switchTab(tabId) {
       document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.dock-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1502,18 +1716,43 @@
       }
     }
 
-    // ── THEME TOGGLE (DARK / LIGHT MODE - IMAGES 2 & 3) ───────
+    function openQuronTab() {
+      if (window.Android && window.Android.openQuronAi) {
+        window.Android.openQuronAi();
+      } else {
+        window.location.href = '/quron';
+      }
+    }
+
+    // ── THEME TOGGLE ──
     function toggleTheme() {
       const html = document.documentElement;
       const isDark = html.getAttribute('data-theme') === 'dark';
       html.setAttribute('data-theme', isDark ? 'light' : 'dark');
     }
 
-    // ── INTERACTIVE GLOBE TOUCH ROTATION ─────────────────────
+    // ── MUSIQA PLAYER ──
+    let isMusicPlaying = false;
+    function toggleMusicPlay() {
+      isMusicPlaying = !isMusicPlaying;
+      const btn = document.getElementById('btnMusicPlay');
+      const disc = document.getElementById('vinylDisc');
+      if (btn) btn.textContent = isMusicPlaying ? '⏸' : '▶';
+      if (disc) disc.style.animationPlayState = isMusicPlaying ? 'running' : 'paused';
+    }
+    function nextSong() {
+      document.getElementById('lblMusicTitle').textContent = "Rayhon — Seni deb";
+      document.getElementById('lblMusicArtist').textContent = "O'zbek Pop Hitlari";
+    }
+    function prevSong() {
+      document.getElementById('lblMusicTitle').textContent = "O'zbekiston — Hurshid Rasulov";
+      document.getElementById('lblMusicArtist').textContent = "Top Hit O'zbek Taronalari";
+    }
+
+    // ── TOUCH ROTATION FOR 3D GLOBE ──
     let isTouching = false;
     let startX = 0;
     let currentRotation = 0;
-
     const globeWrapper = document.getElementById('globeTouchWrapper');
     const globeSphere = document.getElementById('globeSphere');
 
@@ -1540,83 +1779,29 @@
       });
     }
 
-    // ── BOTTOM INPUT & ANDROID BRIDGE ────────────────────────
-    function triggerAttachment() {
-      if (window.Android && window.Android.openAttachmentPicker) {
-        window.Android.openAttachmentPicker();
-      } else {
-        alert("📎 Fayl, rasm yoki hujjat biriktirish");
-      }
-    }
-
-    function triggerMic() {
-      if (window.Android && window.Android.startListening) {
-        window.Android.startListening();
-      } else {
-        alert("🎙️ Ovozli buyruq tinglanmoqda...");
-      }
-    }
-
-    function triggerSend() {
-      const inp = document.getElementById('inpCommand');
-      const val = inp.value.trim();
-      if (!val) return;
-
-      if (window.Android && window.Android.sendCommand) {
-        window.Android.sendCommand(val);
-      } else {
-        appendChatMessage(val, 'user');
-        setTimeout(() => {
-          appendChatMessage(`Buyrug'ingiz qabul qilindi: "${val}"`, 'assistant');
-        }, 600);
-      }
-      inp.value = '';
-    }
-
-    function handleInputKey(e) {
-      if (e.key === 'Enter') triggerSend();
-    }
-
-    function sendSuggestion(txt) {
-      if (window.Android && window.Android.sendCommand) {
-        window.Android.sendCommand(txt);
-      } else {
-        appendChatMessage(txt, 'user');
-        if (txt.includes('Sport TV')) openChannelStream('Sport_TV');
-        else if (txt.includes('Cinema')) openChannelStream('BIZ_Cinema');
-        else if (txt.includes('24')) openChannelStream('Uzbekistan_24');
-      }
-    }
-
-    function appendChatMessage(text, role) {
-      const container = document.querySelector('.chat-container');
-      if (!container) return;
-      const b = document.createElement('div');
-      b.className = `chat-bubble ${role}`;
-      b.textContent = text;
-      container.appendChild(b);
-      b.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // ── INITIALIZATION ───────────────────────────────────────
+    // ── INITIAL LOAD ──
     window.addEventListener('DOMContentLoaded', () => {
-      try {
-        renderHomeChannels();
-      } catch (e) {
-        console.error("renderHomeChannels error:", e);
-      }
+      renderHomeChannels();
+      renderTvChannels('all');
 
-      try {
-        renderTvChannels('all');
-      } catch (e) {
-        console.error("renderTvChannels error:", e);
-      }
+      // Check URL query parameters (e.g. ?country=td or ?tab=tv)
+      const params = new URLSearchParams(window.location.search);
+      const urlCountry = params.get('country');
+      const urlTab = params.get('tab');
+      const urlChannel = params.get('channel');
 
-      // Initial channel ready in TV player
-      setTimeout(() => {
-        const defaultStream = TV_TAB_CHANNELS[0].stream;
-        playHlsStream(defaultStream);
-      }, 300);
+      if (urlCountry && COUNTRIES_DATA[urlCountry]) {
+        openCountryDrawer(urlCountry);
+      }
+      if (urlTab) {
+        switchTab(urlTab);
+      }
+      if (urlChannel) {
+        openChannelStream(urlChannel);
+      } else {
+        // Pre-load default channel
+        playHlsStream("https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8");
+      }
     });
   </script>
 </body>

@@ -187,6 +187,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnOpenExternalBrowser: TextView
     private lateinit var btnCloseWebView: TextView
     private var quronWebUrl: String = ""
+    private var isTvFullscreen = false
+    private var isQuronActive = false
+    private var customView: View? = null
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     // Inline Media Player Views (Image 1 Style)
     private lateinit var cardInlineMedia: LinearLayout
@@ -411,9 +415,19 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                if (customView != null) {
+                    exitCustomViewFullscreen()
+                    return
+                }
+                if (isTvFullscreen) {
+                    setTvFullscreen(false)
+                    webViewDashboard.evaluateJavascript("if (window.toggleFullscreen && document.getElementById('videoContainer')?.classList.contains('fullscreen-expanded')) window.toggleFullscreen();", null)
+                    return
+                }
                 if (isVideoExpanded) {
                     toggleVideoFullscreen()
                 } else if (containerWebView.visibility == View.VISIBLE) {
+                    isQuronActive = false
                     containerWebView.visibility = View.GONE
                     webViewDashboard.loadUrl("about:blank")
                 } else {
@@ -623,6 +637,13 @@ class MainActivity : AppCompatActivity() {
 
         // WebView nazorati
         btnCloseWebView.setOnClickListener {
+            if (customView != null) {
+                exitCustomViewFullscreen()
+            }
+            if (isTvFullscreen) {
+                setTvFullscreen(false)
+            }
+            isQuronActive = false
             containerWebView.visibility = View.GONE
             webViewDashboard.loadUrl("about:blank")
         }
@@ -1241,6 +1262,10 @@ class MainActivity : AppCompatActivity() {
 
     fun deliverJarvisResponseToUi(replyText: String, shapeEmoji: String = currentDomain.icon) {
         runOnUiThread {
+            if (isQuronActive) {
+                Log.d("MainActivity", "isQuronActive = true, suppressing JARVIS speech response")
+                return@runOnUiThread
+            }
             showJarvisTurnCaption(replyText)
             fullChatHistory.add(ChatHistoryMessage("jarvis", replyText))
             if (scrollOnScreenChat.visibility == View.VISIBLE) {
@@ -2197,6 +2222,11 @@ class MainActivity : AppCompatActivity() {
 
     // ── Buyruqni Bajarish (Gemini AI yoki PC Bridge) ────────────────────────
     private fun sendJarvisCommand(cmd: String, shapeEmoji: String = currentDomain.icon) {
+        if (isQuronActive || (containerWebView.visibility == View.VISIBLE && quronWebUrl.contains("quron"))) {
+            Log.d("MainActivity", "Qur'on o'rganish faol - fon ovozli buyruqlari qabul qilinmaydi: $cmd")
+            return
+        }
+
         val detected = JarvisDomainRegistry.findDomainByVoice(cmd)
         if (detected != null && detected.id != currentDomain.id) {
             applyDomain(detected, speakAnnouncement = false)
@@ -2898,9 +2928,73 @@ class MainActivity : AppCompatActivity() {
         startService(intent)
     }
 
-    // ── In-App WebView (Qur'on, YouTube yoki Havolalar) ────────────────────
+    fun setTvFullscreen(enabled: Boolean) {
+        runOnUiThread {
+            isTvFullscreen = enabled
+            val controller = WindowCompat.getInsetsController(window, window.decorView)
+            if (enabled) {
+                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                topBar.visibility = View.GONE
+                findViewById<View>(R.id.headerWebView)?.visibility = View.GONE
+            } else {
+                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                WindowCompat.setDecorFitsSystemWindows(window, false)
+                controller.show(WindowInsetsCompat.Type.systemBars())
+                topBar.visibility = View.VISIBLE
+                findViewById<View>(R.id.headerWebView)?.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    private fun exitCustomViewFullscreen() {
+        if (customView != null) {
+            val decor = window.decorView as FrameLayout
+            decor.removeView(customView)
+            customView = null
+            customViewCallback?.onCustomViewHidden()
+            customViewCallback = null
+            containerWebView.visibility = View.VISIBLE
+            setTvFullscreen(false)
+        }
+    }
+
+    private fun createDashboardChromeClient(): WebChromeClient {
+        return object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                runOnUiThread {
+                    request?.grant(request.resources)
+                }
+            }
+
+            override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                if (customView != null) {
+                    callback?.onCustomViewHidden()
+                    return
+                }
+                customView = view
+                customViewCallback = callback
+                setTvFullscreen(true)
+                val decor = window.decorView as FrameLayout
+                decor.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+                containerWebView.visibility = View.GONE
+            }
+
+            override fun onHideCustomView() {
+                exitCustomViewFullscreen()
+            }
+        }
+    }
+
+    // ── In-App WebView (Qur'on, TV yoki Havolalar) ────────────────────
     @SuppressLint("SetJavaScriptEnabled")
     private fun openQuronLesson(url: String) {
+        isQuronActive = true
+        stopMobileVoiceRecognition()
+        try { tts?.stop() } catch (_: Exception) {}
+
         containerWebView.visibility = View.VISIBLE
         tvWebTitle.text = "Qur'on Ustozi"
 
@@ -2934,13 +3028,8 @@ class MainActivity : AppCompatActivity() {
             }
         }
         webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
-        webViewDashboard.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest?) {
-                runOnUiThread {
-                    request?.grant(request.resources)
-                }
-            }
-        }
+        webViewDashboard.webChromeClient = createDashboardChromeClient()
+
         val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/quron"
         quronWebUrl = targetUrl
         webViewDashboard.loadUrl(targetUrl)
@@ -2970,8 +3059,34 @@ class MainActivity : AppCompatActivity() {
         }
 
         @android.webkit.JavascriptInterface
+        fun toggleFullscreen(enable: Boolean) {
+            setTvFullscreen(enable)
+        }
+
+        @android.webkit.JavascriptInterface
+        fun openQuronAi() {
+            runOnUiThread {
+                openQuronLesson("http://77.83.206.138:8000/quron")
+            }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun openWorldTvTab(tabName: String) {
+            runOnUiThread {
+                openWorldTv("http://77.83.206.138:8000/tv?tab=$tabName")
+            }
+        }
+
+        @android.webkit.JavascriptInterface
         fun closeTv() {
             runOnUiThread {
+                if (customView != null) {
+                    exitCustomViewFullscreen()
+                }
+                if (isTvFullscreen) {
+                    setTvFullscreen(false)
+                }
+                isQuronActive = false
                 containerWebView.visibility = View.GONE
                 webViewDashboard.loadUrl("about:blank")
                 showCaption("⏹ Telekanal yopildi")
@@ -2991,13 +3106,16 @@ class MainActivity : AppCompatActivity() {
         @android.webkit.JavascriptInterface
         fun speakText(text: String) {
             runOnUiThread {
-                speakJarvis(text)
+                if (!isQuronActive) {
+                    speakJarvis(text)
+                }
             }
         }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun openWorldTv(url: String) {
+        isQuronActive = false
         containerWebView.visibility = View.VISIBLE
 
         webViewDashboard.settings.apply {
@@ -3015,13 +3133,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        webViewDashboard.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest?) {
-                runOnUiThread {
-                    request?.grant(request.resources)
-                }
-            }
-        }
+        webViewDashboard.webChromeClient = createDashboardChromeClient()
 
         webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
 
