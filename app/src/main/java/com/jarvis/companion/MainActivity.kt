@@ -415,6 +415,11 @@ class MainActivity : AppCompatActivity() {
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
+                val cardQuickMenu = findViewById<View>(R.id.cardJarvisQuickMenu)
+                if (cardQuickMenu?.visibility == View.VISIBLE) {
+                    cardQuickMenu.visibility = View.GONE
+                    return
+                }
                 if (customView != null) {
                     exitCustomViewFullscreen()
                     return
@@ -628,6 +633,42 @@ class MainActivity : AppCompatActivity() {
             vibrateBrief()
             openSettingsDialog()
             true
+        }
+
+        // 3 Dots Menu Button under Jarvis Brand Title (Opens Qur'on AI, Barcha TV, Eslatmalar)
+        val btnJarvisMenuDots = findViewById<View>(R.id.btnJarvisMenuDots)
+        val cardJarvisQuickMenu = findViewById<View>(R.id.cardJarvisQuickMenu)
+        val btnCloseQuickMenu = findViewById<View>(R.id.btnCloseQuickMenu)
+        val itemMenuQuronAi = findViewById<View>(R.id.itemMenuQuronAi)
+        val itemMenuBarchaTv = findViewById<View>(R.id.itemMenuBarchaTv)
+        val itemMenuEslatmalar = findViewById<View>(R.id.itemMenuEslatmalar)
+
+        btnJarvisMenuDots?.setOnClickListener {
+            vibrateBrief(20)
+            if (cardJarvisQuickMenu?.visibility == View.VISIBLE) {
+                cardJarvisQuickMenu.visibility = View.GONE
+            } else {
+                cardJarvisQuickMenu?.visibility = View.VISIBLE
+            }
+        }
+        btnCloseQuickMenu?.setOnClickListener {
+            vibrateBrief(15)
+            cardJarvisQuickMenu?.visibility = View.GONE
+        }
+        itemMenuQuronAi?.setOnClickListener {
+            vibrateBrief(25)
+            cardJarvisQuickMenu?.visibility = View.GONE
+            openQuronLesson("http://77.83.206.138:8000/quron")
+        }
+        itemMenuBarchaTv?.setOnClickListener {
+            vibrateBrief(25)
+            cardJarvisQuickMenu?.visibility = View.GONE
+            openWorldTv("http://77.83.206.138:8000/tv")
+        }
+        itemMenuEslatmalar?.setOnClickListener {
+            vibrateBrief(25)
+            cardJarvisQuickMenu?.visibility = View.GONE
+            showDomainBottomSheet()
         }
 
         // Matnli buyruq yoki biriktirilgan fayl yuborish
@@ -2290,51 +2331,71 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 0. Qur'on AI ochish buyruqlari
-        if (lower.contains("qur'on") || lower.contains("quron")) {
-            if (lower.contains("och") || lower.contains("ustoz") || lower.contains("o'rgan") || lower.contains("dars") || lower.contains("alifbo") || lower.contains("harf") || lower.contains("mushaf") || lower.contains("qiroat")) {
-                if (currentDomain.id != "DIN") {
-                    applyDomain(JarvisDomainRegistry.DIN, speakAnnouncement = false)
-                }
-                val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
-                           else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
-                           else "recite"
-                openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
-                deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.")
+        val isQuronCmd = (lower.contains("qur'on") || lower.contains("quron") || lower.contains("sura") || lower.contains("oyat") || lower.contains("tilovat") || lower.contains("qiroat") || lower.contains("tajvid") || lower.contains("alifbo") || lower.contains("muallimi"))
+        if (isQuronCmd) {
+            val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
+                       else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
+                       else "recite"
+            openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
+            deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.", "📖")
+            return
+        }
+
+        // 0. YouTube ochish buyrug'i
+        if (lower.contains("youtube") || lower.contains("yutub") || lower == "yt") {
+            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "youtube" || lower.trim() == "yutub") {
+                val res = phoneActionManager.openApp("YouTube", "com.google.android.youtube")
+                deliverJarvisResponseToUi(res, "▶️")
                 return
             }
         }
 
-        // 0. World TV & 3D Globus & Kino buyruqlari (Image 1 & Image 3)
+        // 0. Telegram ochish buyrug'i
+        if (lower.contains("telegram") || lower.contains("tg ni och") || lower.trim() == "tg") {
+            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "telegram" || lower.trim() == "tg") {
+                val res = phoneActionManager.openApp("Telegram", "org.telegram.messenger")
+                deliverJarvisResponseToUi(res, "✈️")
+                return
+            }
+        }
+
+        // 0. World TV & 3D Globus & 34 ta telekanal buyruqlari
         val isTvOrMovie = lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") ||
                 lower.contains("jonli efir") || lower.contains("famelack") || lower.contains("biz tv") ||
-                lower.contains("sevimli") || lower.contains("zo'r tv") || lower.contains("aqlvoy") ||
-                lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv") || lower.contains("sport tv") ||
-                lower.contains("milliy tv") || lower.contains("o'zbekiston 24") || lower.contains("bolajon") ||
+                lower.contains("sevimli") || lower.contains("zo'r") || lower.contains("zor") || lower.contains("aqlvoy") ||
+                lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv") || lower.contains("sport") ||
+                lower.contains("milliy") || lower.contains("o'zbekiston 24") || lower.contains("bolajon") ||
                 lower.contains("kino ko'r") || lower.contains("film ko'r") || lower.contains("kinolar") ||
-                lower.contains("dasturxon tv") || lower.contains("cheksiz tv") || lower.contains("farg'ona mtrk")
+                lower.contains("dasturxon") || lower.contains("cheksiz") || lower.contains("farg'ona") ||
+                lower.contains("my5") || lower.contains("mening yurtim") || lower.contains("uzreport")
 
         if (isTvOrMovie) {
             val targetChannel = when {
-                lower.contains("sport tv") || lower.contains("sport") -> "Sport TV"
+                lower.contains("zo'r") || lower.contains("zor") -> "Zo'r TV"
+                lower.contains("sevimli") -> "Sevimli TV"
+                lower.contains("my5") || lower.contains("mening yurtim") -> "MY5"
+                lower.contains("milliy") -> "Milliy TV"
+                lower.contains("uzreport") -> "UzReport TV"
+                lower.contains("sport") -> "Sport TV"
                 lower.contains("biz cinema") -> "BIZ Cinema"
                 lower.contains("biz music") -> "BIZ Music"
                 lower.contains("biz tv") || lower.contains("biz") -> "BIZ TV"
-                lower.contains("sevimli") -> "Sevimli TV"
-                lower.contains("zo'r tv") || lower.contains("zor tv") -> "Zo'r TV"
                 lower.contains("aqlvoy") -> "Aqlvoy"
                 lower.contains("dunyo bo'ylab") -> "Dunyo bo'ylab"
                 lower.contains("bolajon") -> "Bolajon"
-                lower.contains("milliy") -> "Milliy TV"
                 lower.contains("o'zbekiston 24") || lower.contains("uzbekiston 24") -> "O'zbekiston 24"
+                lower.contains("o'zbekiston") || lower.contains("uzbekiston") -> "O'zbekiston"
+                lower.contains("tarix") -> "O'zbekiston Tarixi"
                 lower.contains("dasturxon") -> "Dasturxon TV"
                 lower.contains("cheksiz") -> "Cheksiz TV"
                 lower.contains("farg'ona") -> "Farg'ona MTRK"
                 lower.contains("kinoteatr") -> "Kinoteatr"
-                lower.contains("futbol") -> "Futbol TV"
                 lower.contains("yoshlar") -> "Yoshlar"
                 lower.contains("mahalla") -> "Mahalla"
                 lower.contains("madaniyat") -> "Madaniyat va ma'rifat"
                 lower.contains("navo") -> "Navo"
+                lower.contains("makon") -> "Makon TV"
+                lower.contains("renessans") -> "Renessans TV"
                 else -> ""
             }
             val targetCat = if (lower.contains("kino") || lower.contains("film") || lower.contains("movie")) "movies" else ""
@@ -2940,7 +3001,7 @@ class MainActivity : AppCompatActivity() {
                 topBar.visibility = View.GONE
                 findViewById<View>(R.id.headerWebView)?.visibility = View.GONE
             } else {
-                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
                 WindowCompat.setDecorFitsSystemWindows(window, false)
                 controller.show(WindowInsetsCompat.Type.systemBars())
                 topBar.visibility = View.VISIBLE
@@ -2985,6 +3046,74 @@ class MainActivity : AppCompatActivity() {
             override fun onHideCustomView() {
                 exitCustomViewFullscreen()
             }
+        }
+    }
+
+    // ── Arabic Quran Voice Recitation Checker Bridge ─────────────────
+    private var quronSpeechRecognizer: SpeechRecognizer? = null
+
+    private fun startArabicRecitationCheck(surah: Int, ayah: Int, expectedArabic: String) {
+        runOnUiThread {
+            try {
+                stopMobileVoiceRecognition()
+                try { tts?.stop() } catch (_: Exception) {}
+
+                quronSpeechRecognizer?.destroy()
+                quronSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+                    setRecognitionListener(object : RecognitionListener {
+                        override fun onReadyForSpeech(params: Bundle?) {
+                            webViewDashboard.evaluateJavascript("if (window.onQuronRecitationState) window.onQuronRecitationState('listening');", null)
+                        }
+                        override fun onBeginningOfSpeech() {}
+                        override fun onRmsChanged(rmsdB: Float) {
+                            val norm = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
+                            webViewDashboard.evaluateJavascript("if (window.onQuronMicLevel) window.onQuronMicLevel($norm);", null)
+                        }
+                        override fun onBufferReceived(buffer: ByteArray?) {}
+                        override fun onEndOfSpeech() {
+                            webViewDashboard.evaluateJavascript("if (window.onQuronRecitationState) window.onQuronRecitationState('evaluating');", null)
+                        }
+                        override fun onError(error: Int) {
+                            Log.d("MainActivity", "Quron SpeechRecognizer error: $error")
+                            webViewDashboard.evaluateJavascript("if (window.onQuronRecitationError) window.onQuronRecitationError($error);", null)
+                        }
+                        override fun onResults(results: Bundle?) {
+                            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) ?: arrayListOf()
+                            val best = matches.firstOrNull() ?: ""
+                            webViewDashboard.evaluateJavascript("if (window.onQuronFinalResult) window.onQuronFinalResult(${JSONObject.quote(best)}, $ayah);", null)
+                        }
+                        override fun onPartialResults(partialResults: Bundle?) {
+                            val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION) ?: arrayListOf()
+                            val partial = matches.firstOrNull() ?: ""
+                            if (partial.isNotEmpty()) {
+                                webViewDashboard.evaluateJavascript("if (window.onQuronPartialResult) window.onQuronPartialResult(${JSONObject.quote(partial)});", null)
+                            }
+                        }
+                        override fun onEvent(eventType: Int, params: Bundle?) {}
+                    })
+                }
+
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ar-SA")
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "ar-SA")
+                    putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, "ar-SA")
+                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                }
+                quronSpeechRecognizer?.startListening(intent)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "startArabicRecitationCheck error: ${e.message}")
+                webViewDashboard.evaluateJavascript("if (window.onQuronRecitationError) window.onQuronRecitationError(-1);", null)
+            }
+        }
+    }
+
+    private fun stopArabicRecitationCheck() {
+        runOnUiThread {
+            try {
+                quronSpeechRecognizer?.stopListening()
+            } catch (_: Exception) {}
         }
     }
 
@@ -3068,6 +3197,16 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 openQuronLesson("http://77.83.206.138:8000/quron")
             }
+        }
+
+        @android.webkit.JavascriptInterface
+        fun startQuronVoiceCheck(surah: Int, ayah: Int, expectedArabic: String) {
+            startArabicRecitationCheck(surah, ayah, expectedArabic)
+        }
+
+        @android.webkit.JavascriptInterface
+        fun stopQuronVoiceCheck() {
+            stopArabicRecitationCheck()
         }
 
         @android.webkit.JavascriptInterface
@@ -3414,6 +3553,8 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
         speechRecognizer?.destroy()
         speechRecognizer = null
+        quronSpeechRecognizer?.destroy()
+        quronSpeechRecognizer = null
         tts?.stop()
         tts?.shutdown()
         tts = null

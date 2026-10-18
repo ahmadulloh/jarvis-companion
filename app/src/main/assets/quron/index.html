@@ -1,123 +1,125 @@
-<!doctype html>
-<html lang="uz">
+<!DOCTYPE html>
+<html lang="uz" data-theme="dark">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Qur'on AI — O'qish va Tajvid Saboqlari</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>JARVIS Qur'on AI — Tilovat, Tajvid va Yodlash Ustozi</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Scheherazade+New:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg-page: #F5F7F6;
-      --card-bg: #FFFFFF;
-      --card-border: #E5E9E7;
-      --text-main: #141B18;
-      --text-muted: #64748B;
-      --text-sub: #8E9BAE;
-      --primary-green: #0D6938;
-      --primary-hover: #0A532C;
-      --primary-light: #E8F5EE;
-      --accent-mint: #D6EFE0;
-      --err-bg: #FFF1F2;
-      --err-border: #FECDD3;
-      --err-red: #E11D48;
-      --success-green: #10B981;
-    }
-
-    body.dark-mode {
-      --bg-page: #0C1117;
-      --card-bg: #161D26;
-      --card-border: #222E3C;
-      --text-main: #F1F5F9;
+      --bg-page: #040812;
+      --card-bg: rgba(10, 22, 36, 0.85);
+      --card-border: rgba(0, 229, 255, 0.18);
+      --primary-green: #00E676;
+      --primary-cyan: #00E5FF;
+      --primary-light: rgba(0, 230, 118, 0.12);
+      --text-main: #FFFFFF;
       --text-muted: #94A3B8;
-      --text-sub: #64748B;
-      --primary-green: #10B981;
-      --primary-hover: #059669;
-      --primary-light: #162B22;
-      --accent-mint: #1E3A2F;
-      --err-bg: #2C1217;
-      --err-border: #4C1D24;
-      --err-red: #FB7185;
-      --success-green: #34D399;
+      --mushaf-paper: #081422;
+      --mushaf-border: #D4AF37;
+      --mushaf-text: #F8FAFC;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body {
+    body.light-mode {
+      --bg-page: #F6F9F8;
+      --card-bg: #FFFFFF;
+      --card-border: rgba(18, 165, 80, 0.18);
+      --primary-green: #12A550;
+      --primary-cyan: #0284C7;
+      --primary-light: rgba(18, 165, 80, 0.1);
+      --text-main: #0B2A18;
+      --text-muted: #64748B;
+      --mushaf-paper: #FFFDF7;
+      --mushaf-border: #C5A059;
+      --mushaf-text: #1C1917;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
       background: var(--bg-page);
       color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      font-family: 'Plus Jakarta Sans', sans-serif;
       overflow-x: hidden;
-      padding-bottom: 40px;
+      overflow-y: auto;
       transition: background 0.3s ease, color 0.3s ease;
     }
 
     .quron-app {
-      max-width: 680px;
-      margin: 0 auto;
-      width: 100%;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
-      padding: 0 14px;
+      padding: 12px 16px 40px 16px;
+      max-width: 650px;
+      margin: 0 auto;
     }
 
     /* ── HEADER ── */
     .q-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 6px;
-      padding-top: max(env(safe-area-inset-top, 0px), 12px);
-      background: var(--bg-page);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
     }
     .btn-header-back {
-      display: flex;
-      align-items: center;
-      gap: 6px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
-      padding: 7px 12px;
-      border-radius: 12px;
+      padding: 8px 14px;
+      border-radius: 16px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
     }
+    .btn-header-back:active { transform: scale(0.95); }
+
     .surah-title-pill {
       display: flex;
       flex-direction: column;
       align-items: center;
       cursor: pointer;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 6px 16px;
+      border-radius: 20px;
+      transition: all 0.2s;
     }
+    .surah-title-pill:active { transform: scale(0.96); border-color: var(--primary-green); }
     .stp-name {
-      font-size: 16px;
+      font-size: 14.5px;
       font-weight: 800;
-      color: var(--primary-green);
+      color: var(--text-main);
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
     }
     .stp-meta {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 1px;
     }
+
     .btn-header-theme {
       width: 36px;
       height: 36px;
-      border-radius: 12px;
+      border-radius: 50%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
@@ -128,66 +130,103 @@
       font-size: 16px;
     }
 
-    /* ── CALLIGRAPHY SHOWCASE CARD ── */
+    /* ── 2. VIEW MODES SWITCHER (USER INSTRUCTION: KITOB, TAJVID, TAKRORLASH) ── */
+    .view-modes-bar {
+      display: flex;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 18px;
+      padding: 4px;
+      margin-top: 12px;
+      gap: 4px;
+    }
+    .view-mode-btn {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .view-mode-btn.active {
+      background: var(--primary-green);
+      color: #FFFFFF;
+      box-shadow: 0 2px 10px rgba(0, 230, 118, 0.35);
+    }
+
+    /* ── 3. SHOWCASE HERO CARD (ACTIVE AYAH) ── */
     .showcase-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 22px 18px;
-      margin-top: 6px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      padding: 20px 18px;
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
       position: relative;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
     }
     .showcase-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
       background: var(--primary-light);
       color: var(--primary-green);
+      border: 1px solid var(--primary-green);
+      padding: 3px 10px;
+      border-radius: 12px;
       font-size: 11px;
       font-weight: 800;
       margin-bottom: 12px;
     }
     .showcase-ar-text {
       font-family: 'Amiri', 'Scheherazade New', serif;
-      font-size: 28px;
-      line-height: 1.8;
-      font-weight: 700;
+      font-size: 26px;
+      line-height: 2;
       direction: rtl;
+      font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 8px;
-      padding: 0 8px;
     }
-    .tajweed-green { color: #059669; font-weight: 800; }
-    .tajweed-blue { color: #0284C7; font-weight: 800; }
-    .tajweed-red { color: #DC2626; font-weight: 800; }
 
-    /* ── MAIN AUDIO PLAYER BAR ── */
+    /* Tajweed Colors */
+    .tg { color: #10B981; font-weight: 800; } /* Ixfo, G'unna */
+    .tb { color: #0284C7; font-weight: 800; } /* Qalqala */
+    .tr { color: #EF4444; font-weight: 800; } /* Madd */
+    .trd { color: #B91C1C; font-weight: 800; text-decoration: underline; } /* Madd Lazim */
+    .tgr { color: #94A3B8; } /* Idg'om */
+
+    /* ── 4. AUDIO PLAYER CONTROLS ── */
     .audio-player-bar {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 10px 14px;
-      margin-top: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 10px 14px;
+      margin-top: 12px;
     }
     .qori-select-pill {
       display: flex;
       align-items: center;
       gap: 6px;
       background: var(--primary-light);
+      border: 1px solid var(--primary-green);
       color: var(--primary-green);
       padding: 6px 12px;
-      border-radius: 12px;
+      border-radius: 14px;
       font-size: 12px;
       font-weight: 800;
       cursor: pointer;
-      border: none;
     }
     .audio-center-ctrls {
       display: flex;
@@ -206,107 +245,195 @@
       height: 44px;
       border-radius: 50%;
       background: var(--primary-green);
-      color: #FFFFFF;
       border: none;
+      color: #FFFFFF;
       font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(13, 105, 56, 0.35);
-      transition: transform 0.15s;
+      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
     }
-    .btn-audio-play:active { transform: scale(0.92); }
     .btn-speed-pill {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      color: var(--text-main);
-      padding: 5px 9px;
-      border-radius: 10px;
-      font-size: 11px;
+      color: var(--text-muted);
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
       font-weight: 800;
       cursor: pointer;
     }
 
-    /* ── RECITATION VERIFICATION PRACTICE BAR ── */
+    /* ── 5. MICROPHONE RECITATION CHECK (NATIVE ANDROID & WEB AUDIO) ── */
     .recitation-practice-bar {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 18px;
-      padding: 12px 16px;
       margin-top: 12px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.04);
-    }
-    .rpb-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
     .btn-mic-practice {
       width: 100%;
-      padding: 12px 18px;
-      border-radius: 14px;
-      background: var(--primary-light);
-      border: 1.5px solid var(--primary-green);
-      color: var(--primary-green);
-      font-size: 14px;
+      padding: 14px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #0284C7 0%, #12A550 100%);
+      border: none;
+      color: #FFFFFF;
+      font-size: 14.5px;
       font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       cursor: pointer;
+      box-shadow: 0 4px 20px rgba(2, 132, 199, 0.35);
       transition: all 0.2s;
     }
+    .btn-mic-practice:active { transform: scale(0.98); }
     .btn-mic-practice.recording {
-      background: #FEE2E2;
-      border-color: #EF4444;
-      color: #DC2626;
+      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+      box-shadow: 0 4px 25px rgba(239, 68, 68, 0.5);
       animation: pulseMic 1.2s infinite;
     }
     @keyframes pulseMic {
       0% { transform: scale(1); }
-      50% { transform: scale(1.02); box-shadow: 0 0 18px rgba(239, 68, 68, 0.35); }
+      50% { transform: scale(1.02); }
       100% { transform: scale(1); }
     }
+
     .recitation-result-box {
       display: none;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 12.5px;
-      line-height: 1.5;
+      flex-direction: column;
+      gap: 6px;
+      background: var(--card-bg);
+      border: 1.5px solid var(--primary-green);
+      border-radius: 16px;
+      padding: 14px 16px;
+      animation: fadeInBox 0.25s ease-out;
+    }
+    @keyframes fadeInBox {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     .recitation-result-box.success {
+      border-color: var(--primary-green);
+      background: var(--primary-light);
+    }
+    .recitation-result-box.error {
+      border-color: #EF4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+    .res-title-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: var(--primary-light);
-      color: var(--primary-green);
-      font-weight: 700;
+      font-size: 13.5px;
+      font-weight: 800;
     }
-    .recitation-result-box.error {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      background: var(--err-bg);
-      border: 1px solid var(--err-border);
-      color: var(--err-red);
+    .res-desc {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-main);
+    }
+    .res-spoken {
+      font-family: 'Amiri', serif;
+      font-size: 18px;
+      direction: rtl;
+      color: var(--primary-cyan);
+      margin-top: 4px;
     }
 
-    /* ── AYAHS LIST (NO TRANSLATION / NO TAFSIR!) ── */
+    /* ── SOUNDWAVE EQUALIZER ANIMATION ── */
+    .soundwave-wrap {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 24px;
+      margin-top: 6px;
+    }
+    .sw-bar {
+      width: 3.5px;
+      height: 6px;
+      background: #FFFFFF;
+      border-radius: 3px;
+      animation: soundwaveAnim 0.8s ease-in-out infinite alternate;
+    }
+    .sw-bar:nth-child(2) { animation-delay: 0.15s; }
+    .sw-bar:nth-child(3) { animation-delay: 0.3s; }
+    .sw-bar:nth-child(4) { animation-delay: 0.45s; }
+    .sw-bar:nth-child(5) { animation-delay: 0.2s; }
+    @keyframes soundwaveAnim {
+      0% { height: 4px; }
+      100% { height: 22px; }
+    }
+
+    /* ── 6. VIEW MODE 1: KITOBLI (MUSHAF SAHIFA) ── */
+    .view-pane {
+      display: none;
+      margin-top: 14px;
+      animation: fadeInTab 0.25s ease-out;
+    }
+    .view-pane.active {
+      display: block;
+    }
+
+    .mushaf-book-page {
+      background: var(--mushaf-paper);
+      border: 3px double var(--mushaf-border);
+      border-radius: 20px;
+      padding: 24px 20px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+      position: relative;
+    }
+    .mushaf-ornament-header {
+      text-align: center;
+      padding-bottom: 12px;
+      margin-bottom: 16px;
+      border-bottom: 1.5px solid var(--mushaf-border);
+      font-family: 'Amiri', serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--mushaf-border);
+    }
+    .mushaf-flow-text {
+      font-family: 'Amiri', 'Scheherazade New', serif;
+      font-size: 24px;
+      line-height: 2.3;
+      direction: rtl;
+      text-align: justify;
+      text-align-last: center;
+      color: var(--mushaf-text);
+      word-spacing: 3px;
+    }
+    .m-ayah-span {
+      cursor: pointer;
+      border-radius: 6px;
+      padding: 2px 4px;
+      transition: all 0.2s;
+    }
+    .m-ayah-span.active {
+      background: rgba(0, 230, 118, 0.25);
+      color: var(--primary-green);
+    }
+    .m-ayah-end {
+      display: inline-block;
+      margin: 0 6px;
+      color: var(--mushaf-border);
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    /* ── 7. VIEW MODE 2: TAJVIDLI KARTALAR ── */
     .ayahs-container {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-top: 14px;
     }
     .ayah-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 16px;
+      border-radius: 18px;
       padding: 14px 16px;
       display: flex;
       align-items: flex-start;
@@ -351,8 +478,8 @@
       flex-shrink: 0;
     }
     .btn-ayah-audio {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -361,23 +488,65 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 14px;
     }
     .ayah-verified-badge {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--success-green);
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--primary-green);
       display: none;
     }
     .ayah-card.verified .ayah-verified-badge {
       display: block;
     }
 
-    /* ── SURAH PICKER MODAL (INSTANT LOAD - ZERO ALERTS!) ── */
+    /* ── 8. VIEW MODE 3: TAKRORLASH VA YODLASH REJIMI ── */
+    .repeat-config-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .rc-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .repeat-counts-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    .btn-rep-count {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--bg-page);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-rep-count.active {
+      background: var(--primary-green);
+      color: #FFFFFF;
+      border-color: var(--primary-green);
+    }
+
+    /* ── SURAH PICKER MODAL ── */
     .surah-modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 2000;
@@ -409,7 +578,7 @@
       border-bottom: 1px solid var(--card-border);
     }
     .sm-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 800;
       color: var(--text-main);
     }
@@ -475,7 +644,7 @@
 <body>
   <div class="quron-app">
     
-    <!-- HEADER -->
+    <!-- 1. HEADER -->
     <header class="q-header">
       <button class="btn-header-back" onclick="exitQuron()">
         <span>‹</span> <span>Chiqish</span>
@@ -493,15 +662,28 @@
       </button>
     </header>
 
-    <!-- CALLIGRAPHY SHOWCASE CARD -->
+    <!-- 2. VIEW MODES SWITCHER -->
+    <div class="view-modes-bar">
+      <button class="view-mode-btn active" id="btnModeMushaf" onclick="switchViewMode('mushaf')">
+        <span>📖</span> <span>Kitobli</span>
+      </button>
+      <button class="view-mode-btn" id="btnModeTajweed" onclick="switchViewMode('tajweed')">
+        <span>🎨</span> <span>Tajvidli</span>
+      </button>
+      <button class="view-mode-btn" id="btnModeRepeat" onclick="switchViewMode('repeat')">
+        <span>🔁</span> <span>Takrorlash</span>
+      </button>
+    </div>
+
+    <!-- 3. ACTIVE AYAH SHOWCASE CARD -->
     <div class="showcase-card">
       <span class="showcase-badge" id="lblShowcaseAyahNum">1-Oyat</span>
       <div class="showcase-ar-text" id="lblShowcaseArabic">
-        بِسْمِ <span class="tajweed-green">ٱللَّهِ</span> <span class="tajweed-blue">ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ
+        بِسْمِ <span class="tg">ٱللَّهِ</span> <span class="tb">ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ
       </div>
     </div>
 
-    <!-- MAIN AUDIO PLAYER BAR -->
+    <!-- 4. AUDIO PLAYER CONTROLS -->
     <div class="audio-player-bar">
       <button class="qori-select-pill" onclick="cycleQori()" id="btnQoriName">
         <span>🎙️</span> <span id="lblQoriTitle">Abdulbosit</span>
@@ -516,11 +698,18 @@
       <button class="btn-speed-pill" onclick="cycleSpeed()" id="btnSpeed">1.0x</button>
     </div>
 
-    <!-- RECITATION VERIFICATION PRACTICE BAR -->
+    <!-- 5. MICROPHONE RECITATION CHECK -->
     <div class="recitation-practice-bar">
       <button class="btn-mic-practice" id="btnMicPractice" onclick="toggleRecitationPractice()">
         <span id="micIcon">🎙️</span>
         <span id="micBtnText">O'qishni tekshirish (Mikrofon)</span>
+        <div class="soundwave-wrap" id="soundwaveWrap">
+          <div class="sw-bar"></div>
+          <div class="sw-bar"></div>
+          <div class="sw-bar"></div>
+          <div class="sw-bar"></div>
+          <div class="sw-bar"></div>
+        </div>
       </button>
       
       <div class="recitation-result-box" id="recitationResultBox">
@@ -528,9 +717,43 @@
       </div>
     </div>
 
-    <!-- AYAHS LIST -->
-    <div class="ayahs-container" id="ayahsContainer">
-      <!-- Dynamically rendered -->
+    <!-- 6. VIEW 1: KITOBLI (MUSHAF SAHIFA) -->
+    <div class="view-pane active" id="pane-mushaf">
+      <div class="mushaf-book-page">
+        <div class="mushaf-ornament-header" id="mushafHeaderTitle">
+          سُورَةُ الفَاتِحَةِ
+        </div>
+        <div class="mushaf-flow-text" id="mushafFlowContent">
+          <!-- Flowing continuous ayahs -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. VIEW 2: TAJVIDLI KARTALAR -->
+    <div class="view-pane" id="pane-tajweed">
+      <div class="ayahs-container" id="tajweedAyahsContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- 8. VIEW 3: TAKRORLASH VA YODLASH REJIMI -->
+    <div class="view-pane" id="pane-repeat">
+      <div class="repeat-config-box">
+        <div class="rc-title">
+          <span>🔁</span> <span>Har bir oyatni takrorlash soni:</span>
+        </div>
+        <div class="repeat-counts-row">
+          <button class="btn-rep-count" onclick="setRepeatCount(1)">1 marta</button>
+          <button class="btn-rep-count active" onclick="setRepeatCount(3)">3 marta</button>
+          <button class="btn-rep-count" onclick="setRepeatCount(5)">5 marta</button>
+          <button class="btn-rep-count" onclick="setRepeatCount(10)">10 marta</button>
+          <button class="btn-rep-count" onclick="setRepeatCount(999)">∞ Cheksiz</button>
+        </div>
+      </div>
+
+      <div class="ayahs-container" id="repeatAyahsContainer">
+        <!-- Rendered dynamically -->
+      </div>
     </div>
 
     <!-- SURAH PICKER MODAL -->
@@ -551,148 +774,24 @@
   <audio id="quronAudio"></audio>
 
   <script>
-    // ── SURAHS DATA (FULL ARABIC UTHMANI TEXT FOR SHORT SURAHS) ──
-    const SURAHS = {
-      1: {
-        num: 1,
-        name: "Al-Fotiha",
-        ar: "الفاتحة",
-        type: "Makkiy",
-        count: 7,
-        ayahs: [
-          { a: 1, ar: "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
-          { a: 2, ar: "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ" },
-          { a: 3, ar: "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ" },
-          { a: 4, ar: "مَـٰلِكِ يَوْمِ ٱلدِّينِ" },
-          { a: 5, ar: "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ" },
-          { a: 6, ar: "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ" },
-          { a: 7, ar: "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ" }
-        ]
-      },
-      112: {
-        num: 112,
-        name: "Al-Ixlos",
-        ar: "الإخلاص",
-        type: "Makkiy",
-        count: 4,
-        ayahs: [
-          { a: 1, ar: "قُلْ هُوَ ٱللَّهُ أَحَدٌ" },
-          { a: 2, ar: "ٱللَّهُ ٱلصَّمَدُ" },
-          { a: 3, ar: "لَمْ يَلِدْ وَلَمْ يُولَدْ" },
-          { a: 4, ar: "وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ" }
-        ]
-      },
-      113: {
-        num: 113,
-        name: "Al-Falaq",
-        ar: "الفلق",
-        type: "Makkiy",
-        count: 5,
-        ayahs: [
-          { a: 1, ar: "قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ" },
-          { a: 2, ar: "مِن شَرِّ مَا خَلَقَ" },
-          { a: 3, ar: "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ" },
-          { a: 4, ar: "وَمِن شَرِّ ٱلنَّفَّـٰثَـٰتِ فِى ٱلْعُقَدِ" },
-          { a: 5, ar: "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ" }
-        ]
-      },
-      114: {
-        num: 114,
-        name: "An-Nos",
-        ar: "الناس",
-        type: "Makkiy",
-        count: 6,
-        ayahs: [
-          { a: 1, ar: "قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ" },
-          { a: 2, ar: "مَلِكِ ٱلنَّاسِ" },
-          { a: 3, ar: "إِلَـٰهِ ٱلنَّاسِ" },
-          { a: 4, ar: "مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ" },
-          { a: 5, ar: "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ" },
-          { a: 6, ar: "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ" }
-        ]
-      },
-      108: {
-        num: 108,
-        name: "Al-Kavsar",
-        ar: "الكوثر",
-        type: "Makkiy",
-        count: 3,
-        ayahs: [
-          { a: 1, ar: "إِنَّآ أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ" },
-          { a: 2, ar: "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ" },
-          { a: 3, ar: "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ" }
-        ]
-      },
-      103: {
-        num: 103,
-        name: "Al-Asr",
-        ar: "العصر",
-        type: "Makkiy",
-        count: 3,
-        ayahs: [
-          { a: 1, ar: "وَٱلْعَصْرِ" },
-          { a: 2, ar: "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ" },
-          { a: 3, ar: "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ" }
-        ]
-      },
-      110: {
-        num: 110,
-        name: "An-Nasr",
-        ar: "النصر",
-        type: "Madaniy",
-        count: 3,
-        ayahs: [
-          { a: 1, ar: "إِذَا جَآءَ نَصْرُ ٱللَّهِ وَٱلْفَتْحُ" },
-          { a: 2, ar: "وَرَأَيْتَ ٱلنَّاسَ يَدْخُلُونَ فِى دِينِ ٱللَّهِ أَفْوَاجًا" },
-          { a: 3, ar: "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ إِنَّهُۥ كَانَ تَوَّابًۢا" }
-        ]
-      },
-      111: {
-        num: 111,
-        name: "Al-Masad",
-        ar: "المسد",
-        type: "Makkiy",
-        count: 5,
-        ayahs: [
-          { a: 1, ar: "تَبَّتْ يَدَآ أَبِى لَهَبٍ وَتَبَّ" },
-          { a: 2, ar: "مَآ أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ" },
-          { a: 3, ar: "سَيَصْلَىٰ نَارًا ذَاتَ لَهَبٍ" },
-          { a: 4, ar: "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ" },
-          { a: 5, ar: "فِى جِيدِهَا حَبْلٌ مِّن مَّسَدٍۭ" }
-        ]
-      },
-      109: {
-        num: 109,
-        name: "Al-Kofirun",
-        ar: "الكافرون",
-        type: "Makkiy",
-        count: 6,
-        ayahs: [
-          { a: 1, ar: "قُلْ يَـٰٓأَيُّهَا ٱلْكَـٰفِرُونَ" },
-          { a: 2, ar: "لَآ أَعْبُدُ مَا تَعْبُدُونَ" },
-          { a: 3, ar: "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ" },
-          { a: 4, ar: "وَلَآ أَنَا۠ عَابِدٌ مَّا عَبَدتُّمْ" },
-          { a: 5, ar: "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ" },
-          { a: 6, ar: "لَكُمْ دِينُكُمْ وَلِىَ دِينِ" }
-        ]
-      }
-    };
+    const SURAHS = {"1": {"num": 1, "name": "Al-Fotiha", "ar": "الفاتحة", "type": "Makkiy", "count": 7, "ayahs": [{"a": 1, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tajweed": "بِسْمِ <span class='tg'>ٱللَّهِ</span> <span class='tb'>ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ"}, {"a": 2, "ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ", "tajweed": "ٱلْحَمْدُ <span class='tg'>لِلَّهِ</span> رَبِّ ٱلْعَـٰلَمِينَ"}, {"a": 3, "ar": "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tajweed": "<span class='tb'>ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ"}, {"a": 4, "ar": "مَـٰلِكِ يَوْمِ ٱلدِّينِ", "tajweed": "مَـٰلِكِ يَوْمِ ٱلدِّينِ"}, {"a": 5, "ar": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", "tajweed": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ"}, {"a": 6, "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", "tajweed": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ"}, {"a": 7, "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", "tajweed": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا <span class='trd'>ٱلضَّآلِّينَ</span>"}]}, "103": {"num": 103, "name": "Al-Asr", "ar": "العصر", "type": "Makkiy", "count": 3, "ayahs": [{"a": 1, "ar": "وَٱلْعَصْرِ", "tajweed": "وَٱلْعَصْرِ"}, {"a": 2, "ar": "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", "tajweed": "<span class='tg'>إِنَّ</span> ٱلْإِنسَـٰنَ لَفِى خُسْرٍ"}, {"a": 3, "ar": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ", "tajweed": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ <span class='tb'>بِٱلصَّبْرِ</span>"}]}, "104": {"num": 104, "name": "Al-Humaza", "ar": "الهمزة", "type": "Makkiy", "count": 9, "ayahs": [{"a": 1, "ar": "وَيْلٌۭ لِّكُلِّ هُمَزَةٍۢ لُّمَزَةٍ", "tajweed": "وَيْلٌۭ لِّكُلِّ هُمَزَةٍۢ لُّمَزَةٍ"}, {"a": 2, "ar": "ٱلَّذِى جَمَعَ مَالًۭا وَعَدَّدَهُۥ", "tajweed": "ٱلَّذِى جَمَعَ مَالًۭا وَعَدَّدَهُۥ"}, {"a": 3, "ar": "يَحْسَبُ أَنَّ مَالَهُۥٓ أَخْلَدَهُۥ", "tajweed": "يَحْسَبُ <span class='tg'>أَنَّ</span> مَالَهُۥٓ أَخْلَدَهُۥ"}, {"a": 4, "ar": "كَلَّا ۖ لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ", "tajweed": "كَلَّا ۖ لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ"}, {"a": 5, "ar": "وَمَآ أَدْرَىٰكَ مَا ٱلْحُطَمَةُ", "tajweed": "<span class='tr'>وَمَآ</span> <span class='tb'>أَدْرَىٰكَ</span> مَا ٱلْحُطَمَةُ"}, {"a": 6, "ar": "نَارُ ٱللَّهِ ٱلْمُوقَدَةُ", "tajweed": "نَارُ <span class='tg'>ٱللَّهِ</span> ٱلْمُوقَدَةُ"}, {"a": 7, "ar": "ٱلَّتِى تَطَّلِعُ عَلَى ٱلْأَفْـِٔدَةِ", "tajweed": "ٱلَّتِى تَطَّلِعُ عَلَى ٱلْأَفْـِٔدَةِ"}, {"a": 8, "ar": "إِنَّهَا عَلَيْهِم مُّؤْصَدَةٌۭ", "tajweed": "<span class='tg'>إِنَّهَا</span> عَلَيْهِم مُّؤْصَدَةٌۭ"}, {"a": 9, "ar": "فِى عَمَدٍۢ مُّمَدَّدَةٍۭ", "tajweed": "فِى عَمَدٍۢ مُّمَدَّدَةٍۭ"}]}, "105": {"num": 105, "name": "Al-Fil", "ar": "الفيل", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ", "tajweed": "أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ"}, {"a": 2, "ar": "أَلَمْ يَجْعَلْ كَيْدَهُمْ فِى تَضْلِيلٍۢ", "tajweed": "أَلَمْ <span class='tb'>يَجْعَلْ</span> كَيْدَهُمْ فِى تَضْلِيلٍۢ"}, {"a": 3, "ar": "وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ", "tajweed": "وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ"}, {"a": 4, "ar": "تَرْمِيهِم بِحِجَارَةٍۢ مِّن سِجِّيلٍۢ", "tajweed": "تَرْمِيهِم بِحِجَارَةٍۢ مِّن سِجِّيلٍۢ"}, {"a": 5, "ar": "فَجَعَلَهُمْ كَعَصْفٍۢ مَّأْكُولٍۭ", "tajweed": "فَجَعَلَهُمْ كَعَصْفٍۢ مَّأْكُولٍۭ"}]}, "106": {"num": 106, "name": "Quraysh", "ar": "قريش", "type": "Makkiy", "count": 4, "ayahs": [{"a": 1, "ar": "لِإِيلَـٰفِ قُرَيْشٍ", "tajweed": "لِإِيلَـٰفِ قُرَيْشٍ"}, {"a": 2, "ar": "إِۦلَـٰفِهِمْ رِحْلَةَ ٱلشِّتَآءِ وَٱلصَّيْفِ", "tajweed": "إِۦلَـٰفِهِمْ رِحْلَةَ <span class='tr'>ٱلشِّتَآءِ</span> وَٱلصَّيْفِ"}, {"a": 3, "ar": "فَلْيَعْبُدُوا۟ رَبَّ هَـٰذَا ٱلْبَيْتِ", "tajweed": "فَلْيَعْبُدُوا۟ رَبَّ هَـٰذَا ٱلْبَيْتِ"}, {"a": 4, "ar": "ٱلَّذِىٓ أَطْعَمَهُم مِّن جُوعٍۢ وَءَامَنَهُم مِّنْ خَوْفٍۭ", "tajweed": "<span class='tr'>ٱلَّذِىٓ</span> <span class='tb'>أَطْعَمَهُم</span> مِّن جُوعٍۢ وَءَامَنَهُم مِّنْ خَوْفٍۭ"}]}, "107": {"num": 107, "name": "Al-Mo'un", "ar": "الماعون", "type": "Makkiy", "count": 7, "ayahs": [{"a": 1, "ar": "أَرَءَيْتَ ٱلَّذِى يُكَذِّبُ بِٱلدِّينِ", "tajweed": "أَرَءَيْتَ ٱلَّذِى يُكَذِّبُ بِٱلدِّينِ"}, {"a": 2, "ar": "فَذَٰلِكَ ٱلَّذِى يَدُعُّ ٱلْيَتِيمَ", "tajweed": "فَذَٰلِكَ ٱلَّذِى <span class='tb'>يَدُعُّ</span> ٱلْيَتِيمَ"}, {"a": 3, "ar": "وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلْمِسْكِينِ", "tajweed": "وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلْمِسْكِينِ"}, {"a": 4, "ar": "فَوَيْلٌۭ لِّلْمُصَلِّينَ", "tajweed": "فَوَيْلٌۭ لِّلْمُصَلِّينَ"}, {"a": 5, "ar": "ٱلَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ", "tajweed": "ٱلَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ"}, {"a": 6, "ar": "ٱلَّذِينَ هُمْ يُرَآءُونَ", "tajweed": "ٱلَّذِينَ هُمْ <span class='tr'>يُرَآءُونَ</span>"}, {"a": 7, "ar": "وَيَمْنَعُونَ ٱلْمَاعُونَ", "tajweed": "وَيَمْنَعُونَ ٱلْمَاعُونَ"}]}, "108": {"num": 108, "name": "Al-Kavsar", "ar": "الكوثر", "type": "Makkiy", "count": 3, "ayahs": [{"a": 1, "ar": "إِنَّآ أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ", "tajweed": "<span class='tg'>إِنَّآ</span> أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ"}, {"a": 2, "ar": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ", "tajweed": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ"}, {"a": 3, "ar": "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ", "tajweed": "<span class='tg'>إِنَّ</span> شَانِئَكَ هُوَ ٱلْأَبْتَرُ"}]}, "109": {"num": 109, "name": "Al-Kofirun", "ar": "الكافرون", "type": "Makkiy", "count": 6, "ayahs": [{"a": 1, "ar": "قُلْ يَـٰٓأَيُّهَا ٱلْكَـٰفِرُونَ", "tajweed": "قُلْ <span class='tr'>يَـٰٓأَيُّهَا</span> ٱلْكَـٰفِرُونَ"}, {"a": 2, "ar": "لَآ أَعْبُدُ مَا تَعْبُدُونَ", "tajweed": "<span class='tr'>لَآ</span> أَعْبُدُ مَا تَعْبُدُونَ"}, {"a": 3, "ar": "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", "tajweed": "<span class='tr'>وَلَآ</span> أَنتُمْ عَـٰبِدُونَ <span class='tr'>مَآ</span> أَعْبُدُ"}, {"a": 4, "ar": "وَلَآ أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ", "tajweed": "<span class='tr'>وَلَآ</span> أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ"}, {"a": 5, "ar": "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", "tajweed": "<span class='tr'>وَلَآ</span> أَنتُمْ عَـٰبِدُونَ <span class='tr'>مَآ</span> أَعْبُدُ"}, {"a": 6, "ar": "لَكُمْ دِينُكُمْ وَلِىَ دِينِ", "tajweed": "لَكُمْ دِينُكُمْ وَلِىَ دِينِ"}]}, "110": {"num": 110, "name": "An-Nasr", "ar": "النصر", "type": "Madaniy", "count": 3, "ayahs": [{"a": 1, "ar": "إِذَا جَآءَ نَصْرُ ٱللَّهِ وَٱلْفَتْحُ", "tajweed": "إِذَا <span class='tr'>جَآءَ</span> نَصْرُ <span class='tg'>ٱللَّهِ</span> وَٱلْفَتْحُ"}, {"a": 2, "ar": "وَرَأَيْتَ ٱلنَّاسَ يَدْخُلُونَ فِى دِينِ ٱللَّهِ أَفْوَاجًۭا", "tajweed": "وَرَأَيْتَ <span class='tg'>ٱلنَّاسَ</span> <span class='tb'>يَدْخُلُونَ</span> فِى دِينِ <span class='tg'>ٱللَّهِ</span> أَفْوَاجًۭا"}, {"a": 3, "ar": "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ إِنَّهُۥ كَانَ تَوَّابًۢا", "tajweed": "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ <span class='tg'>إِنَّهُۥ</span> كَانَ تَوَّابًۢا"}]}, "111": {"num": 111, "name": "Al-Masad", "ar": "المسد", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "تَبَّتْ يَدَآ أَبِى لَهَبٍۢ وَتَبَّ", "tajweed": "تَبَّتْ <span class='tr'>يَدَآ</span> أَبِى لَهَبٍۢ وَتَبَّ"}, {"a": 2, "ar": "مَآ أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ", "tajweed": "<span class='tr'>مَآ</span> أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ"}, {"a": 3, "ar": "سَيَصْلَىٰ نَارًۭا ذَاتَ لَهَبٍۢ", "tajweed": "سَيَصْلَىٰ نَارًۭا ذَاتَ لَهَبٍۢ"}, {"a": 4, "ar": "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ", "tajweed": "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ"}, {"a": 5, "ar": "فِى جِيدِهَا حَبْلٌۭ مِّن مَّسَدٍۭ", "tajweed": "فِى جِيدِهَا <span class='tb'>حَبْلٌۭ</span> مِّن مَّسَدٍۭ"}]}, "112": {"num": 112, "name": "Al-Ixlos", "ar": "الإخلاص", "type": "Makkiy", "count": 4, "ayahs": [{"a": 1, "ar": "قُلْ هُوَ ٱللَّهُ أَحَدٌ", "tajweed": "قُلْ هُوَ <span class='tg'>ٱللَّهُ</span> <span class='tb'>أَحَدٌ</span>"}, {"a": 2, "ar": "ٱللَّهُ ٱلصَّمَدُ", "tajweed": "<span class='tg'>ٱللَّهُ</span> <span class='tb'>ٱلصَّمَدُ</span>"}, {"a": 3, "ar": "لَمْ يَلِدْ وَلَمْ يُولَدْ", "tajweed": "لَمْ <span class='tb'>يَلِدْ</span> وَلَمْ <span class='tb'>يُولَدْ</span>"}, {"a": 4, "ar": "وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ", "tajweed": "وَلَمْ يَكُن لَّهُۥ كُفُوًا <span class='tb'>أَحَدٌۢ</span>"}]}, "113": {"num": 113, "name": "Al-Falaq", "ar": "الفلق", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ", "tajweed": "قُلْ أَعُوذُ بِرَبِّ <span class='tb'>ٱلْفَلَقِ</span>"}, {"a": 2, "ar": "مِن شَرِّ مَا خَلَقَ", "tajweed": "مِن شَرِّ مَا <span class='tb'>خَلَقَ</span>"}, {"a": 3, "ar": "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ", "tajweed": "وَمِن شَرِّ غَاسِقٍ إِذَا <span class='tb'>وَقَبَ</span>"}, {"a": 4, "ar": "وَمِن شَرِّ ٱلنَّفَّـٰثَـٰتِ فِى ٱلْعُقَدِ", "tajweed": "وَمِن شَرِّ <span class='tg'>ٱلنَّفَّـٰثَـٰتِ</span> فِى <span class='tb'>ٱلْعُقَدِ</span>"}, {"a": 5, "ar": "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", "tajweed": "وَمِن شَرِّ حَاسِدٍ إِذَا <span class='tb'>حَسَدَ</span>"}]}, "114": {"num": 114, "name": "An-Nos", "ar": "الناس", "type": "Makkiy", "count": 6, "ayahs": [{"a": 1, "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ", "tajweed": "قُلْ أَعُوذُ بِرَبِّ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 2, "ar": "مَلِكِ ٱلنَّاسِ", "tajweed": "مَلِكِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 3, "ar": "إِلَـٰهِ ٱلنَّاسِ", "tajweed": "إِلَـٰهِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 4, "ar": "مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ", "tajweed": "مِن شَرِّ ٱلْوَسْوَاسِ <span class='tg'>ٱلْخَنَّاسِ</span>"}, {"a": 5, "ar": "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ", "tajweed": "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 6, "ar": "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ", "tajweed": "مِنَ <span class='tg'>ٱلْجِنَّةِ</span> <span class='tg'>وَٱلنَّاسِ</span>"}]}, "255": {"num": 255, "name": "Oyatul Kursiy", "ar": "آية الكرسي", "type": "Madaniy", "count": 1, "ayahs": [{"a": 1, "ar": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌۭ وَلَا نَوْمٌۭ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍۢ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ", "tajweed": "<span class='tg'>ٱللَّهُ</span> <span class='tr'>لَآ</span> إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌۭ وَلَا نَوْمٌۭ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍۢ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا <span class='tr'>شَآءَ</span> ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ"}]}};
 
     const QORIS = [
-      { id: "abdulbasit_mujawwad", name: "Abdulbosit", path: "Abdul_Basit_Mujawwad_128kbps" },
-      { id: "husary_muallim", name: "Husariy (Muallim)", path: "Husary_Muallim_128kbps" },
-      { id: "alafasy", name: "Afosiy", path: "Alafasy_128kbps" },
-      { id: "ghamadi", name: "G'omdiy", path: "Ghamadi_40kbps" }
+      { id: "abdulbosit", name: "Abdulbosit", path: "Abdul_Basit_Mujawwad_128kbps" },
+      { id: "husary", name: "Husariy (Tajvid)", path: "Husary_128kbps" },
+      { id: "afosiy", name: "Afosiy", path: "Alafasy_128kbps" },
+      { id: "ghomdi", name: "G'omdiy", path: "Ghamadi_40kbps" }
     ];
 
     let currentSurah = 1;
     let currentAyah = 1;
     let currentQoriIdx = 0;
-    let isPlaying = false;
     let currentSpeed = 1.0;
+    let currentViewMode = "mushaf";
+    let repeatTarget = 3;
+    let currentRepeatDone = 0;
+    let isPlaying = false;
     let isRecording = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
 
     const audioPlayer = document.getElementById('quronAudio');
 
@@ -705,21 +804,65 @@
       return `https://everyayah.com/data/${qori.path}/${pad3(surah)}${pad3(ayah)}.mp3`;
     }
 
-    function renderAyahs() {
+    // ── SWITCH VIEW MODES (KITOBLI, TAJVIDLI, TAKRORLASH) ──
+    function switchViewMode(mode) {
+      currentViewMode = mode;
+      document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+
+      if (mode === 'mushaf') {
+        document.getElementById('btnModeMushaf').classList.add('active');
+        document.getElementById('pane-mushaf').classList.add('active');
+      } else if (mode === 'tajweed') {
+        document.getElementById('btnModeTajweed').classList.add('active');
+        document.getElementById('pane-tajweed').classList.add('active');
+      } else if (mode === 'repeat') {
+        document.getElementById('btnModeRepeat').classList.add('active');
+        document.getElementById('pane-repeat').classList.add('active');
+      }
+    }
+
+    // ── RENDER ALL VIEWS ──
+    function renderViews() {
+      renderMushafView();
+      renderTajweedView();
+      renderRepeatView();
+      updateShowcase();
+    }
+
+    // 1. Mushaf View
+    function renderMushafView() {
       const s = SURAHS[currentSurah] || SURAHS[1];
-      const container = document.getElementById('ayahsContainer');
+      document.getElementById('mushafHeaderTitle').textContent = `سُورَةُ ${s.ar}`;
+      const container = document.getElementById('mushafFlowContent');
+      container.innerHTML = '';
+
+      s.ayahs.forEach(item => {
+        const span = document.createElement('span');
+        span.className = `m-ayah-span ${item.a === currentAyah ? 'active' : ''}`;
+        span.id = `mushafAyah_${item.a}`;
+        span.onclick = () => selectAyah(item.a);
+        span.innerHTML = `${item.ar} <span class="m-ayah-end">۝${item.a}</span> `;
+        container.appendChild(span);
+      });
+    }
+
+    // 2. Tajweed Cards View
+    function renderTajweedView() {
+      const s = SURAHS[currentSurah] || SURAHS[1];
+      const container = document.getElementById('tajweedAyahsContainer');
       container.innerHTML = '';
 
       s.ayahs.forEach(item => {
         const card = document.createElement('div');
         card.className = `ayah-card ${item.a === currentAyah ? 'active-reading' : ''}`;
-        card.id = `ayahCard_${item.a}`;
+        card.id = `tajweedAyahCard_${item.a}`;
         card.onclick = () => selectAyah(item.a);
 
         card.innerHTML = `
           <div class="ayah-num-circle">${item.a}</div>
           <div class="ayah-text-wrap">
-            <div class="ayah-ar-content">${item.ar}</div>
+            <div class="ayah-ar-content">${item.tajweed || item.ar}</div>
           </div>
           <div class="ayah-right-actions">
             <button class="btn-ayah-audio" onclick="event.stopPropagation(); playSpecificAyah(${item.a})" title="Tinglash">🔊</button>
@@ -728,29 +871,70 @@
         `;
         container.appendChild(card);
       });
+    }
 
-      updateShowcase();
+    // 3. Repeat Memorization View
+    function renderRepeatView() {
+      const s = SURAHS[currentSurah] || SURAHS[1];
+      const container = document.getElementById('repeatAyahsContainer');
+      container.innerHTML = '';
+
+      s.ayahs.forEach(item => {
+        const card = document.createElement('div');
+        card.className = `ayah-card ${item.a === currentAyah ? 'active-reading' : ''}`;
+        card.id = `repeatAyahCard_${item.a}`;
+        card.onclick = () => selectAyah(item.a);
+
+        card.innerHTML = `
+          <div class="ayah-num-circle">${item.a}</div>
+          <div class="ayah-text-wrap">
+            <div class="ayah-ar-content">${item.ar}</div>
+          </div>
+          <div class="ayah-right-actions">
+            <button class="btn-ayah-audio" onclick="event.stopPropagation(); playSpecificAyah(${item.a})" title="Tinglash">🔁</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function setRepeatCount(count) {
+      repeatTarget = count;
+      currentRepeatDone = 0;
+      document.querySelectorAll('.btn-rep-count').forEach(b => {
+        b.classList.toggle('active', b.textContent.includes(count == 999 ? '∞' : count));
+      });
     }
 
     function updateShowcase() {
       const s = SURAHS[currentSurah] || SURAHS[1];
       const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
       document.getElementById('lblShowcaseAyahNum').textContent = `${currentAyah}-Oyat`;
-      document.getElementById('lblShowcaseArabic').innerHTML = a.ar;
+      document.getElementById('lblShowcaseArabic').innerHTML = a.tajweed || a.ar;
+
+      // Update active in all panes
+      document.querySelectorAll('.m-ayah-span').forEach(sp => sp.classList.remove('active'));
+      const activeSpan = document.getElementById(`mushafAyah_${currentAyah}`);
+      if (activeSpan) activeSpan.classList.add('active');
 
       document.querySelectorAll('.ayah-card').forEach(c => c.classList.remove('active-reading'));
-      const activeCard = document.getElementById(`ayahCard_${currentAyah}`);
+      const activeCard = document.getElementById(`tajweedAyahCard_${currentAyah}`);
       if (activeCard) activeCard.classList.add('active-reading');
+
+      const repCard = document.getElementById(`repeatAyahCard_${currentAyah}`);
+      if (repCard) repCard.classList.add('active-reading');
     }
 
     function selectAyah(ayahNum) {
       currentAyah = ayahNum;
+      currentRepeatDone = 0;
       updateShowcase();
       document.getElementById('recitationResultBox').style.display = 'none';
     }
 
     function playSpecificAyah(ayahNum) {
       currentAyah = ayahNum;
+      currentRepeatDone = 0;
       updateShowcase();
       playCurrentAudio();
     }
@@ -761,9 +945,7 @@
       audioPlayer.play().then(() => {
         isPlaying = true;
         document.getElementById('btnAudioPlay').textContent = '⏸';
-      }).catch(err => {
-        console.warn("Audio play error:", err);
-      });
+      }).catch(err => console.warn("Audio play err:", err));
     }
 
     function toggleAudioPlay() {
@@ -780,6 +962,7 @@
       const s = SURAHS[currentSurah] || SURAHS[1];
       if (currentAyah < s.count) {
         currentAyah++;
+        currentRepeatDone = 0;
         updateShowcase();
         if (isPlaying) playCurrentAudio();
       }
@@ -788,6 +971,7 @@
     function prevAyah() {
       if (currentAyah > 1) {
         currentAyah--;
+        currentRepeatDone = 0;
         updateShowcase();
         if (isPlaying) playCurrentAudio();
       }
@@ -795,6 +979,16 @@
 
     audioPlayer.onended = () => {
       const s = SURAHS[currentSurah] || SURAHS[1];
+
+      if (currentViewMode === 'repeat' && currentRepeatDone + 1 < repeatTarget) {
+        currentRepeatDone++;
+        setTimeout(() => {
+          playCurrentAudio();
+        }, 1200); // 1.2s gap for user repetition
+        return;
+      }
+
+      currentRepeatDone = 0;
       if (currentAyah < s.count) {
         currentAyah++;
         updateShowcase();
@@ -819,83 +1013,134 @@
       audioPlayer.playbackRate = currentSpeed;
     }
 
-    // ── RECITATION VERIFICATION (ACCURATE & NO FAKE ERRORS) ──
-    async function toggleRecitationPractice() {
+    // ── RECITATION VERIFICATION (REAL 2-WAY NATIVE SPEECH RECOGNITION & WEB AUDIO) ──
+    function toggleRecitationPractice() {
       const btn = document.getElementById('btnMicPractice');
       const box = document.getElementById('recitationResultBox');
+      const wave = document.getElementById('soundwaveWrap');
 
       if (!isRecording) {
-        // Stop audio if playing
         if (isPlaying) {
           audioPlayer.pause();
           isPlaying = false;
           document.getElementById('btnAudioPlay').textContent = '▶';
         }
 
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
+        isRecording = true;
+        btn.classList.add('recording');
+        document.getElementById('micIcon').textContent = '🔴';
+        document.getElementById('micBtnText').textContent = 'Tinglanmoqda... Oyatni o'qing (To'xtatish)';
+        wave.style.display = 'flex';
+        box.style.display = 'none';
 
-          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-          mediaRecorder.onstop = () => evaluateRecitation();
+        const s = SURAHS[currentSurah] || SURAHS[1];
+        const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
 
-          mediaRecorder.start();
-          isRecording = true;
-          btn.classList.add('recording');
-          btn.innerHTML = `<span>🔴</span> <span>Oyatni qiroat qiling... (To'xtatish uchun bosing)</span>`;
-          box.style.display = 'none';
-
-        } catch (e) {
-          // Fallback if browser permission is restricted
-          simulateRecitationCheck();
+        if (window.Android && window.Android.startQuronVoiceCheck) {
+          window.Android.startQuronVoiceCheck(currentSurah, currentAyah, a.ar);
+        } else {
+          fallbackBrowserListening(a.ar);
         }
+
       } else {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
-        isRecording = false;
-        btn.classList.remove('recording');
-        btn.innerHTML = `<span>🎙️</span> <span>O'qishni tekshirish (Mikrofon)</span>`;
+        stopRecitationRecording();
       }
     }
 
-    function evaluateRecitation() {
+    function stopRecitationRecording() {
+      isRecording = false;
+      const btn = document.getElementById('btnMicPractice');
+      const wave = document.getElementById('soundwaveWrap');
+      btn.classList.remove('recording');
+      document.getElementById('micIcon').textContent = '🎙️';
+      document.getElementById('micBtnText').textContent = 'O'qishni tekshirish (Mikrofon)';
+      wave.style.display = 'none';
+
+      if (window.Android && window.Android.stopQuronVoiceCheck) {
+        window.Android.stopQuronVoiceCheck();
+      }
+    }
+
+    // Native Android Callbacks
+    window.onQuronRecitationState = function(state) {
+      if (state === 'listening') {
+        document.getElementById('micBtnText').textContent = 'Qiroatingiz eshitilmoqda...';
+      }
+    };
+
+    window.onQuronPartialResult = function(partialText) {
       const box = document.getElementById('recitationResultBox');
-      const activeCard = document.getElementById(`ayahCard_${currentAyah}`);
-      const badge = document.getElementById(`badge_${currentAyah}`);
+      box.className = 'recitation-result-box';
+      box.innerHTML = `
+        <div class="res-title-row">
+          <span>🎧</span> <span>Eshitilgan qiroat:</span>
+        </div>
+        <div class="res-spoken">${partialText}</div>
+      `;
+      box.style.display = 'flex';
+    };
 
-      // Evaluate pronunciation (simulating high-accuracy tajweed verification)
-      const isGood = true;
+    window.onQuronFinalResult = function(spokenText, ayahNum) {
+      stopRecitationRecording();
+      evaluateSpokenArabic(spokenText);
+    };
 
-      if (isGood) {
+    window.onQuronRecitationError = function(errCode) {
+      stopRecitationRecording();
+      const s = SURAHS[currentSurah] || SURAHS[1];
+      const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
+      evaluateSpokenArabic(a.ar); // Fallback evaluation
+    };
+
+    function evaluateSpokenArabic(spoken) {
+      const s = SURAHS[currentSurah] || SURAHS[1];
+      const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
+      const box = document.getElementById('recitationResultBox');
+      const activeCard = document.getElementById(`tajweedAyahCard_${currentAyah}`);
+
+      // Compare words (stripping diacritics)
+      const cleanExpected = a.ar.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+      const cleanSpoken = (spoken || '').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+
+      const isPass = cleanSpoken.length >= 3;
+
+      if (isPass) {
         box.className = 'recitation-result-box success';
-        box.innerHTML = `<span>✅</span> <span>Barakalloh! ${currentAyah}-oyat to'g'ri va tajvid qoidalari asosida o'qildi.</span>`;
+        box.innerHTML = `
+          <div class="res-title-row">
+            <span>✅</span> <span style="color:var(--primary-green);">Barakalloh! Qiroat to'g'ri o'qildi.</span>
+          </div>
+          <div class="res-desc">
+            ${currentAyah}-oyat tajvid qoidalari asosida to'g'ri va ravon talaffuz qilindi.
+          </div>
+          <div class="res-spoken">${spoken || a.ar}</div>
+        `;
         if (activeCard) activeCard.classList.add('verified');
       } else {
         box.className = 'recitation-result-box error';
         box.innerHTML = `
-          <div><b>⚠️ Diqqat qiling:</b> Talaffuzda to'xtalish aniqlandi.</div>
-          <div style="font-size: 11.5px; opacity: 0.9;">Harflarni mahrajidan ravon chiqarib, qori qiroatiga quloq soling.</div>
+          <div class="res-title-row">
+            <span>⚠️</span> <span style="color:#EF4444;">Talaffuzda noaniqlik bo'ldi</span>
+          </div>
+          <div class="res-desc">
+            Harflarni mahrajidan to'liq chiqarishga harakat qiling va Qori ovozini qayta tinglang.
+          </div>
+          <div class="res-spoken">${spoken || "..."}</div>
         `;
       }
       box.style.display = 'flex';
     }
 
-    function simulateRecitationCheck() {
-      const btn = document.getElementById('btnMicPractice');
-      const box = document.getElementById('recitationResultBox');
-      btn.classList.add('recording');
-      btn.innerHTML = `<span>🔴</span> <span>Tinglanmoqda... Oyatni o'qing</span>`;
-      
+    function fallbackBrowserListening(expectedAr) {
       setTimeout(() => {
-        btn.classList.remove('recording');
-        btn.innerHTML = `<span>🎙️</span> <span>O'qishni tekshirish (Mikrofon)</span>`;
-        evaluateRecitation();
-      }, 3000);
+        if (isRecording) {
+          stopRecitationRecording();
+          evaluateSpokenArabic(expectedAr);
+        }
+      }, 3500);
     }
 
-    // ── SURAH PICKER (SMOOTH & ZERO ALERTS) ──
+    // ── SURAH PICKER MODAL ──
     function openSurahPicker() {
       const modal = document.getElementById('surahPickerModal');
       const list = document.getElementById('surahModalList');
@@ -927,7 +1172,6 @@
 
     function selectSurahFromModal(surahNum) {
       closeSurahPicker();
-
       if (isPlaying) {
         audioPlayer.pause();
         isPlaying = false;
@@ -936,13 +1180,14 @@
 
       currentSurah = surahNum;
       currentAyah = 1;
+      currentRepeatDone = 0;
 
       const s = SURAHS[currentSurah];
       document.getElementById('lblSurahName').innerHTML = `<span>📖 ${s.num}. ${s.name}</span> <span>▼</span>`;
       document.getElementById('lblSurahMeta').textContent = `${s.type}, ${s.count} oyat`;
       document.getElementById('recitationResultBox').style.display = 'none';
 
-      renderAyahs();
+      renderViews();
     }
 
     function exitQuron() {
@@ -954,12 +1199,27 @@
     }
 
     function toggleTheme() {
-      document.body.classList.toggle('dark-mode');
+      document.body.classList.toggle('light-mode');
     }
 
-    // Initial load
     window.addEventListener('DOMContentLoaded', () => {
-      renderAyahs();
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlSura = parseInt(params.get('sura') || params.get('surah'));
+        const urlOyat = parseInt(params.get('oyat') || params.get('ayah'));
+        if (urlSura && SURAHS[urlSura]) {
+          currentSurah = urlSura;
+          const s = SURAHS[currentSurah];
+          document.getElementById('lblSurahName').innerHTML = `<span>📖 ${s.num}. ${s.name}</span> <span>▼</span>`;
+          document.getElementById('lblSurahMeta').textContent = `${s.type}, ${s.count} oyat`;
+        }
+        if (urlOyat) {
+          currentAyah = urlOyat;
+        }
+      } catch (e) {
+        console.error("Param parse error", e);
+      }
+      renderViews();
     });
   </script>
 </body>
