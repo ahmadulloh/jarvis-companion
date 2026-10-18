@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>JARVIS World TV & 3D Globe</title>
+  
+  <!-- HLS.js for Live Streaming -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
+  <!-- Three.js for Interactive 3D Holographic Globe -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-space: #070B14;
+      --bg-card: rgba(13, 21, 38, 0.85);
+      --bg-glass: rgba(17, 27, 49, 0.7);
+      --border-hud: rgba(0, 229, 255, 0.25);
+      --border-glow: rgba(0, 229, 255, 0.5);
+      --primary: #00E5FF;
+      --primary-glow: rgba(0, 229, 255, 0.35);
+      --accent-gold: #FFB300;
+      --accent-red: #FF3366;
+      --accent-green: #00E676;
+      --text-main: #FFFFFF;
+      --text-muted: #8FA2C4;
+      --sidebar-width: 360px;
+    }
+
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-space);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+      width: 100vw; height: 100vh;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── 1. CYBER HUD TOP BAR ───────────────────────────────── */
+    .hud-topbar {
+      height: 60px;
+      background: linear-gradient(180deg, rgba(7, 11, 20, 0.95) 0%, rgba(13, 21, 38, 0.8) 100%);
+      border-bottom: 1px solid var(--border-hud);
+      backdrop-filter: blur(14px);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 100; flex-shrink: 0;
+    }
+
+    .hud-brand {
+      display: flex; align-items: center; gap: 10px; cursor: pointer;
+    }
+    .brand-orb {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: radial-gradient(circle, var(--primary) 0%, #0077b6 70%, transparent 100%);
+      box-shadow: 0 0 15px var(--primary-glow);
+      position: relative; animation: pulseOrb 2.5s infinite alternate;
+    }
+    @keyframes pulseOrb {
+      0% { transform: scale(0.92); box-shadow: 0 0 8px var(--primary-glow); }
+      100% { transform: scale(1.08); box-shadow: 0 0 20px var(--primary); }
+    }
+    .brand-title {
+      font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 800;
+      letter-spacing: 1.5px; color: #fff;
+    }
+    .brand-title span { color: var(--primary); text-shadow: 0 0 10px var(--primary-glow); }
+
+    .hud-center-controls {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .country-chip-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border-hud);
+      padding: 6px 14px; border-radius: 20px; color: #fff;
+      font-size: 13px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .country-chip-btn:hover, .country-chip-btn:active {
+      border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow);
+    }
+    .time-badge {
+      font-family: 'Orbitron', monospace; font-size: 11px; color: var(--primary);
+      background: rgba(0, 229, 255, 0.1); padding: 2px 6px; border-radius: 6px;
+    }
+
+    .hud-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hud-btn {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--bg-card); border: 1px solid var(--border-hud);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.2s; font-size: 16px;
+    }
+    .hud-btn:hover, .hud-btn:active {
+      border-color: var(--primary); background: rgba(0, 229, 255, 0.15);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* ── 2. CATEGORIES CHIPS ROW ────────────────────────────── */
+    .category-pills-row {
+      height: 44px; background: rgba(10, 16, 29, 0.85);
+      border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+      display: flex; align-items: center; gap: 8px; padding: 0 14px;
+      overflow-x: auto; scrollbar-width: none; z-index: 90; flex-shrink: 0;
+    }
+    .category-pills-row::-webkit-scrollbar { display: none; }
+
+    .cat-pill {
+      padding: 5px 12px; border-radius: 14px; font-size: 12px; font-weight: 600;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted); cursor: pointer; white-space: nowrap; transition: 0.2s;
+    }
+    .cat-pill:hover { color: #fff; border-color: var(--primary); }
+    .cat-pill.active {
+      background: linear-gradient(135deg, rgba(0, 229, 255, 0.2), rgba(0, 176, 255, 0.4));
+      border-color: var(--primary); color: #fff; box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* ── 3. MAIN WORKSPACE (VIEWPORT + SIDEBAR) ──────────────── */
+    .hud-main {
+      flex: 1; display: flex; position: relative; overflow: hidden;
+    }
+
+    /* Left Stage: 3D Globe & Video Player Container */
+    .stage-container {
+      flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0B132B 0%, #070B14 80%);
+      overflow: hidden;
+    }
+
+    /* 3D WebGL Canvas */
+    #globeCanvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1; cursor: grab;
+    }
+    #globeCanvas:active { cursor: grabbing; }
+
+    /* Globe Overlay Info Box */
+    .globe-hud-overlay {
+      position: absolute; bottom: 20px; left: 20px; z-index: 10;
+      background: rgba(10, 16, 29, 0.8); border: 1px solid var(--border-hud);
+      padding: 12px 18px; border-radius: 14px; backdrop-filter: blur(10px);
+      pointer-events: none; max-width: 280px;
+    }
+    .gh-tag {
+      font-family: 'Orbitron', monospace; font-size: 10px; color: var(--primary);
+      letter-spacing: 1.5px; margin-bottom: 4px;
+    }
+    .gh-title { font-size: 16px; font-weight: 800; }
+    .gh-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Live Video Player Container */
+    .video-player-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 20; display: none; flex-direction: column;
+    }
+    .video-player-container.active { display: flex; }
+
+    .video-screen-box {
+      flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center;
+    }
+    video {
+      width: 100%; height: 100%; object-fit: contain; max-height: 100%;
+    }
+
+    /* Player Overlay Bar */
+    .player-top-overlay {
+      position: absolute; top: 12px; left: 16px; right: 16px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 30; pointer-events: none;
+    }
+    .live-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(255, 0, 55, 0.85); color: #fff;
+      font-size: 11px; font-weight: 800; font-family: 'Orbitron', monospace;
+      padding: 4px 10px; border-radius: 12px; letter-spacing: 1px;
+      box-shadow: 0 0 12px rgba(255, 0, 55, 0.6);
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #fff;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+
+    .player-ctrl-top {
+      pointer-events: auto; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-close-player {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent-red); border: none; color: #fff;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 12px rgba(255, 51, 102, 0.6); transition: 0.2s;
+    }
+    .btn-close-player:hover { transform: scale(1.1); }
+
+    /* Player Bottom Controls */
+    .player-bottom-bar {
+      height: 48px; background: rgba(7, 11, 20, 0.95);
+      border-top: 1px solid var(--border-hud); display: flex;
+      align-items: center; justify-content: space-between; padding: 0 16px;
+      z-index: 30; flex-shrink: 0;
+    }
+    .pbb-left {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .pbb-name {
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .pbb-lang {
+      font-size: 10px; font-weight: 700; color: var(--primary);
+      border: 1px solid var(--border-hud); padding: 2px 6px; border-radius: 6px;
+    }
+    .pbb-right {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .pbb-btn {
+      background: transparent; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 16px; padding: 4px; transition: 0.2s;
+    }
+    .pbb-btn:hover { color: var(--primary); }
+
+    /* ── 4. RIGHT SIDEBAR: CHANNELS LIST ────────────────────── */
+    .hud-sidebar {
+      width: var(--sidebar-width); height: 100%;
+      background: rgba(10, 16, 29, 0.92);
+      border-left: 1px solid var(--border-hud);
+      backdrop-filter: blur(16px);
+      display: flex; flex-direction: column; z-index: 50; flex-shrink: 0;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px; border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sh-title {
+      font-size: 16px; font-weight: 800; color: #fff;
+    }
+    .sh-sub {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+    .sh-clock {
+      font-family: 'Orbitron', monospace; font-size: 12px; font-weight: 700;
+      color: var(--primary); background: rgba(0, 229, 255, 0.08);
+      padding: 4px 8px; border-radius: 8px; border: 1px solid var(--border-hud);
+    }
+
+    /* Search inside sidebar */
+    .sidebar-search-box {
+      padding: 10px 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .search-input-wrap {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-hud);
+      border-radius: 12px; display: flex; align-items: center; padding: 0 12px; height: 38px;
+    }
+    .search-input-wrap input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: #fff; font-size: 13px; margin-left: 8px;
+    }
+    .search-input-wrap input::placeholder { color: rgba(255, 255, 255, 0.3); }
+
+    /* Channels Scroll List */
+    .channels-list-container {
+      flex: 1; overflow-y: auto; padding: 8px 10px;
+    }
+    .channels-list-container::-webkit-scrollbar { width: 5px; }
+    .channels-list-container::-webkit-scrollbar-thumb {
+      background: rgba(0, 229, 255, 0.2); border-radius: 10px;
+    }
+
+    /* Channel Card Item (Image 1 Style) */
+    .channel-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 14px; margin-bottom: 6px; border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .channel-item:hover {
+      background: rgba(0, 229, 255, 0.08); border-color: rgba(0, 229, 255, 0.3);
+      transform: translateX(-2px);
+    }
+    .channel-item.active {
+      background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%) !important;
+      color: #070B14 !important; border-color: transparent !important;
+      font-weight: 800; box-shadow: 0 4px 18px rgba(0, 201, 255, 0.4);
+    }
+    .channel-item.active .ci-name { color: #070B14 !important; }
+    .channel-item.active .ci-tag {
+      background: rgba(7, 11, 20, 0.2) !important; color: #070B14 !important;
+    }
+
+    .ci-left {
+      display: flex; align-items: center; gap: 10px; overflow: hidden;
+    }
+    .ci-flag { font-size: 18px; }
+    .ci-name {
+      font-size: 13.5px; font-weight: 600; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ci-tag {
+      font-size: 10px; font-weight: 700; color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.06); padding: 2px 6px; border-radius: 6px;
+      text-transform: uppercase;
+    }
+
+    /* ── 5. COUNTRY SELECTOR MODAL ──────────────────────────── */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(7, 11, 20, 0.85); backdrop-filter: blur(12px);
+      z-index: 200; display: none; align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-card {
+      width: 100%; max-width: 520px; max-height: 80vh;
+      background: #0E1629; border: 1px solid var(--border-hud);
+      border-radius: 20px; box-shadow: 0 0 35px var(--primary-glow);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px; border-bottom: 1px solid rgba(0, 229, 255, 0.2);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-search {
+      padding: 10px 18px; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .modal-countries-grid {
+      flex: 1; overflow-y: auto; padding: 12px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px;
+    }
+    .country-card-item {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: 0.2s;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .country-card-item:hover, .country-card-item.active {
+      border-color: var(--primary); background: rgba(0, 229, 255, 0.12);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+    .cci-top {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cci-flag { font-size: 20px; }
+    .cci-count {
+      font-size: 10px; font-weight: 700; color: var(--primary);
+      background: rgba(0, 229, 255, 0.1); padding: 1px 5px; border-radius: 6px;
+    }
+    .cci-name {
+      font-size: 12px; font-weight: 700; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 820px) {
+      .hud-main { flex-direction: column; }
+      .hud-sidebar {
+        width: 100%; height: 50%; border-left: none; border-top: 1px solid var(--border-hud);
+      }
+      .stage-container { height: 50%; }
+      .globe-hud-overlay { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. TOP HUD BAR -->
+  <header class="hud-topbar">
+    <div class="hud-brand" onclick="resetToGlobeView()">
+      <div class="brand-orb"></div>
+      <div class="brand-title">JARVIS <span>WORLD TV</span></div>
+    </div>
+
+    <div class="hud-center-controls">
+      <button class="country-chip-btn" id="btnOpenCountriesModal">
+        <span id="txtCountryFlag">🇺🇿</span>
+        <span id="txtCountryName">O'zbekiston</span>
+        <span class="time-badge" id="txtCountryClock">21:30</span>
+      </button>
+    </div>
+
+    <div class="hud-actions">
+      <!-- Random Lucky Channel Dice Button -->
+      <button class="hud-btn" id="btnRandomChannel" title="Tasodifiy Telekanal (Lucky Channel)">🎲</button>
+      <!-- Search Button -->
+      <button class="hud-btn" id="btnFocusSearch" title="Qidirish">🔍</button>
+      <!-- Toggle Globe / Player -->
+      <button class="hud-btn" id="btnToggleGlobeView" title="3D Kiber Globus">🌐</button>
+    </div>
+  </header>
+
+  <!-- 2. CATEGORIES CHIPS ROW -->
+  <nav class="category-pills-row">
+    <div class="cat-pill active" data-cat="all">🌍 Barcha Kanallar</div>
+    <div class="cat-pill" data-cat="movies">🎬 Kinolar (Movies)</div>
+    <div class="cat-pill" data-cat="news">📰 Yangiliklar (News)</div>
+    <div class="cat-pill" data-cat="sports">⚽ Sport</div>
+    <div class="cat-pill" data-cat="music">🎵 Musiqa</div>
+    <div class="cat-pill" data-cat="animation">👶 Bolalar &amp; Multfilm</div>
+    <div class="cat-pill" data-cat="documentary">📚 Hujjatli</div>
+    <div class="cat-pill" data-cat="culture">🕌 Madaniyat</div>
+  </nav>
+
+  <!-- 3. MAIN WORKSPACE -->
+  <main class="hud-main">
+    
+    <!-- LEFT STAGE: 3D GLOBE & VIDEO PLAYER -->
+    <div class="stage-container" id="stageContainer">
+      <!-- 3D WebGL Globe Canvas -->
+      <canvas id="globeCanvas"></canvas>
+
+      <!-- Globe Info HUD Box -->
+      <div class="globe-hud-overlay" id="globeHudOverlay">
+        <div class="gh-tag">KIBER GLOBUS · LIVE HUD</div>
+        <div class="gh-title" id="ghCountryTitle">🇺🇿 O'zbekiston</div>
+        <div class="gh-desc" id="ghCountryDesc">Poytaxt: Toshkent · 34 ta jonli telekanal faol</div>
+      </div>
+
+      <!-- Live Video Player Container -->
+      <div class="video-player-container" id="videoPlayerContainer">
+        <div class="video-screen-box">
+          <video id="liveVideo" playsinline autoplay controls></video>
+          
+          <!-- Top Overlay on Video (Live Badge + Close X) -->
+          <div class="player-top-overlay">
+            <div class="live-pill">
+              <span class="live-dot"></span>
+              <span>LIVE</span>
+            </div>
+            <div class="player-ctrl-top">
+              <button class="btn-close-player" id="btnClosePlayer" title="Globusga qaytish">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Controls Bar -->
+        <div class="player-bottom-bar">
+          <div class="pbb-left">
+            <span class="pbb-name" id="pbbChannelName">BIZ TV</span>
+            <span class="pbb-lang" id="pbbLangBadge">UZB</span>
+          </div>
+          <div class="pbb-right">
+            <button class="pbb-btn" id="btnPrevChannel" title="Oldingi kanal">⏮</button>
+            <button class="pbb-btn" id="btnNextChannel" title="Keyingi kanal">⏭</button>
+            <button class="pbb-btn" id="btnPiP" title="Kichik oyna (PiP)">⧉</button>
+            <button class="pbb-btn" id="btnFullscreen" title="To'liq ekran">⛶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR: CHANNELS LIST -->
+    <aside class="hud-sidebar" id="hudSidebar">
+      <div class="sidebar-header">
+        <div>
+          <div class="sh-title" id="sbCountryTitle">O'zbekiston</div>
+          <div class="sh-sub" id="sbChannelCount">34 ta telekanal</div>
+        </div>
+        <div class="sh-clock" id="sbClock">9:23 PM</div>
+      </div>
+
+      <div class="sidebar-search-box">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="inputChannelSearch" placeholder="Kanal nomi yoki soha bo'yicha qidiring...">
+        </div>
+      </div>
+
+      <div class="channels-list-container" id="channelsListContainer">
+        <!-- Rendered channel cards -->
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- 4. COUNTRIES SELECTOR MODAL -->
+  <div class="modal-overlay" id="countriesModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:16px; font-weight:800;">🌍 Dunyo Davlatlari (173+)</h3>
+        <span style="cursor:pointer; font-size:18px;" id="btnCloseCountriesModal">✕</span>
+      </div>
+      <div class="modal-search">
+        <div class="search-input-wrap">
+          <span>🔍</span>
+          <input type="text" id="inputCountrySearch" placeholder="Davlatni qidiring (masalan: Turkiya, AQSh, Rossiya)...">
+        </div>
+      </div>
+      <div class="modal-countries-grid" id="countriesGridContainer">
+        <!-- Country cards -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── STATE VARIABLES ──────────────────────────────────────────
+    const ALL_COUNTRIES = [{"code": "us", "name": "AQSH (AQSh)", "capital": "Washington, D.C.", "timeZone": "America/New_York", "channelCount": 1416, "flag": "🇺🇸", "isPopular": true}, {"code": "ae", "name": "BAA (Dubay)", "capital": "Abu Dhabi", "timeZone": "Asia/Dubai", "channelCount": 33, "flag": "🇦🇪", "isPopular": true}, {"code": "br", "name": "Braziliya", "capital": "Brasília", "timeZone": "America/Sao_Paulo", "channelCount": 131, "flag": "🇧🇷", "isPopular": true}, {"code": "fr", "name": "Fransiya", "capital": "Paris", "timeZone": "Europe/Paris", "channelCount": 149, "flag": "🇫🇷", "isPopular": true}, {"code": "de", "name": "Germaniya", "capital": "Berlin", "timeZone": "Europe/Berlin", "channelCount": 169, "flag": "🇩🇪", "isPopular": true}, {"code": "in", "name": "Hindiston", "capital": "New Delhi", "timeZone": "Asia/Kolkata", "channelCount": 595, "flag": "🇮🇳", "isPopular": true}, {"code": "es", "name": "Ispaniya", "capital": "Madrid", "timeZone": "Europe/Madrid", "channelCount": 141, "flag": "🇪🇸", "isPopular": true}, {"code": "it", "name": "Italiya", "capital": "Rome", "timeZone": "Europe/Rome", "channelCount": 182, "flag": "🇮🇹", "isPopular": true}, {"code": "kr", "name": "Janubiy Koreya", "capital": "Seoul", "timeZone": "Asia/Seoul", "channelCount": 71, "flag": "🇰🇷", "isPopular": true}, {"code": "eg", "name": "Misr", "capital": "Cairo", "timeZone": "Africa/Cairo", "channelCount": 12, "flag": "🇪🇬", "isPopular": true}, {"code": "uz", "name": "O'zbekiston", "capital": "Tashkent", "timeZone": "Asia/Tashkent", "channelCount": 34, "flag": "🇺🇿", "isPopular": true}, {"code": "az", "name": "Ozarbayjon", "capital": "Baku", "timeZone": "Asia/Baku", "channelCount": 15, "flag": "🇦🇿", "isPopular": true}, {"code": "kz", "name": "Qozog'iston", "capital": "Nur-Sultan", "timeZone": "Asia/Almaty", "channelCount": 16, "flag": "🇰🇿", "isPopular": true}, {"code": "ru", "name": "Rossiya", "capital": "Moscow", "timeZone": "Europe/Moscow", "channelCount": 228, "flag": "🇷🇺", "isPopular": true}, {"code": "sa", "name": "Saudiya Arabistoni", "capital": "Riyadh", "timeZone": "Asia/Riyadh", "channelCount": 31, "flag": "🇸🇦", "isPopular": true}, {"code": "tr", "name": "Turkiya", "capital": "Ankara", "timeZone": "Europe/Istanbul", "channelCount": 167, "flag": "🇹🇷", "isPopular": true}, {"code": "jp", "name": "Yaponiya", "capital": "Tokyo", "timeZone": "Asia/Tokyo", "channelCount": 33, "flag": "🇯🇵", "isPopular": true}, {"code": "af", "name": "Afghanistan", "capital": "Kabul", "timeZone": "Asia/Kabul", "channelCount": 14, "flag": "🇦🇫", "isPopular": false}, {"code": "al", "name": "Albania", "capital": "Tirana", "timeZone": "Europe/Tirane", "channelCount": 9, "flag": "🇦🇱", "isPopular": false}, {"code": "dz", "name": "Algeria", "capital": "Algiers", "timeZone": "Africa/Algiers", "channelCount": 3, "flag": "🇩🇿", "isPopular": false}, {"code": "ad", "name": "Andorra", "capital": "Andorra la Vella", "timeZone": "Europe/Andorra", "channelCount": 2, "flag": "🇦🇩", "isPopular": false}, {"code": "ao", "name": "Angola", "capital": "Luanda", "timeZone": "Africa/Luanda", "channelCount": 3, "flag": "🇦🇴", "isPopular": false}, {"code": "ag", "name": "Antigua and Barbuda", "capital": "St. John's", "timeZone": "America/Antigua", "channelCount": 1, "flag": "🇦🇬", "isPopular": false}, {"code": "ar", "name": "Argentina", "capital": "Buenos Aires", "timeZone": "America/Argentina/Buenos_Aires", "channelCount": 151, "flag": "🇦🇷", "isPopular": false}, {"code": "am", "name": "Armenia", "capital": "Yerevan", "timeZone": "Asia/Yerevan", "channelCount": 4, "flag": "🇦🇲", "isPopular": false}, {"code": "aw", "name": "Aruba", "capital": "Oranjestad", "timeZone": "America/Aruba", "channelCount": 9, "flag": "🇦🇼", "isPopular": false}, {"code": "au", "name": "Australia", "capital": "Canberra", "timeZone": "Australia/Sydney", "channelCount": 52, "flag": "🇦🇺", "isPopular": false}, {"code": "at", "name": "Austria", "capital": "Vienna", "timeZone": "Europe/Vienna", "channelCount": 36, "flag": "🇦🇹", "isPopular": false}, {"code": "bs", "name": "Bahamas", "capital": "Nassau", "timeZone": "America/Nassau", "channelCount": 2, "flag": "🇧🇸", "isPopular": false}, {"code": "bh", "name": "Bahrain", "capital": "Manama", "timeZone": "Asia/Bahrain", "channelCount": 5, "flag": "🇧🇭", "isPopular": false}, {"code": "bd", "name": "Bangladesh", "capital": "Dhaka", "timeZone": "Asia/Dhaka", "channelCount": 21, "flag": "🇧🇩", "isPopular": false}, {"code": "by", "name": "Belarus", "capital": "Minsk", "timeZone": "Europe/Minsk", "channelCount": 14, "flag": "🇧🇾", "isPopular": false}, {"code": "be", "name": "Belgium", "capital": "Brussels", "timeZone": "Europe/Brussels", "channelCount": 20, "flag": "🇧🇪", "isPopular": false}, {"code": "bz", "name": "Belize", "capital": "Belmopan", "timeZone": "America/Belize", "channelCount": 1, "flag": "🇧🇿", "isPopular": false}, {"code": "bj", "name": "Benin", "capital": "Porto-Novo", "timeZone": "Africa/Porto-Novo", "channelCount": 5, "flag": "🇧🇯", "isPopular": false}, {"code": "bo", "name": "Bolivia", "capital": "Sucre", "timeZone": "America/La_Paz", "channelCount": 48, "flag": "🇧🇴", "isPopular": false}, {"code": "bq", "name": "Bonaire", "capital": "Kralendijk", "timeZone": "America/Kralendijk", "channelCount": 4, "flag": "🇧🇶", "isPopular": false}, {"code": "ba", "name": "Bosnia and Herzegovina", "capital": "Sarajevo", "timeZone": "Europe/Sarajevo", "channelCount": 7, "flag": "🇧🇦", "isPopular": false}, {"code": "vg", "name": "British Virgin Islands", "capital": "Road Town", "timeZone": "America/Tortola", "channelCount": 2, "flag": "🇻🇬", "isPopular": false}, {"code": "bg", "name": "Bulgaria", "capital": "Sofia", "timeZone": "Europe/Sofia", "channelCount": 18, "flag": "🇧🇬", "isPopular": false}, {"code": "bf", "name": "Burkina Faso", "capital": "Ouagadougou", "timeZone": "Africa/Ouagadougou", "channelCount": 2, "flag": "🇧🇫", "isPopular": false}, {"code": "kh", "name": "Cambodia", "capital": "Phnom Penh", "timeZone": "Asia/Phnom_Penh", "channelCount": 11, "flag": "🇰🇭", "isPopular": false}, {"code": "cm", "name": "Cameroon", "capital": "Yaoundé", "timeZone": "Africa/Douala", "channelCount": 7, "flag": "🇨🇲", "isPopular": false}, {"code": "ca", "name": "Canada", "capital": "Ottawa", "timeZone": "America/Toronto", "channelCount": 160, "flag": "🇨🇦", "isPopular": false}, {"code": "cv", "name": "Cape Verde", "capital": "Praia", "timeZone": "Atlantic/Cape_Verde", "channelCount": 1, "flag": "🇨🇻", "isPopular": false}, {"code": "td", "name": "Chad", "capital": "N'Djamena", "timeZone": "Africa/Ndjamena", "channelCount": 1, "flag": "🇹🇩", "isPopular": false}, {"code": "cl", "name": "Chile", "capital": "Santiago", "timeZone": "America/Santiago", "channelCount": 184, "flag": "🇨🇱", "isPopular": false}, {"code": "cn", "name": "China", "capital": "Beijing", "timeZone": "Asia/Shanghai", "channelCount": 76, "flag": "🇨🇳", "isPopular": false}, {"code": "co", "name": "Colombia", "capital": "Bogotá", "timeZone": "America/Bogota", "channelCount": 75, "flag": "🇨🇴", "isPopular": false}, {"code": "cg", "name": "Congo", "capital": "Brazzaville", "timeZone": "Africa/Brazzaville", "channelCount": 2, "flag": "🇨🇬", "isPopular": false}, {"code": "cr", "name": "Costa Rica", "capital": "San José", "timeZone": "America/Costa_Rica", "channelCount": 49, "flag": "🇨🇷", "isPopular": false}, {"code": "hr", "name": "Croatia", "capital": "Zagreb", "timeZone": "Europe/Zagreb", "channelCount": 8, "flag": "🇭🇷", "isPopular": false}, {"code": "cu", "name": "Cuba", "capital": "Havana", "timeZone": "America/Havana", "channelCount": 1, "flag": "🇨🇺", "isPopular": false}, {"code": "cw", "name": "Curaçao", "capital": "Willemstad", "timeZone": "America/Curacao", "channelCount": 3, "flag": "🇨🇼", "isPopular": false}, {"code": "cy", "name": "Cyprus", "capital": "Nicosia", "timeZone": "Asia/Nicosia", "channelCount": 14, "flag": "🇨🇾", "isPopular": false}, {"code": "cz", "name": "Czechia", "capital": "Prague", "timeZone": "Europe/Prague", "channelCount": 27, "flag": "🇨🇿", "isPopular": false}, {"code": "cd", "name": "DR Congo", "capital": "Kinshasa", "timeZone": "Africa/Kinshasa", "channelCount": 4, "flag": "🇨🇩", "isPopular": false}, {"code": "dk", "name": "Denmark", "capital": "Copenhagen", "timeZone": "Europe/Copenhagen", "channelCount": 4, "flag": "🇩🇰", "isPopular": false}, {"code": "dj", "name": "Djibouti", "capital": "Djibouti", "timeZone": "Africa/Djibouti", "channelCount": 1, "flag": "🇩🇯", "isPopular": false}, {"code": "do", "name": "Dominican Republic", "capital": "Santo Domingo", "timeZone": "America/Santo_Domingo", "channelCount": 169, "flag": "🇩🇴", "isPopular": false}, {"code": "ec", "name": "Ecuador", "capital": "Quito", "timeZone": "America/Guayaquil", "channelCount": 45, "flag": "🇪🇨", "isPopular": false}, {"code": "sv", "name": "El Salvador", "capital": "San Salvador", "timeZone": "America/El_Salvador", "channelCount": 14, "flag": "🇸🇻", "isPopular": false}, {"code": "gq", "name": "Equatorial Guinea", "capital": "Malabo", "timeZone": "Africa/Malabo", "channelCount": 1, "flag": "🇬🇶", "isPopular": false}, {"code": "er", "name": "Eritrea", "capital": "Asmara", "timeZone": "Africa/Asmara", "channelCount": 1, "flag": "🇪🇷", "isPopular": false}, {"code": "ee", "name": "Estonia", "capital": "Tallinn", "timeZone": "Europe/Tallinn", "channelCount": 11, "flag": "🇪🇪", "isPopular": false}, {"code": "et", "name": "Ethiopia", "capital": "Addis Ababa", "timeZone": "Africa/Addis_Ababa", "channelCount": 1, "flag": "🇪🇹", "isPopular": false}, {"code": "fo", "name": "Faroe Islands", "capital": "Tórshavn", "timeZone": "Atlantic/Faroe", "channelCount": 1, "flag": "🇫🇴", "isPopular": false}, {"code": "fi", "name": "Finland", "capital": "Helsinki", "timeZone": "Europe/Helsinki", "channelCount": 20, "flag": "🇫🇮", "isPopular": false}, {"code": "gf", "name": "French Guiana", "capital": "Cayenne", "timeZone": "America/Cayenne", "channelCount": 1, "flag": "🇬🇫", "isPopular": false}, {"code": "gm", "name": "Gambia", "capital": "Banjul", "timeZone": "Africa/Banjul", "channelCount": 1, "flag": "🇬🇲", "isPopular": false}, {"code": "ge", "name": "Georgia", "capital": "Tbilisi", "timeZone": "Asia/Tbilisi", "channelCount": 8, "flag": "🇬🇪", "isPopular": false}, {"code": "gh", "name": "Ghana", "capital": "Accra", "timeZone": "Africa/Accra", "channelCount": 7, "flag": "🇬🇭", "isPopular": false}, {"code": "gr", "name": "Greece", "capital": "Athens", "timeZone": "Europe/Athens", "channelCount": 52, "flag": "🇬🇷", "isPopular": false}, {"code": "gl", "name": "Greenland", "capital": "Nuuk", "timeZone": "America/Nuuk", "channelCount": 2, "flag": "🇬🇱", "isPopular": false}, {"code": "gp", "name": "Guadeloupe", "capital": "Basse-Terre", "timeZone": "America/Guadeloupe", "channelCount": 5, "flag": "🇬🇵", "isPopular": false}, {"code": "gu", "name": "Guam", "capital": "Hagåtña", "timeZone": "Pacific/Guam", "channelCount": 1, "flag": "🇬🇺", "isPopular": false}, {"code": "gt", "name": "Guatemala", "capital": "Guatemala City", "timeZone": "America/Guatemala", "channelCount": 28, "flag": "🇬🇹", "isPopular": false}, {"code": "gn", "name": "Guinea", "capital": "Conakry", "timeZone": "Africa/Conakry", "channelCount": 3, "flag": "🇬🇳", "isPopular": false}, {"code": "gy", "name": "Guyana", "capital": "Georgetown", "timeZone": "America/Guyana", "channelCount": 2, "flag": "🇬🇾", "isPopular": false}, {"code": "ht", "name": "Haiti", "capital": "Port-au-Prince", "timeZone": "America/Port-au-Prince", "channelCount": 6, "flag": "🇭🇹", "isPopular": false}, {"code": "hn", "name": "Honduras", "capital": "Tegucigalpa", "timeZone": "America/Tegucigalpa", "channelCount": 46, "flag": "🇭🇳", "isPopular": false}, {"code": "hk", "name": "Hong Kong", "capital": "Hong Kong", "timeZone": "Asia/Hong_Kong", "channelCount": 5, "flag": "🇭🇰", "isPopular": false}, {"code": "hu", "name": "Hungary", "capital": "Budapest", "timeZone": "Europe/Budapest", "channelCount": 26, "flag": "🇭🇺", "isPopular": false}, {"code": "is", "name": "Iceland", "capital": "Reykjavik", "timeZone": "Atlantic/Reykjavik", "channelCount": 4, "flag": "🇮🇸", "isPopular": false}, {"code": "id", "name": "Indonesia", "capital": "Jakarta", "timeZone": "Asia/Jakarta", "channelCount": 105, "flag": "🇮🇩", "isPopular": false}, {"code": "ir", "name": "Iran", "capital": "Tehran", "timeZone": "Asia/Tehran", "channelCount": 62, "flag": "🇮🇷", "isPopular": false}, {"code": "iq", "name": "Iraq", "capital": "Baghdad", "timeZone": "Asia/Baghdad", "channelCount": 44, "flag": "🇮🇶", "isPopular": false}, {"code": "ie", "name": "Ireland", "capital": "Dublin", "timeZone": "Europe/Dublin", "channelCount": 1, "flag": "🇮🇪", "isPopular": false}, {"code": "il", "name": "Israel", "capital": "Jerusalem", "timeZone": "Asia/Jerusalem", "channelCount": 18, "flag": "🇮🇱", "isPopular": false}, {"code": "ci", "name": "Ivory Coast", "capital": "Yamoussoukro", "timeZone": "Africa/Abidjan", "channelCount": 12, "flag": "🇨🇮", "isPopular": false}, {"code": "jm", "name": "Jamaica", "capital": "Kingston", "timeZone": "America/Jamaica", "channelCount": 6, "flag": "🇯🇲", "isPopular": false}, {"code": "jo", "name": "Jordan", "capital": "Amman", "timeZone": "Asia/Amman", "channelCount": 13, "flag": "🇯🇴", "isPopular": false}, {"code": "ke", "name": "Kenya", "capital": "Nairobi", "timeZone": "Africa/Nairobi", "channelCount": 11, "flag": "🇰🇪", "isPopular": false}, {"code": "xk", "name": "Kosovo", "capital": "Pristina", "timeZone": "Europe/Belgrade", "channelCount": 5, "flag": "🇽🇰", "isPopular": false}, {"code": "kw", "name": "Kuwait", "capital": "Kuwait City", "timeZone": "Asia/Kuwait", "channelCount": 11, "flag": "🇰🇼", "isPopular": false}, {"code": "la", "name": "Laos", "capital": "Vientiane", "timeZone": "Asia/Vientiane", "channelCount": 9, "flag": "🇱🇦", "isPopular": false}, {"code": "lv", "name": "Latvia", "capital": "Riga", "timeZone": "Europe/Riga", "channelCount": 6, "flag": "🇱🇻", "isPopular": false}, {"code": "lb", "name": "Lebanon", "capital": "Beirut", "timeZone": "Asia/Beirut", "channelCount": 19, "flag": "🇱🇧", "isPopular": false}, {"code": "ly", "name": "Libya", "capital": "Tripoli", "timeZone": "Africa/Tripoli", "channelCount": 3, "flag": "🇱🇾", "isPopular": false}, {"code": "lt", "name": "Lithuania", "capital": "Vilnius", "timeZone": "Europe/Vilnius", "channelCount": 6, "flag": "🇱🇹", "isPopular": false}, {"code": "lu", "name": "Luxembourg", "capital": "Luxembourg", "timeZone": "Europe/Luxembourg", "channelCount": 9, "flag": "🇱🇺", "isPopular": false}, {"code": "my", "name": "Malaysia", "capital": "Kuala Lumpur", "timeZone": "Asia/Kuala_Lumpur", "channelCount": 5, "flag": "🇲🇾", "isPopular": false}, {"code": "mv", "name": "Maldives", "capital": "Malé", "timeZone": "Indian/Maldives", "channelCount": 4, "flag": "🇲🇻", "isPopular": false}, {"code": "ml", "name": "Mali", "capital": "Bamako", "timeZone": "Africa/Bamako", "channelCount": 1, "flag": "🇲🇱", "isPopular": false}, {"code": "mt", "name": "Malta", "capital": "Valletta", "timeZone": "Europe/Malta", "channelCount": 2, "flag": "🇲🇹", "isPopular": false}, {"code": "mq", "name": "Martinique", "capital": "Fort-de-France", "timeZone": "America/Martinique", "channelCount": 5, "flag": "🇲🇶", "isPopular": false}, {"code": "mr", "name": "Mauritania", "capital": "Nouakchott", "timeZone": "Africa/Nouakchott", "channelCount": 1, "flag": "🇲🇷", "isPopular": false}, {"code": "mx", "name": "Mexico", "capital": "Mexico City", "timeZone": "America/Mexico_City", "channelCount": 110, "flag": "🇲🇽", "isPopular": false}, {"code": "md", "name": "Moldova", "capital": "Chisinau", "timeZone": "Europe/Chisinau", "channelCount": 11, "flag": "🇲🇩", "isPopular": false}, {"code": "mc", "name": "Monaco", "capital": "Monaco", "timeZone": "Europe/Monaco", "channelCount": 3, "flag": "🇲🇨", "isPopular": false}, {"code": "mn", "name": "Mongolia", "capital": "Ulaanbaatar", "timeZone": "Asia/Ulaanbaatar", "channelCount": 4, "flag": "🇲🇳", "isPopular": false}, {"code": "me", "name": "Montenegro", "capital": "Podgorica", "timeZone": "Europe/Podgorica", "channelCount": 2, "flag": "🇲🇪", "isPopular": false}, {"code": "ma", "name": "Morocco", "capital": "Rabat", "timeZone": "Africa/Casablanca", "channelCount": 6, "flag": "🇲🇦", "isPopular": false}, {"code": "mz", "name": "Mozambique", "capital": "Maputo", "timeZone": "Africa/Maputo", "channelCount": 4, "flag": "🇲🇿", "isPopular": false}, {"code": "mm", "name": "Myanmar", "capital": "Nay Pyi Taw", "timeZone": "Asia/Yangon", "channelCount": 9, "flag": "🇲🇲", "isPopular": false}, {"code": "na", "name": "Namibia", "capital": "Windhoek", "timeZone": "Africa/Windhoek", "channelCount": 1, "flag": "🇳🇦", "isPopular": false}, {"code": "np", "name": "Nepal", "capital": "Kathmandu", "timeZone": "Asia/Kathmandu", "channelCount": 10, "flag": "🇳🇵", "isPopular": false}, {"code": "nl", "name": "Netherlands", "capital": "Amsterdam", "timeZone": "Europe/Amsterdam", "channelCount": 106, "flag": "🇳🇱", "isPopular": false}, {"code": "nc", "name": "New Caledonia", "capital": "Nouméa", "timeZone": "Pacific/Noumea", "channelCount": 1, "flag": "🇳🇨", "isPopular": false}, {"code": "nz", "name": "New Zealand", "capital": "Wellington", "timeZone": "Pacific/Auckland", "channelCount": 17, "flag": "🇳🇿", "isPopular": false}, {"code": "ni", "name": "Nicaragua", "capital": "Managua", "timeZone": "America/Managua", "channelCount": 5, "flag": "🇳🇮", "isPopular": false}, {"code": "ne", "name": "Niger", "capital": "Niamey", "timeZone": "Africa/Niamey", "channelCount": 2, "flag": "🇳🇪", "isPopular": false}, {"code": "ng", "name": "Nigeria", "capital": "Abuja", "timeZone": "Africa/Lagos", "channelCount": 36, "flag": "🇳🇬", "isPopular": false}, {"code": "kp", "name": "North Korea", "capital": "Pyongyang", "timeZone": "Asia/Pyongyang", "channelCount": 1, "flag": "🇰🇵", "isPopular": false}, {"code": "mk", "name": "North Macedonia", "capital": "Skopje", "timeZone": "Europe/Skopje", "channelCount": 2, "flag": "🇲🇰", "isPopular": false}, {"code": "no", "name": "Norway", "capital": "Oslo", "timeZone": "Europe/Oslo", "channelCount": 1, "flag": "🇳🇴", "isPopular": false}, {"code": "om", "name": "Oman", "capital": "Muscat", "timeZone": "Asia/Muscat", "channelCount": 5, "flag": "🇴🇲", "isPopular": false}, {"code": "pk", "name": "Pakistan", "capital": "Islamabad", "timeZone": "Asia/Karachi", "channelCount": 69, "flag": "🇵🇰", "isPopular": false}, {"code": "ps", "name": "Palestine", "capital": "East Jerusalem", "timeZone": "Asia/Hebron", "channelCount": 14, "flag": "🇵🇸", "isPopular": false}, {"code": "pa", "name": "Panama", "capital": "Panama City", "timeZone": "America/Panama", "channelCount": 12, "flag": "🇵🇦", "isPopular": false}, {"code": "pg", "name": "Papua New Guinea", "capital": "Port Moresby", "timeZone": "Pacific/Port_Moresby", "channelCount": 1, "flag": "🇵🇬", "isPopular": false}, {"code": "py", "name": "Paraguay", "capital": "Asunción", "timeZone": "America/Asuncion", "channelCount": 46, "flag": "🇵🇾", "isPopular": false}, {"code": "pe", "name": "Peru", "capital": "Lima", "timeZone": "America/Lima", "channelCount": 96, "flag": "🇵🇪", "isPopular": false}, {"code": "ph", "name": "Philippines", "capital": "Manila", "timeZone": "Asia/Manila", "channelCount": 14, "flag": "🇵🇭", "isPopular": false}, {"code": "pl", "name": "Poland", "capital": "Warsaw", "timeZone": "Europe/Warsaw", "channelCount": 70, "flag": "🇵🇱", "isPopular": false}, {"code": "pt", "name": "Portugal", "capital": "Lisbon", "timeZone": "Europe/Lisbon", "channelCount": 32, "flag": "🇵🇹", "isPopular": false}, {"code": "pr", "name": "Puerto Rico", "capital": "San Juan", "timeZone": "America/Puerto_Rico", "channelCount": 26, "flag": "🇵🇷", "isPopular": false}, {"code": "qa", "name": "Qatar", "capital": "Doha", "timeZone": "Asia/Qatar", "channelCount": 23, "flag": "🇶🇦", "isPopular": false}, {"code": "ro", "name": "Romania", "capital": "Bucharest", "timeZone": "Europe/Bucharest", "channelCount": 87, "flag": "🇷🇴", "isPopular": false}, {"code": "rw", "name": "Rwanda", "capital": "Kigali", "timeZone": "Africa/Kigali", "channelCount": 5, "flag": "🇷🇼", "isPopular": false}, {"code": "re", "name": "Réunion", "capital": "Saint-Denis", "timeZone": "Indian/Reunion", "channelCount": 1, "flag": "🇷🇪", "isPopular": false}, {"code": "kn", "name": "Saint Kitts and Nevis", "capital": "Basseterre", "timeZone": "America/St_Kitts", "channelCount": 3, "flag": "🇰🇳", "isPopular": false}, {"code": "lc", "name": "Saint Lucia", "capital": "Castries", "timeZone": "America/St_Lucia", "channelCount": 2, "flag": "🇱🇨", "isPopular": false}, {"code": "sn", "name": "Senegal", "capital": "Dakar", "timeZone": "Africa/Dakar", "channelCount": 8, "flag": "🇸🇳", "isPopular": false}, {"code": "rs", "name": "Serbia", "capital": "Belgrade", "timeZone": "Europe/Belgrade", "channelCount": 12, "flag": "🇷🇸", "isPopular": false}, {"code": "sl", "name": "Sierra Leone", "capital": "Freetown", "timeZone": "Africa/Freetown", "channelCount": 1, "flag": "🇸🇱", "isPopular": false}, {"code": "sg", "name": "Singapore", "capital": "Singapore", "timeZone": "Asia/Singapore", "channelCount": 9, "flag": "🇸🇬", "isPopular": false}, {"code": "sx", "name": "Sint Maarten", "capital": "Philipsburg", "timeZone": "America/Lower_Princes", "channelCount": 5, "flag": "🇸🇽", "isPopular": false}, {"code": "sk", "name": "Slovakia", "capital": "Bratislava", "timeZone": "Europe/Bratislava", "channelCount": 27, "flag": "🇸🇰", "isPopular": false}, {"code": "si", "name": "Slovenia", "capital": "Ljubljana", "timeZone": "Europe/Ljubljana", "channelCount": 4, "flag": "🇸🇮", "isPopular": false}, {"code": "so", "name": "Somalia", "capital": "Mogadishu", "timeZone": "Africa/Mogadishu", "channelCount": 1, "flag": "🇸🇴", "isPopular": false}, {"code": "za", "name": "South Africa", "capital": "Pretoria", "timeZone": "Africa/Johannesburg", "channelCount": 20, "flag": "🇿🇦", "isPopular": false}, {"code": "lk", "name": "Sri Lanka", "capital": "Sri Jayawardenepura Kotte", "timeZone": "Asia/Colombo", "channelCount": 13, "flag": "🇱🇰", "isPopular": false}, {"code": "sd", "name": "Sudan", "capital": "Khartoum", "timeZone": "Africa/Khartoum", "channelCount": 2, "flag": "🇸🇩", "isPopular": false}, {"code": "sr", "name": "Suriname", "capital": "Paramaribo", "timeZone": "America/Paramaribo", "channelCount": 2, "flag": "🇸🇷", "isPopular": false}, {"code": "se", "name": "Sweden", "capital": "Stockholm", "timeZone": "Europe/Stockholm", "channelCount": 14, "flag": "🇸🇪", "isPopular": false}, {"code": "ch", "name": "Switzerland", "capital": "Bern", "timeZone": "Europe/Zurich", "channelCount": 18, "flag": "🇨🇭", "isPopular": false}, {"code": "sy", "name": "Syria", "capital": "Damascus", "timeZone": "Asia/Damascus", "channelCount": 8, "flag": "🇸🇾", "isPopular": false}, {"code": "tw", "name": "Taiwan", "capital": "Taipei", "timeZone": "Asia/Taipei", "channelCount": 35, "flag": "🇹🇼", "isPopular": false}, {"code": "tz", "name": "Tanzania", "capital": "Dodoma", "timeZone": "Africa/Dar_es_Salaam", "channelCount": 2, "flag": "🇹🇿", "isPopular": false}, {"code": "th", "name": "Thailand", "capital": "Bangkok", "timeZone": "Asia/Bangkok", "channelCount": 52, "flag": "🇹🇭", "isPopular": false}, {"code": "tg", "name": "Togo", "capital": "Lomé", "timeZone": "Africa/Lome", "channelCount": 7, "flag": "🇹🇬", "isPopular": false}, {"code": "tt", "name": "Trinidad and Tobago", "capital": "Port of Spain", "timeZone": "America/Port_of_Spain", "channelCount": 5, "flag": "🇹🇹", "isPopular": false}, {"code": "tn", "name": "Tunisia", "capital": "Tunis", "timeZone": "Africa/Tunis", "channelCount": 4, "flag": "🇹🇳", "isPopular": false}, {"code": "ug", "name": "Uganda", "capital": "Kampala", "timeZone": "Africa/Kampala", "channelCount": 10, "flag": "🇺🇬", "isPopular": false}, {"code": "ua", "name": "Ukraine", "capital": "Kyiv", "timeZone": "Europe/Kiev", "channelCount": 66, "flag": "🇺🇦", "isPopular": false}, {"code": "uk", "name": "United Kingdom", "capital": "London", "timeZone": "Europe/London", "channelCount": 221, "flag": "🇺🇰", "isPopular": false}, {"code": "uy", "name": "Uruguay", "capital": "Montevideo", "timeZone": "America/Montevideo", "channelCount": 2, "flag": "🇺🇾", "isPopular": false}, {"code": "ve", "name": "Venezuela", "capital": "Caracas", "timeZone": "America/Caracas", "channelCount": 44, "flag": "🇻🇪", "isPopular": false}, {"code": "vn", "name": "Vietnam", "capital": "Hanoi", "timeZone": "Asia/Ho_Chi_Minh", "channelCount": 42, "flag": "🇻🇳", "isPopular": false}, {"code": "eh", "name": "Western Sahara", "capital": "El Aaiún", "timeZone": "Africa/El_Aaiun", "channelCount": 1, "flag": "🇪🇭", "isPopular": false}, {"code": "ye", "name": "Yemen", "capital": "Sana'a", "timeZone": "Asia/Aden", "channelCount": 3, "flag": "🇾🇪", "isPopular": false}, {"code": "zw", "name": "Zimbabwe", "capital": "Harare", "timeZone": "Africa/Harare", "channelCount": 1, "flag": "🇿🇼", "isPopular": false}];
+    let currentChannels = [{"nanoid": "MrDAdB1Ld8qhDL", "name": "Aqlvoy", "sources": {"streams": ["https://stream8.cinerama.uz/1205/tracks-v1a1/mono.m3u8"]}, "languages": ["eng", "rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "FWhDbCLuy2F57c", "name": "BIZ Cinema", "sources": {"streams": ["https://fl.biztv.media/cinema_720_EMfSyXgoRdiIHgldXTZICucKTIeCKO/index.m3u8", "https://stream8.cinerama.uz/1213/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "Xmm3LX5dLU22wn", "name": "BIZ Music", "sources": {"streams": ["https://fl.biztv.media/music_720_QAKpGmVUjaPApCNjpsgBxrdqNihAkl/index.m3u8", "https://stream8.cinerama.uz/1212/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "B57EXBA3NLspPl", "name": "BIZ TV", "sources": {"streams": ["https://fl.biztv.media/biz_tv_720_uni8jhub4h8fub4idejswh8dh3j94finbu4nidj39inwsj92in3d/index.m3u8", "https://stream8.cinerama.uz/1211/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "L2FPG37MOC7Wok", "name": "Bolajon", "sources": {"streams": ["https://stream8.cinerama.uz/1007/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "p0LmxAo37VlDGs", "name": "Cheksiz TV", "sources": {"streams": ["https://fl.biztv.media/cheksiz_tv_480_unif7hujidth7f4du83jrhuid3k94j8hfj8d93eubych8eju93n4ubt/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "WM8ZbaFb6rajI2", "name": "Dasturxon TV", "sources": {"streams": ["https://stream8.cinerama.uz/1206/tracks-v1a1/playlist.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "OSYyq5HUKntW2J", "name": "Dunyo bo'ylab", "sources": {"streams": ["https://stream8.cinerama.uz/1006/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "VNlFb5mrIGiyvJ", "name": "Farg'ona MTRK", "sources": {"streams": ["https://stream8.cinerama.uz/1458/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "Et7cnSonRNZOTr", "name": "FTV", "sources": {"streams": ["https://stream8.cinerama.uz/1018/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "zSqcM4N6tJjo6K", "name": "Futbol TV", "sources": {"streams": ["https://stream3.cinerama.uz/1010/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "GwTrM0kpZSwLus", "name": "Kinoteatr", "sources": {"streams": ["https://stream8.cinerama.uz/1009/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "n4KBxiRcgFIxIJ", "name": "Madaniyat va ma'rifat", "sources": {"streams": ["https://stream8.cinerama.uz/1005/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "hwlcVEv18NkxUy", "name": "Mahalla", "sources": {"streams": ["https://stream8.cinerama.uz/1013/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "VgpL3Vc6jvvqaJ", "name": "Makon TV", "sources": {"streams": ["https://stream8.cinerama.uz/1497/tracks-v1a1/mono.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "mktyzJuOjzCG0D", "name": "Milliy", "sources": {"streams": ["https://stream8.cinerama.uz/1014/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "NGs3QITdm4gdTq", "name": "Muz TV Uzbekistan", "sources": {"streams": ["https://stream8.cinerama.uz/1063/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "cJnlIEpP8bVOtB", "name": "MY5", "sources": {"streams": ["https://stream8.cinerama.uz/1217/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "zg76XEhs4aE3Qh", "name": "Navo", "sources": {"streams": ["https://stream8.cinerama.uz/1008/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "HEECzR93m2zAxT", "name": "Navoiy MTRK", "sources": {"streams": ["https://stream8.cinerama.uz/1460/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "AZ7Ksh1ozbVk5Y", "name": "Nurafshon TV", "sources": {"streams": ["https://stream8.cinerama.uz/1220/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "3aVcjaCk9E1yIS", "name": "O'zbekiston", "sources": {"streams": ["https://stream8.cinerama.uz/1001/tracks-v1a1/playlist.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "T9ZAEs0iIDmcBM", "name": "O'zbekiston 24", "sources": {"streams": ["https://stream8.cinerama.uz/1011/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "5dGASmS4TNjspn", "name": "O'zbekiston Tarixi", "sources": {"streams": ["https://stream8.cinerama.uz/1209/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "mtmMkwYurNSHQj", "name": "Qaraqalpaqstan", "sources": {"streams": ["https://stream8.cinerama.uz/1467/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "OalhiPVroO7djL", "name": "Renessans TV", "sources": {"streams": ["https://stream8.cinerama.uz/1221/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "cEFRovhmEVfGx8", "name": "Sevimli TV", "sources": {"streams": ["https://stream8.cinerama.uz/1017/tracks-v1a1/playlist.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "eYcafCQpoKdrr4", "name": "Sport", "sources": {"streams": ["https://stream8.cinerama.uz/1004/tracks-v1a1/mono.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "a71xtV9XZ9keoH", "name": "Taraqqiyot TV", "sources": {"streams": ["https://stream8.cinerama.uz/1204/tracks-v1a1/mono.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "w0tjxb3dHX6Fls", "name": "Toshkent", "sources": {"streams": ["https://stream8.cinerama.uz/1003/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "CrkyvIQRNatExy", "name": "UzReport TV", "sources": {"streams": ["https://stream8.cinerama.uz/1015/tracks-v1a1/playlist.m3u8"]}, "languages": ["eng", "rus", "uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "OUiyKTTPTYttWN", "name": "Yoshlar", "sources": {"streams": ["https://stream8.cinerama.uz/1002/tracks-v1a1/playlist.m3u8"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "mGqiGx8PLsFhQa", "name": "Yulduz Usmanova", "sources": {"youtube": ["https://www.youtube-nocookie.com/embed/v5D3XvVtz98"]}, "languages": ["uzb"], "country": "uz", "isGeoBlocked": false}, {"nanoid": "Y67heKltErviMJ", "name": "Zo'r TV", "sources": {"streams": ["https://stream8.cinerama.uz/1016/tracks-v1a1/mono.m3u8"]}, "languages": ["rus", "uzb"], "country": "uz", "isGeoBlocked": false}];
+    let currentCountryCode = "uz";
+    let currentChannel = null;
+    let currentCategory = "all";
+    let hls = null;
+    let globeScene, globeCamera, globeRenderer, earthMesh, starsMesh, haloMesh;
+    let isGlobeRotating = true;
+    let targetRotationY = 0;
+
+    const $ = id => document.getElementById(id);
+    const SERVER_BASE = (window.location.protocol === 'file:' || !window.location.origin.startsWith('http')) ? 'http://77.83.206.138:8000' : '';
+
+    // ── INIT APP ────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      init3DGlobe();
+      setupEventListeners();
+      renderChannels(currentChannels);
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Auto play requested initial channel if present
+      const initialTarget = "BIZ TV";
+      if (initialTarget && currentChannels.length > 0) {
+        const matched = currentChannels.find(c => c.name.toLowerCase().includes(initialTarget.toLowerCase()));
+        if (matched) playChannel(matched);
+      }
+    });
+
+    // ── 3D HOLOGRAPHIC GLOBE (THREE.JS) ──────────────────────────
+    function init3DGlobe() {
+      const canvas = $('globeCanvas');
+      const container = $('stageContainer');
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+
+      globeScene = new THREE.Scene();
+      globeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+      globeCamera.position.z = 2.8;
+
+      globeRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+      globeRenderer.setSize(width, height);
+      globeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      // Earth Sphere with glowing cyber texture
+      const sphereGeo = new THREE.SphereGeometry(1, 48, 48);
+      const sphereMat = new THREE.MeshPhongMaterial({
+        color: 0x071b38,
+        emissive: 0x051329,
+        specular: 0x00E5FF,
+        shininess: 25,
+        wireframe: false
+      });
+      earthMesh = new THREE.Mesh(sphereGeo, sphereMat);
+      globeScene.add(earthMesh);
+
+      // Cyber Holographic Wireframe Grid around Earth
+      const wireGeo = new THREE.SphereGeometry(1.005, 24, 24);
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: 0x00E5FF,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.18
+      });
+      const wireMesh = new THREE.Mesh(wireGeo, wireMat);
+      earthMesh.add(wireMesh);
+
+      // Atmosphere Glowing Halo
+      const haloGeo = new THREE.SphereGeometry(1.15, 32, 32);
+      const haloMat = new THREE.MeshBasicMaterial({
+        color: 0x00E5FF,
+        transparent: true,
+        opacity: 0.1,
+        side: THREE.BackSide
+      });
+      haloMesh = new THREE.Mesh(haloGeo, haloMat);
+      globeScene.add(haloMesh);
+
+      // Starfield Particles in background
+      const starsGeo = new THREE.BufferGeometry();
+      const starsCount = 600;
+      const starPositions = new Float32Array(starsCount * 3);
+      for (let i = 0; i < starsCount * 3; i += 3) {
+        starPositions[i] = (Math.random() - 0.5) * 20;
+        starPositions[i + 1] = (Math.random() - 0.5) * 20;
+        starPositions[i + 2] = (Math.random() - 0.5) * 20;
+      }
+      starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+      const starsMat = new THREE.PointsMaterial({ color: 0x88ccff, size: 0.04, transparent: true, opacity: 0.8 });
+      starsMesh = new THREE.Points(starsGeo, starsMat);
+      globeScene.add(starsMesh);
+
+      // Lights
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      globeScene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0x00E5FF, 1.2);
+      dirLight.position.set(5, 3, 5);
+      globeScene.add(dirLight);
+
+      // Touch / Mouse Orbit Controls
+      let isDragging = false;
+      let prevMouseX = 0, prevMouseY = 0;
+
+      const onPointerDown = e => {
+        isDragging = true;
+        isGlobeRotating = false;
+        prevMouseX = e.clientX || (e.touches && e.touches[0].clientX);
+        prevMouseY = e.clientY || (e.touches && e.touches[0].clientY);
+      };
+
+      const onPointerMove = e => {
+        if (!isDragging) return;
+        const x = e.clientX || (e.touches && e.touches[0].clientX);
+        const y = e.clientY || (e.touches && e.touches[0].clientY);
+        const deltaX = x - prevMouseX;
+        const deltaY = y - prevMouseY;
+        earthMesh.rotation.y += deltaX * 0.006;
+        earthMesh.rotation.x += deltaY * 0.006;
+        prevMouseX = x;
+        prevMouseY = y;
+      };
+
+      const onPointerUp = () => {
+        isDragging = false;
+        setTimeout(() => { isGlobeRotating = true; }, 3000);
+      };
+
+      canvas.addEventListener('mousedown', onPointerDown);
+      window.addEventListener('mousemove', onPointerMove);
+      window.addEventListener('mouseup', onPointerUp);
+      canvas.addEventListener('touchstart', onPointerDown);
+      window.addEventListener('touchmove', onPointerMove);
+      window.addEventListener('touchend', onPointerUp);
+
+      // Render Loop
+      const animate = () => {
+        requestAnimationFrame(animate);
+        if (isGlobeRotating) {
+          earthMesh.rotation.y += 0.0018;
+          starsMesh.rotation.y += 0.0003;
+        }
+        globeRenderer.render(globeScene, globeCamera);
+      };
+      animate();
+
+      // Window resize
+      window.addEventListener('resize', () => {
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        globeCamera.aspect = w / h;
+        globeCamera.updateProjectionMatrix();
+        globeRenderer.setSize(w, h);
+      });
+    }
+
+    // ── LIVE HLS VIDEO PLAYER ──────────────────────────────────
+    function playChannel(channel) {
+      currentChannel = channel;
+      const video = $('liveVideo');
+      const streams = (channel.sources && channel.sources.streams) ? channel.sources.streams : [];
+
+      if (!streams || streams.length === 0) {
+        alert("Kechirasiz, ushbu telekanalning jonli translatsiyasi hozirda mavjud emas.");
+        return;
+      }
+
+      const streamUrl = streams[0];
+      $('videoPlayerContainer').classList.add('active');
+      $('pbbChannelName').textContent = channel.name;
+      $('pbbLangBadge').textContent = (channel.languages && channel.languages[0]) ? channel.languages[0].toUpperCase() : 'LIVE';
+
+      if (Hls.isSupported()) {
+        if (hls) hls.destroy();
+        hls = new Hls({ enableWorker: true, lowLatencyMode: true });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(e => console.log("Autoplay blocked:", e));
+        });
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.warn("HLS fatal error, trying next source if available:", data);
+            if (streams.length > 1) {
+              hls.loadSource(streams[1]);
+            }
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.play().catch(e => console.log("Autoplay blocked:", e));
+      }
+
+      // Highlight in list
+      document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+      const activeEl = $(`ch_${channel.nanoid}`);
+      if (activeEl) {
+        activeEl.classList.add('active');
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    function closePlayer() {
+      const video = $('liveVideo');
+      video.pause();
+      if (hls) { hls.destroy(); hls = null; }
+      video.src = '';
+      $('videoPlayerContainer').classList.remove('active');
+      isGlobeRotating = true;
+    }
+
+    function resetToGlobeView() {
+      closePlayer();
+    }
+
+    // ── CHANNELS LIST RENDER ───────────────────────────────────
+    function renderChannels(channels) {
+      const listContainer = $('channelsListContainer');
+      listContainer.innerHTML = '';
+
+      if (!channels || channels.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">Ushbu mezon bo\'yicha kanallar topilmadi.</div>';
+        return;
+      }
+
+      channels.forEach(ch => {
+        const item = document.createElement('div');
+        item.className = `channel-item ${currentChannel && currentChannel.nanoid === ch.nanoid ? 'active' : ''}`;
+        item.id = `ch_${ch.nanoid}`;
+
+        const lang = (ch.languages && ch.languages[0]) ? ch.languages[0].toUpperCase() : 'UZB';
+        const flag = ALL_COUNTRIES.find(c => c.code === (ch.country || currentCountryCode))?.flag || '🌐';
+
+        item.innerHTML = `
+          <div class="ci-left">
+            <span class="ci-flag">${flag}</span>
+            <div class="ci-name">${ch.name}</div>
+          </div>
+          <div class="ci-tag">${lang}</div>
+        `;
+
+        item.onclick = () => playChannel(ch);
+        listContainer.appendChild(item);
+      });
+
+      $('sbChannelCount').textContent = `${channels.length} ta telekanal`;
+    }
+
+    // ── COUNTRIES & CATEGORIES LOADERS ─────────────────────────
+    async function switchCountry(countryCode) {
+      try {
+        const resp = await fetch(`${SERVER_BASE}/api/tv/channels/${countryCode}`);
+        const channels = await resp.json();
+        currentChannels = channels;
+        currentCountryCode = countryCode;
+
+        const cInfo = ALL_COUNTRIES.find(c => c.code === countryCode);
+        if (cInfo) {
+          $('txtCountryFlag').textContent = cInfo.flag;
+          $('txtCountryName').textContent = cInfo.name;
+          $('sbCountryTitle').textContent = cInfo.name;
+          $('ghCountryTitle').textContent = `${cInfo.flag} ${cInfo.name}`;
+          $('ghCountryDesc').textContent = `Poytaxt: ${cInfo.capital || "---"} · ${channels.length} ta jonli kanal`;
+        }
+
+        renderChannels(channels);
+        $('countriesModal').classList.remove('open');
+      } catch (e) {
+        console.error("Country load error:", e);
+      }
+    }
+
+    async function switchCategory(catName) {
+      document.querySelectorAll('.cat-pill').forEach(p => p.classList.toggle('active', p.dataset.cat === catName));
+      currentCategory = catName;
+
+      if (catName === 'all') {
+        switchCountry(currentCountryCode);
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${SERVER_BASE}/api/tv/category/${catName}`);
+        const channels = await resp.json();
+        currentChannels = channels;
+        $('sbCountryTitle').textContent = `Kategoriya: ${catName.toUpperCase()}`;
+        renderChannels(channels);
+      } catch (e) {
+        console.error("Category load error:", e);
+      }
+    }
+
+    async function pickRandomChannel() {
+      try {
+        const resp = await fetch(`${SERVER_BASE}/api/tv/random`);
+        const res = await resp.json();
+        if (res && res.channel) {
+          await switchCountry(res.country_code);
+          playChannel(res.channel);
+        }
+      } catch (e) {
+        console.error("Random channel error:", e);
+      }
+    }
+
+    // ── EVENT LISTENERS & CLOCK ────────────────────────────────
+    function setupEventListeners() {
+      // Player Buttons
+      $('btnClosePlayer').onclick = closePlayer;
+      $('btnToggleGlobeView').onclick = () => {
+        if ($('videoPlayerContainer').classList.contains('active')) {
+          closePlayer();
+        } else if (currentChannel) {
+          playChannel(currentChannel);
+        }
+      };
+
+      $('btnRandomChannel').onclick = pickRandomChannel;
+
+      // Fullscreen & PiP
+      $('btnFullscreen').onclick = () => {
+        const v = $('liveVideo');
+        if (v.requestFullscreen) v.requestFullscreen();
+        else if (v.webkitRequestFullscreen) v.webkitRequestFullscreen();
+      };
+      $('btnPiP').onclick = async () => {
+        const v = $('liveVideo');
+        if (document.pictureInPictureElement) document.exitPictureInPicture();
+        else if (v.requestPictureInPicture) await v.requestPictureInPicture();
+      };
+
+      // Next / Prev Channel
+      $('btnNextChannel').onclick = () => {
+        if (!currentChannels || currentChannels.length === 0) return;
+        const curIdx = currentChannels.findIndex(c => currentChannel && c.nanoid === currentChannel.nanoid);
+        const nextIdx = (curIdx + 1) % currentChannels.length;
+        playChannel(currentChannels[nextIdx]);
+      };
+      $('btnPrevChannel').onclick = () => {
+        if (!currentChannels || currentChannels.length === 0) return;
+        const curIdx = currentChannels.findIndex(c => currentChannel && c.nanoid === currentChannel.nanoid);
+        const prevIdx = (curIdx - 1 + currentChannels.length) % currentChannels.length;
+        playChannel(currentChannels[prevIdx]);
+      };
+
+      // Category Chips
+      document.querySelectorAll('.cat-pill').forEach(pill => {
+        pill.onclick = () => switchCategory(pill.dataset.cat);
+      });
+
+      // Country Modal
+      $('btnOpenCountriesModal').onclick = () => {
+        populateCountriesModal(ALL_COUNTRIES);
+        $('countriesModal').classList.add('open');
+      };
+      $('btnCloseCountriesModal').onclick = () => {
+        $('countriesModal').classList.remove('open');
+      };
+
+      // Search Channels
+      $('inputChannelSearch').oninput = e => {
+        const q = e.target.value.toLowerCase().trim();
+        const filtered = currentChannels.filter(c => c.name.toLowerCase().includes(q));
+        renderChannels(filtered);
+      };
+      $('btnFocusSearch').onclick = () => {
+        $('inputChannelSearch').focus();
+      };
+
+      // Search Countries inside Modal
+      $('inputCountrySearch').oninput = e => {
+        const q = e.target.value.toLowerCase().trim();
+        const filtered = ALL_COUNTRIES.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q));
+        populateCountriesModal(filtered);
+      };
+    }
+
+    function populateCountriesModal(list) {
+      const grid = $('countriesGridContainer');
+      grid.innerHTML = '';
+      list.forEach(c => {
+        const card = document.createElement('div');
+        card.className = `country-card-item ${c.code === currentCountryCode ? 'active' : ''}`;
+        card.innerHTML = `
+          <div class="cci-top">
+            <span class="cci-flag">${c.flag}</span>
+            <span class="cci-count">${c.channelCount} TV</span>
+          </div>
+          <div class="cci-name">${c.name}</div>
+        `;
+        card.onclick = () => switchCountry(c.code);
+        grid.appendChild(card);
+      });
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+      $('txtCountryClock').textContent = timeStr;
+      $('sbClock').textContent = timeStr;
+    }
+  </script>
+</body>
+</html>

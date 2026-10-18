@@ -39,8 +39,8 @@ object JarvisDomainRegistry {
         keywords = listOf("asosiy", "standart", "bosh", "oddiy", "bosh sahifa", "asosiy rejim"),
         actions = listOf(
             DomainAction("act_call", "Onamga telefon", "📞", "Onamga telefon qil"),
+            DomainAction("act_world_tv", "3D Globus & TV", "🌐", "Jonli telekanallar va 3D Globusni och"),
             DomainAction("act_tg", "Telegram", "💬", "Telegramdagi shaxsiy xabarlarni o'qib ber"),
-            DomainAction("act_reminder", "Eslatma", "⏰", "Eslatma o'rnat"),
             DomainAction("act_status", "Tizim holati", "⚡", "JARVIS tizim holati qanday?")
         ),
         systemPersonaPrompt = "You are JARVIS, Tony Stark's advanced personal AI assistant for Axmadulloh sir. Be concise, respectful, ultra-intelligent, and execute tasks directly."

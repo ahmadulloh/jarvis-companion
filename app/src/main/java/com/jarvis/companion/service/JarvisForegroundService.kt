@@ -81,6 +81,11 @@ class JarvisForegroundService : Service() {
         const val EXTRA_QURON_SURA = "extra_quron_sura"
         const val EXTRA_QURON_OYAT = "extra_quron_oyat"
 
+        const val BROADCAST_WORLD_TV_UPDATE = "com.jarvis.companion.WORLD_TV_UPDATE"
+        const val EXTRA_WORLD_TV_URL = "extra_world_tv_url"
+        const val EXTRA_WORLD_TV_CHANNEL = "extra_world_tv_channel"
+        const val EXTRA_WORLD_TV_COUNTRY = "extra_world_tv_country"
+
         const val ACTION_INTERRUPT = "com.jarvis.companion.ACTION_INTERRUPT"
         const val ACTION_SET_SECRETARY = "com.jarvis.companion.ACTION_SET_SECRETARY"
         const val ACTION_SET_DOMAIN = "com.jarvis.companion.ACTION_SET_DOMAIN"
@@ -432,6 +437,12 @@ class JarvisForegroundService : Service() {
                         val oyat = json.optInt("oyat", 0)
                         broadcastQuronUpdate(url, sura, oyat)
                     }
+                    "world_tv" -> {
+                        val url = json.optString("url", "http://77.83.206.138:8000/tv")
+                        val channel = json.optString("channel", "")
+                        val country = json.optString("country", "uz")
+                        broadcastWorldTvUpdate(url, channel, country)
+                    }
                     "set_secretary_reason" -> {
                         val reason = json.optString("reason", "Darsdaman")
                         val enabled = json.optBoolean("enabled", true)
@@ -543,6 +554,16 @@ class JarvisForegroundService : Service() {
             putExtra(EXTRA_QURON_URL, url)
             putExtra(EXTRA_QURON_SURA, sura)
             putExtra(EXTRA_QURON_OYAT, oyat)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastWorldTvUpdate(url: String, channel: String, country: String) {
+        val intent = Intent(BROADCAST_WORLD_TV_UPDATE).apply {
+            putExtra(EXTRA_WORLD_TV_URL, url)
+            putExtra(EXTRA_WORLD_TV_CHANNEL, channel)
+            putExtra(EXTRA_WORLD_TV_COUNTRY, country)
             setPackage(packageName)
         }
         sendBroadcast(intent)

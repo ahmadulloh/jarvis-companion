@@ -299,6 +299,16 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }
+                JarvisForegroundService.BROADCAST_WORLD_TV_UPDATE -> {
+                    val url = intent.getStringExtra(JarvisForegroundService.EXTRA_WORLD_TV_URL)
+                        ?: intent.getStringExtra("url")
+                        ?: "http://77.83.206.138:8000/tv"
+                    if (url.isNotEmpty()) {
+                        runOnUiThread {
+                            openWorldTv(url)
+                        }
+                    }
+                }
                 JarvisForegroundService.BROADCAST_DOMAIN_CHANGE -> {
                     val dId = intent.getStringExtra(JarvisForegroundService.EXTRA_DOMAIN_ID) ?: "ASOSIY"
                     val target = JarvisDomainRegistry.getDomainById(dId)
@@ -2232,6 +2242,29 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 0. World TV & 3D Globus buyruqlari
+        if (lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") || lower.contains("jonli efir") || lower.contains("famelack") || lower.contains("biz tv") || lower.contains("sevimli") || lower.contains("zo'r tv") || lower.contains("aqlvoy") || lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv")) {
+            if (lower.contains("och") || lower.contains("qo'y") || lower.contains("yoq") || lower.contains("ko'rsat") || lower.contains("ishlat") || lower == "tv" || lower == "televizor" || lower.startsWith("tv ")) {
+                val targetChannel = if (lower.contains("biz tv")) "BIZ TV"
+                                    else if (lower.contains("sevimli")) "Sevimli TV"
+                                    else if (lower.contains("zo'r tv")) "Zo'r TV"
+                                    else if (lower.contains("aqlvoy")) "Aqlvoy"
+                                    else if (lower.contains("dunyo bo'ylab")) "Dunyo bo'ylab"
+                                    else ""
+                val targetCat = if (lower.contains("kino") || lower.contains("film") || lower.contains("movie")) "movies" else ""
+                val targetCountry = if (lower.contains("turkiya")) "tr"
+                                    else if (lower.contains("aqsh") || lower.contains("amerika")) "us"
+                                    else if (lower.contains("rossiya")) "ru"
+                                    else "uz"
+                val tvUrl = if (targetChannel.isNotEmpty()) "http://77.83.206.138:8000/tv?country=$targetCountry&channel=${android.net.Uri.encode(targetChannel)}"
+                            else if (targetCat.isNotEmpty()) "http://77.83.206.138:8000/tv?category=$targetCat"
+                            else "http://77.83.206.138:8000/tv?country=$targetCountry"
+                openWorldTv(tvUrl)
+                deliverJarvisResponseToUi("Axmadulloh sir, JARVIS 3D Kiber Globus va jonli telekanallar xizmatini ochdim! Maroqli tomosha tilayman.", "📺")
+                return
+            }
+        }
+
         // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
         if (pendingSecretaryTarget != null) {
             val target = pendingSecretaryTarget!!
@@ -2846,6 +2879,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
+    fun openWorldTv(url: String) {
+        containerWebView.visibility = View.VISIBLE
+        tvWebTitle.text = "JARVIS World TV & 3D Globus"
+
+        webViewDashboard.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_DEFAULT
+            allowFileAccess = true
+            allowContentAccess = true
+        }
+        webViewDashboard.webViewClient = WebViewClient()
+        webViewDashboard.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                runOnUiThread {
+                    request?.grant(request.resources)
+                }
+            }
+        }
+        val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/tv"
+        quronWebUrl = targetUrl
+        webViewDashboard.loadUrl(targetUrl)
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
     fun playInAppYouTube(urlOrQuery: String, title: String) {
         runOnUiThread {
             try {
@@ -3063,6 +3122,7 @@ class MainActivity : AppCompatActivity() {
             addAction(JarvisForegroundService.BROADCAST_ACTION_LOG)
             addAction(JarvisForegroundService.BROADCAST_ROUTE_CHANGE)
             addAction(JarvisForegroundService.BROADCAST_QURON_UPDATE)
+            addAction(JarvisForegroundService.BROADCAST_WORLD_TV_UPDATE)
             addAction(JarvisForegroundService.BROADCAST_RMS)
             addAction(JarvisForegroundService.BROADCAST_INPUT_TRANSCRIPT)
             addAction(JarvisForegroundService.BROADCAST_CAPTION)
