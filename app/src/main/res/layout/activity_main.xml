@@ -166,7 +166,7 @@
         android:id="@+id/cardInlineMedia"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/bottomBarContainer"
+        android:layout_above="@id/bottomControlGroup"
         android:layout_marginStart="14dp"
         android:layout_marginEnd="14dp"
         android:layout_marginBottom="10dp"
@@ -176,67 +176,88 @@
         android:padding="8dp"
         android:visibility="gone">
 
-        <!-- 16:9 Rounded Video Container -->
-        <FrameLayout
-            android:id="@+id/layoutVideoContainer"
+        <!-- 16:9 Smooth Rounded Video Container (CardView clips WebView with 20dp smooth anti-aliased corners) -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardVideoFrame"
             android:layout_width="match_parent"
             android:layout_height="195dp"
-            android:background="@drawable/bg_video_player_rounded">
+            app:cardCornerRadius="20dp"
+            app:cardElevation="0dp"
+            app:cardPreventCornerOverlap="false"
+            app:cardBackgroundColor="#000000">
 
-            <WebView
-                android:id="@+id/webViewInlineVideo"
+            <FrameLayout
+                android:id="@+id/layoutVideoContainer"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#000000" />
+                android:layout_height="match_parent">
 
-            <!-- Top Overlay with Title, Expand and Close -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="32dp"
-                android:background="@drawable/bg_media_top_gradient"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp">
+                <WebView
+                    android:id="@+id/webViewInlineVideo"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#000000" />
 
-                <TextView
-                    android:id="@+id/tvMediaVideoTitle"
-                    android:layout_width="0dp"
+                <!-- Top Overlay with Pill Title and Controls matching Image 1 -->
+                <RelativeLayout
+                    android:id="@+id/layoutMediaTopOverlay"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ellipsize="end"
-                    android:fontFamily="sans-serif-medium"
-                    android:singleLine="true"
-                    android:text="🎵 Hurshid Rasulov - Bo'laverdi"
-                    android:textColor="#FFFFFF"
-                    android:textSize="12sp" />
+                    android:padding="8dp">
 
-                <TextView
-                    android:id="@+id/btnExpandInlineMedia"
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_marginEnd="4dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="⛶"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp" />
+                    <TextView
+                        android:id="@+id/tvMediaVideoTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:background="@drawable/bg_media_title_pill"
+                        android:paddingStart="10dp"
+                        android:paddingTop="5dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="5dp"
+                        android:ellipsize="end"
+                        android:fontFamily="sans-serif-medium"
+                        android:maxWidth="220dp"
+                        android:singleLine="true"
+                        android:text="🎵 Hurshid Rasulov - Bo'laverdi"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp" />
 
-                <TextView
-                    android:id="@+id/btnCloseInlineMedia"
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:gravity="center"
-                    android:text="✕"
-                    android:textColor="#FFFFFF"
-                    android:textSize="15sp" />
-            </LinearLayout>
-        </FrameLayout>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/btnExpandInlineMedia"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_media_title_pill"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:text="⛶"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/btnCloseInlineMedia"
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:background="@drawable/bg_media_title_pill"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:text="✕"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </RelativeLayout>
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
 
         <!-- Track Info Row (Thumbnail, Title, Artist, Like) -->
         <RelativeLayout
@@ -253,8 +274,8 @@
                 android:layout_alignParentStart="true"
                 android:layout_centerVertical="true"
                 android:background="@drawable/bg_media_thumb_rounded"
-                android:padding="6dp"
-                android:scaleType="centerInside"
+                android:padding="2dp"
+                android:scaleType="centerCrop"
                 android:src="@drawable/ic_jarvis" />
 
             <LinearLayout
@@ -343,81 +364,152 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Always-Visible Text Input Bar (Kamida 52dp balandlik, 16sp matn, klaviatura ustida adjustResize) -->
-    <LinearLayout
-        android:id="@+id/bottomBarContainer"
+    <!-- On-Screen Live Chat Conversation View (Shows questions, uploaded photos/docs, and answers) -->
+    <ScrollView
+        android:id="@+id/scrollOnScreenChat"
         android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:layout_alignParentBottom="true"
+        android:layout_height="match_parent"
+        android:layout_below="@id/layoutCenterInfo"
+        android:layout_above="@id/bottomControlGroup"
         android:layout_marginStart="14dp"
         android:layout_marginEnd="14dp"
-        android:layout_marginBottom="12dp"
-        android:background="@drawable/bg_sheet_search"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:scrollbars="none"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/containerChatBubbles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <!-- Bottom Control Group: Attachment preview chip + Text Input Bar (Moves cleanly together above keyboard) -->
+    <LinearLayout
+        android:id="@+id/bottomControlGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <!-- Attachment Preview Chip Bar (Appears when photo/doc is picked) -->
+        <LinearLayout
+            android:id="@+id/layoutAttachmentPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+        android:layout_marginBottom="6dp"
+        android:background="@drawable/bg_attachment_chip"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="8dp"
+        android:paddingTop="4dp"
         android:paddingEnd="8dp"
-        android:visibility="visible">
+        android:paddingBottom="4dp"
+        android:visibility="gone">
 
-        <!-- History Button (Opens pull-up Bottom Sheet for full conversation) -->
-        <ImageButton
-            android:id="@+id/btnChatHistory"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+        <ImageView
+            android:id="@+id/ivAttachmentPreviewThumb"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_media_thumb_rounded"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_camera" />
+
+        <TextView
+            android:id="@+id/tvAttachmentPreviewName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="middle"
+            android:fontFamily="sans-serif-medium"
+            android:maxWidth="220dp"
+            android:singleLine="true"
+            android:text="hujjat.pdf"
+            android:textColor="#1E293B"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/btnRemoveAttachment"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Suhbat tarixi"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_history"
-            app:tint="#64748B" />
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:text="✕"
+            android:textColor="#94A3B8"
+            android:textSize="14sp" />
+    </LinearLayout>
 
-        <!-- Camera / Document Scanner Button -->
-        <ImageButton
-            android:id="@+id/btnAttachDocument"
-            android:layout_width="38dp"
-            android:layout_height="38dp"
-            android:layout_marginStart="2dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Hujjatni tahlil qilish uchun rasm olish"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_camera"
-            app:tint="#64748B" />
+        <!-- Always-Visible Text Input Bar (Image 3 Style: (+) Savolingizni yozing... (🎤) (➤) -->
+        <LinearLayout
+            android:id="@+id/bottomBarContainer"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_sheet_search"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:visibility="visible">
 
-        <EditText
-            android:id="@+id/etCommandInput"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:background="@null"
-            android:hint="Buyruq yoki savol yozing..."
-            android:imeOptions="actionSend"
-            android:inputType="textCapSentences"
-            android:textColor="#0B2A18"
-            android:textColorHint="#94A3B8"
-            android:textSize="16sp" />
+            <!-- Solid Green Plus (+) Button for Camera/Gallery/Doc upload -->
+            <ImageButton
+                android:id="@+id/btnPlusAttachment"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_green_circle"
+                android:contentDescription="Fayl yoki rasm yuklash"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_plus_white" />
 
-        <!-- Microphone toggle button -->
-        <ImageButton
-            android:id="@+id/btnToggleMic"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Mikrofon"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_mic"
-            app:tint="#12A550" />
+            <EditText
+                android:id="@+id/etCommandInput"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="6dp"
+                android:background="@null"
+                android:hint="Savolingizni yozing..."
+                android:imeOptions="actionSend"
+                android:inputType="textCapSentences"
+                android:textColor="#0B2A18"
+                android:textColorHint="#94A3B8"
+                android:textSize="15sp" />
 
-        <!-- Send button -->
-        <ImageButton
-            android:id="@+id/btnSendCommand"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Jo'natish"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/ic_send"
-            app:tint="#12A550" />
+            <!-- Microphone toggle button -->
+            <ImageButton
+                android:id="@+id/btnToggleMic"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Mikrofon"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_mic"
+                app:tint="#12A550" />
+
+            <!-- Circular Solid Green Send Button (Image 3 Style) -->
+            <ImageButton
+                android:id="@+id/btnSendCommand"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="4dp"
+                android:background="@drawable/bg_green_circle"
+                android:contentDescription="Jo'natish"
+                android:scaleType="centerInside"
+                app:srcCompat="@drawable/ic_send"
+                app:tint="#FFFFFF" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Floating mini keyboard button when bottom bar is hidden in settings -->

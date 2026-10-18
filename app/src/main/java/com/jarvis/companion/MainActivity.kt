@@ -43,6 +43,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -129,33 +130,52 @@ class MainActivity : AppCompatActivity() {
     data class ChatHistoryMessage(val speaker: String, val text: String, val timestamp: Long = System.currentTimeMillis())
     private val fullChatHistory = mutableListOf<ChatHistoryMessage>()
 
-    // Always-Visible Bottom Text Input Bar
-    private lateinit var bottomBarContainer: View
-    private lateinit var btnChatHistory: ImageButton
-    private lateinit var btnAttachDocument: ImageButton
+    // Always-Visible Bottom Text Input Bar (Image 3 Style)
+    private lateinit var bottomControlGroup: LinearLayout
+    private lateinit var bottomBarContainer: LinearLayout
+    private lateinit var btnPlusAttachment: ImageButton
+    private lateinit var layoutAttachmentPreview: LinearLayout
+    private lateinit var ivAttachmentPreviewThumb: ImageView
+    private lateinit var tvAttachmentPreviewName: TextView
+    private lateinit var btnRemoveAttachment: TextView
     private lateinit var etCommandInput: EditText
     private lateinit var btnToggleMic: ImageButton
     private lateinit var btnSendCommand: ImageButton
     private lateinit var btnFloatingKeyboard: ImageButton
 
+    // On-Screen Live Chat Conversation View (Image 3 Style)
+    private lateinit var scrollOnScreenChat: android.widget.ScrollView
+    private lateinit var containerChatBubbles: LinearLayout
+
+    // Pending attachment state
+    private var pendingImageBitmap: Bitmap? = null
+    private var pendingDocBytes: ByteArray? = null
+    private var pendingDocName: String? = null
+    private var pendingDocMime: String? = null
+
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
-            handleDocumentImage(bitmap)
+            pendingImageBitmap = bitmap
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+            val bytes = baos.toByteArray()
+            val fileName = "kamera_foto_${System.currentTimeMillis()}.jpg"
+            pendingDocBytes = bytes
+            pendingDocName = fileName
+            pendingDocMime = "image/jpeg"
+            showAttachmentPreview(bitmap, fileName, isImage = true)
+        }
+    }
+
+    private val pickDocumentLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            handleSelectedDocumentUri(uri)
         }
     }
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
-            try {
-                val inputStream = contentResolver.openInputStream(uri)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                inputStream?.close()
-                if (bitmap != null) {
-                    handleDocumentImage(bitmap)
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this, "Rasmni yuklab bo'lmadi: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            handleSelectedDocumentUri(uri)
         }
     }
 
@@ -167,14 +187,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnCloseWebView: TextView
     private var quronWebUrl: String = ""
 
-
     // Inline Media Player Views (Image 1 Style)
     private lateinit var cardInlineMedia: LinearLayout
+    private lateinit var cardVideoFrame: androidx.cardview.widget.CardView
     private lateinit var layoutVideoContainer: FrameLayout
     private lateinit var webViewInlineVideo: WebView
     private lateinit var tvMediaVideoTitle: TextView
     private lateinit var btnCloseInlineMedia: TextView
     private lateinit var btnExpandInlineMedia: TextView
+    private lateinit var ivMediaThumb: ImageView
     private lateinit var tvMediaSongTitle: TextView
     private lateinit var tvMediaArtist: TextView
     private lateinit var btnMediaLike: ImageView
@@ -184,11 +205,11 @@ class MainActivity : AppCompatActivity() {
     private var isMediaPlaying = true
     private var isMediaLiked = false
     private var isVideoExpanded = false
-
+    private var inlineMediaInitialLp: android.widget.RelativeLayout.LayoutParams? = null
 
     // Active Domain & Route
     private var currentDomain: JarvisDomain = JarvisDomainRegistry.ASOSIY
-    private var activeRoute: AudioRoute = AudioRoute.EARBUDS
+    private var activeRoute: AudioRoute = AudioRoute.PHONE
 
     // Mobile Speech & TTS
     private var speechRecognizer: SpeechRecognizer? = null
@@ -337,11 +358,26 @@ class MainActivity : AppCompatActivity() {
 
         prefs = PreferencesHelper(this)
         phoneActionManager = PhoneActionManager(this)
+        activeRoute = try { AudioRoute.valueOf(prefs.audioRoute) } catch (_: Exception) { AudioRoute.PHONE }
         initVibrator()
         checkStartupCrashLog()
         initViews()
         initSpeechRecognizer()
         initTextToSpeech()
+
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (isVideoExpanded) {
+                    toggleVideoFullscreen()
+                } else if (containerWebView.visibility == View.VISIBLE) {
+                    containerWebView.visibility = View.GONE
+                    webViewDashboard.loadUrl("about:blank")
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        })
 
         // Faol sohani yuklash
         val savedDomain = JarvisDomainRegistry.getDomainById(prefs.activeDomain)
@@ -421,22 +457,35 @@ class MainActivity : AppCompatActivity() {
             insets
         }
 
-        // Bottom Bar & Controls
+        // Bottom Bar & Controls (Image 3 Style)
+        bottomControlGroup = findViewById(R.id.bottomControlGroup)
         bottomBarContainer = findViewById(R.id.bottomBarContainer)
-        btnChatHistory = findViewById(R.id.btnChatHistory)
-        btnAttachDocument = findViewById(R.id.btnAttachDocument)
+        btnPlusAttachment = findViewById(R.id.btnPlusAttachment)
+        layoutAttachmentPreview = findViewById(R.id.layoutAttachmentPreview)
+        ivAttachmentPreviewThumb = findViewById(R.id.ivAttachmentPreviewThumb)
+        tvAttachmentPreviewName = findViewById(R.id.tvAttachmentPreviewName)
+        btnRemoveAttachment = findViewById(R.id.btnRemoveAttachment)
         etCommandInput = findViewById(R.id.etCommandInput)
         btnToggleMic = findViewById(R.id.btnToggleMic)
         btnSendCommand = findViewById(R.id.btnSendCommand)
         btnFloatingKeyboard = findViewById(R.id.btnFloatingKeyboard)
 
-        btnAttachDocument.setOnClickListener {
+        // On-Screen Live Chat Conversation View (Image 3 Style)
+        scrollOnScreenChat = findViewById(R.id.scrollOnScreenChat)
+        containerChatBubbles = findViewById(R.id.containerChatBubbles)
+
+        btnPlusAttachment.setOnClickListener {
             vibrateBrief(15)
-            showDocumentAnalysisOptions()
+            showAttachmentSourceChooser()
         }
 
-        // WindowInsets for bottomBarContainer: adjust for navigation bar and IME keyboard
-        ViewCompat.setOnApplyWindowInsetsListener(bottomBarContainer) { v, insets ->
+        btnRemoveAttachment.setOnClickListener {
+            vibrateBrief(15)
+            clearPendingAttachment()
+        }
+
+        // WindowInsets for bottomControlGroup: adjust for navigation bar and IME keyboard
+        ViewCompat.setOnApplyWindowInsetsListener(bottomControlGroup) { v, insets ->
             val imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
             val navHeight = insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
             val bottomMargin = if (imeHeight > 0) {
@@ -453,21 +502,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         val showInput = prefs.showTextInputBar
-        bottomBarContainer.visibility = if (showInput) View.VISIBLE else View.GONE
+        bottomControlGroup.visibility = if (showInput) View.VISIBLE else View.GONE
         btnFloatingKeyboard.visibility = if (showInput) View.GONE else View.VISIBLE
 
         btnFloatingKeyboard.setOnClickListener {
             vibrateBrief(15)
-            bottomBarContainer.visibility = View.VISIBLE
+            bottomControlGroup.visibility = View.VISIBLE
             btnFloatingKeyboard.visibility = View.GONE
             etCommandInput.requestFocus()
             val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
             imm?.showSoftInput(etCommandInput, InputMethodManager.SHOW_IMPLICIT)
-        }
-
-        btnChatHistory.setOnClickListener {
-            vibrateBrief(15)
-            showChatHistoryBottomSheet()
         }
 
         btnToggleMic.setOnClickListener {
@@ -480,15 +524,10 @@ class MainActivity : AppCompatActivity() {
         btnOpenExternalBrowser = findViewById(R.id.btnOpenExternalBrowser)
         btnCloseWebView = findViewById(R.id.btnCloseWebView)
 
-        // Enter bosilganda ham buyruqni yuborish
+        // Enter bosilganda yuborish
         etCommandInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
-                val txt = etCommandInput.text.toString().trim()
-                if (txt.isNotEmpty()) {
-                    vibrateBrief()
-                    etCommandInput.setText("")
-                    sendJarvisCommand(txt)
-                }
+                handleSendAction()
                 true
             } else {
                 false
@@ -517,14 +556,9 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // Matnli buyruq yuborish
+        // Matnli buyruq yoki biriktirilgan fayl yuborish
         btnSendCommand.setOnClickListener {
-            val txt = etCommandInput.text.toString().trim()
-            if (txt.isNotEmpty()) {
-                vibrateBrief()
-                etCommandInput.setText("")
-                sendJarvisCommand(txt)
-            }
+            handleSendAction()
         }
 
         // WebView nazorati
@@ -541,11 +575,13 @@ class MainActivity : AppCompatActivity() {
 
         // Inline Media Player nazorati (Image 1 Style)
         cardInlineMedia = findViewById(R.id.cardInlineMedia)
+        cardVideoFrame = findViewById(R.id.cardVideoFrame)
         layoutVideoContainer = findViewById(R.id.layoutVideoContainer)
         webViewInlineVideo = findViewById(R.id.webViewInlineVideo)
         tvMediaVideoTitle = findViewById(R.id.tvMediaVideoTitle)
         btnCloseInlineMedia = findViewById(R.id.btnCloseInlineMedia)
         btnExpandInlineMedia = findViewById(R.id.btnExpandInlineMedia)
+        ivMediaThumb = findViewById(R.id.ivMediaThumb)
         tvMediaSongTitle = findViewById(R.id.tvMediaSongTitle)
         tvMediaArtist = findViewById(R.id.tvMediaArtist)
         btnMediaLike = findViewById(R.id.btnMediaLike)
@@ -555,25 +591,13 @@ class MainActivity : AppCompatActivity() {
 
         btnExpandInlineMedia.setOnClickListener {
             vibrateBrief(20)
-            isVideoExpanded = !isVideoExpanded
-            val density = resources.displayMetrics.density
-            val newHeightDp = if (isVideoExpanded) 360 else 195
-            val newHeightPx = (newHeightDp * density).toInt()
-            layoutVideoContainer.layoutParams = layoutVideoContainer.layoutParams.apply {
-                height = newHeightPx
-            }
-            btnExpandInlineMedia.text = if (isVideoExpanded) "🗗" else "⛶"
+            toggleVideoFullscreen()
         }
 
         btnCloseInlineMedia.setOnClickListener {
             vibrateBrief(20)
             if (isVideoExpanded) {
-                isVideoExpanded = false
-                val density = resources.displayMetrics.density
-                layoutVideoContainer.layoutParams = layoutVideoContainer.layoutParams.apply {
-                    height = (195 * density).toInt()
-                }
-                btnExpandInlineMedia.text = "⛶"
+                toggleVideoFullscreen()
             }
             cardInlineMedia.visibility = View.GONE
             webViewInlineVideo.loadUrl("about:blank")
@@ -583,9 +607,8 @@ class MainActivity : AppCompatActivity() {
             vibrateBrief(25)
             isMediaPlaying = !isMediaPlaying
             btnMediaPlayPause.setImageResource(if (isMediaPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play)
-            webViewInlineVideo.evaluateJavascript(
-                "(function(){ var v = document.querySelector('video'); if (v) { if (v.paused) v.play(); else v.pause(); } })()", null
-            )
+            val func = if (isMediaPlaying) "playVideo" else "pauseVideo"
+            webViewInlineVideo.evaluateJavascript("sendCmd('$func');", null)
         }
 
         btnMediaLike.setOnClickListener {
@@ -596,19 +619,416 @@ class MainActivity : AppCompatActivity() {
 
         btnMediaPrev.setOnClickListener {
             vibrateBrief(20)
-            webViewInlineVideo.evaluateJavascript(
-                "(function(){ var v = document.querySelector('video'); if (v) v.currentTime = Math.max(0, v.currentTime - 10); })()", null
-            )
+            webViewInlineVideo.evaluateJavascript("sendCmd('seekTo', [0, true]);", null)
         }
 
         btnMediaNext.setOnClickListener {
             vibrateBrief(20)
-            webViewInlineVideo.evaluateJavascript(
-                "(function(){ var v = document.querySelector('video'); if (v) v.currentTime = v.currentTime + 10; })()", null
-            )
+            webViewInlineVideo.evaluateJavascript("sendCmd('seekTo', [999999, true]);", null)
         }
     }
 
+    private fun toggleVideoFullscreen() {
+        isVideoExpanded = !isVideoExpanded
+        val density = resources.displayMetrics.density
+
+        if (isVideoExpanded) {
+            if (inlineMediaInitialLp == null) {
+                inlineMediaInitialLp = android.widget.RelativeLayout.LayoutParams(cardInlineMedia.layoutParams as android.widget.RelativeLayout.LayoutParams)
+            }
+            val fullLp = android.widget.RelativeLayout.LayoutParams(
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT
+            ).apply {
+                setMargins(0, 0, 0, 0)
+            }
+            cardInlineMedia.layoutParams = fullLp
+            cardInlineMedia.setPadding(0, 0, 0, 0)
+            cardVideoFrame.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1.0f
+            )
+            cardVideoFrame.radius = 0f
+            btnExpandInlineMedia.text = "🗗"
+            bottomControlGroup.visibility = View.GONE
+            topBar.visibility = View.GONE
+        } else {
+            val restoredLp = inlineMediaInitialLp ?: android.widget.RelativeLayout.LayoutParams(
+                android.widget.RelativeLayout.LayoutParams.MATCH_PARENT,
+                android.widget.RelativeLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                addRule(android.widget.RelativeLayout.ABOVE, R.id.bottomControlGroup)
+                setMargins((14 * density).toInt(), 0, (14 * density).toInt(), (10 * density).toInt())
+            }
+            cardInlineMedia.layoutParams = restoredLp
+            val pad = (8 * density).toInt()
+            cardInlineMedia.setPadding(pad, pad, pad, pad)
+            cardVideoFrame.layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                (195 * density).toInt()
+            )
+            cardVideoFrame.radius = 20 * density
+            btnExpandInlineMedia.text = "⛶"
+            bottomControlGroup.visibility = if (prefs.showTextInputBar) View.VISIBLE else View.GONE
+            topBar.visibility = View.VISIBLE
+        }
+    }
+
+    private fun handleSendAction() {
+        val txt = etCommandInput.text.toString().trim()
+        if (pendingDocBytes != null) {
+            vibrateBrief()
+            sendPendingAttachmentWithPrompt(txt)
+        } else if (txt.isNotEmpty()) {
+            vibrateBrief()
+            etCommandInput.setText("")
+            addUserChatBubble(txt, null, null)
+            sendJarvisCommand(txt)
+        }
+    }
+
+    private fun showAttachmentSourceChooser() {
+        val items = arrayOf(
+            "📸 Kameradan rasmga olish",
+            "🖼️ Galereyadan rasm tanlash",
+            "📄 Hujjat yuklash (PDF, Word, Excel, TXT)"
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Fayl yoki rasm yuklash")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> {
+                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 101)
+                        } else {
+                            takePictureLauncher.launch(null)
+                        }
+                    }
+                    1 -> {
+                        pickImageLauncher.launch("image/*")
+                    }
+                    2 -> {
+                        pickDocumentLauncher.launch("*/*")
+                    }
+                }
+            }
+            .setNegativeButton("Bekor qilish", null)
+            .show()
+    }
+
+    private fun handleSelectedDocumentUri(uri: Uri) {
+        try {
+            var fileName = "hujjat"
+            val cursor = contentResolver.query(uri, null, null, null, null)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex >= 0) {
+                        fileName = it.getString(nameIndex) ?: "hujjat"
+                    }
+                }
+            }
+
+            val mime = contentResolver.getType(uri) ?: "application/octet-stream"
+            val inputStream = contentResolver.openInputStream(uri)
+            val bytes = inputStream?.readBytes()
+            inputStream?.close()
+
+            if (bytes != null && bytes.isNotEmpty()) {
+                val lowerName = fileName.lowercase()
+                if (mime.startsWith("image/") || lowerName.endsWith(".jpg") || lowerName.endsWith(".jpeg") || lowerName.endsWith(".png") || lowerName.endsWith(".webp")) {
+                    val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (bmp != null) {
+                        pendingImageBitmap = bmp
+                        pendingDocBytes = bytes
+                        pendingDocName = fileName
+                        pendingDocMime = mime
+                        showAttachmentPreview(bmp, fileName, isImage = true)
+                        return
+                    }
+                }
+
+                pendingImageBitmap = null
+                pendingDocBytes = bytes
+                pendingDocName = fileName
+                pendingDocMime = mime
+                showAttachmentPreview(null, fileName, isImage = false)
+            } else {
+                Toast.makeText(this, "Fayl bo'sh", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "handleSelectedDocumentUri error: ${e.message}")
+            Toast.makeText(this, "Faylni yuklab bo'lmadi: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showAttachmentPreview(bitmap: Bitmap?, fileName: String, isImage: Boolean) {
+        layoutAttachmentPreview.visibility = View.VISIBLE
+        tvAttachmentPreviewName.text = fileName
+        if (isImage && bitmap != null) {
+            ivAttachmentPreviewThumb.setImageBitmap(bitmap)
+        } else {
+            ivAttachmentPreviewThumb.setImageResource(R.drawable.ic_document)
+        }
+        etCommandInput.requestFocus()
+    }
+
+    private fun clearPendingAttachment() {
+        pendingImageBitmap = null
+        pendingDocBytes = null
+        pendingDocName = null
+        pendingDocMime = null
+        layoutAttachmentPreview.visibility = View.GONE
+    }
+
+    private fun addUserChatBubble(text: String, imageBitmap: Bitmap?, docName: String?) {
+        scrollOnScreenChat.visibility = View.VISIBLE
+        val density = resources.displayMetrics.density
+
+        val row = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = (4 * density).toInt()
+                bottomMargin = (4 * density).toInt()
+            }
+            gravity = android.view.Gravity.END
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        val bubble = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_chat_bubble_user)
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * density).toInt(), (10 * density).toInt(), (14 * density).toInt(), (10 * density).toInt())
+            elevation = (2 * density)
+        }
+
+        if (imageBitmap != null) {
+            val iv = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    (200 * density).toInt(),
+                    (140 * density).toInt()
+                ).apply {
+                    bottomMargin = (6 * density).toInt()
+                }
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                setImageBitmap(imageBitmap)
+                clipToOutline = true
+                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_media_thumb_rounded)
+            }
+            bubble.addView(iv)
+        }
+
+        if (docName != null) {
+            val docRow = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = (4 * density).toInt()
+                }
+            }
+            val icDoc = ImageView(this).apply {
+                layoutParams = LinearLayout.LayoutParams((22 * density).toInt(), (22 * density).toInt())
+                setImageResource(R.drawable.ic_document)
+            }
+            val tvName = TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    marginStart = (6 * density).toInt()
+                }
+                text = docName
+                textSize = 12.5f
+                setTextColor(Color.parseColor("#0F5132"))
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
+            }
+            docRow.addView(icDoc)
+            docRow.addView(tvName)
+            bubble.addView(docRow)
+        }
+
+        if (text.isNotBlank()) {
+            val tvText = TextView(this).apply {
+                this.text = text
+                textSize = 14f
+                setTextColor(Color.parseColor("#0B2A18"))
+                setLineSpacing(2 * density, 1f)
+            }
+            bubble.addView(tvText)
+        }
+
+        row.addView(bubble)
+        containerChatBubbles.addView(row)
+        scrollOnScreenChat.post {
+            scrollOnScreenChat.fullScroll(View.FOCUS_DOWN)
+        }
+    }
+
+    private fun addJarvisChatBubble(text: String) {
+        scrollOnScreenChat.visibility = View.VISIBLE
+        val density = resources.displayMetrics.density
+
+        val row = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = (4 * density).toInt()
+                bottomMargin = (4 * density).toInt()
+            }
+            gravity = android.view.Gravity.START
+            orientation = LinearLayout.HORIZONTAL
+        }
+
+        val bubble = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_chat_bubble_jarvis)
+            orientation = LinearLayout.VERTICAL
+            setPadding((14 * density).toInt(), (10 * density).toInt(), (14 * density).toInt(), (12 * density).toInt())
+            elevation = (2 * density)
+        }
+
+        // Header: JARVIS badge
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = (4 * density).toInt()
+            }
+        }
+        val icon = ImageView(this).apply {
+            layoutParams = LinearLayout.LayoutParams((18 * density).toInt(), (18 * density).toInt())
+            setImageResource(R.drawable.ic_jarvis)
+        }
+        val tvHeader = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                marginStart = (6 * density).toInt()
+            }
+            text = "JARVIS"
+            textSize = 11f
+            setTextColor(Color.parseColor("#12A550"))
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            letterSpacing = 0.08f
+        }
+        header.addView(icon)
+        header.addView(tvHeader)
+        bubble.addView(header)
+
+        val tvText = TextView(this).apply {
+            this.text = text
+            textSize = 14f
+            setTextColor(Color.parseColor("#1E293B"))
+            setTextIsSelectable(true)
+            setLineSpacing(2.5f * density, 1f)
+        }
+        bubble.addView(tvText)
+
+        row.addView(bubble)
+        containerChatBubbles.addView(row)
+        scrollOnScreenChat.post {
+            scrollOnScreenChat.fullScroll(View.FOCUS_DOWN)
+        }
+    }
+
+    private fun sendPendingAttachmentWithPrompt(userPrompt: String) {
+        val bytes = pendingDocBytes ?: return
+        val docName = pendingDocName ?: "hujjat.pdf"
+        val mime = pendingDocMime ?: "application/octet-stream"
+        val bmp = pendingImageBitmap
+
+        val promptToSend = if (userPrompt.isNotBlank()) {
+            userPrompt
+        } else {
+            "Ushbu hujjatni sinchiklab tahlil qilib, xulosangizni bering."
+        }
+
+        // Add user chat bubble immediately
+        addUserChatBubble(promptToSend, bmp, if (bmp == null) docName else null)
+        fullChatHistory.add(ChatHistoryMessage("user", "📎 $docName: $promptToSend"))
+
+        clearPendingAttachment()
+        etCommandInput.setText("")
+
+        showJarvisTurnCaption("🔍 Hujjat tahlil qilinmoqda...")
+        tvMicStatus.text = "⏳ Tahlil qilinmoqda..."
+        jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val url = "${getHttpBaseUrl()}/api/analyze-document"
+                val requestBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "file",
+                        docName,
+                        bytes.toRequestBody(mime.toMediaTypeOrNull())
+                    )
+                    .addFormDataPart("prompt", promptToSend)
+                    .addFormDataPart("domain", currentDomain.id)
+                    .build()
+
+                val request = Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .build()
+
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(45, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(90, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+
+                val response = client.newCall(request).execute()
+                val respStr = response.body?.string() ?: ""
+                val json = JSONObject(respStr)
+
+                if (json.has("analysis")) {
+                    val analysis = json.getString("analysis")
+                    withContext(Dispatchers.Main) {
+                        tvMicStatus.text = "● Aloqada"
+                        showJarvisTurnCaption("✅ Hujjat tahlili tayyor")
+                        addJarvisChatBubble(analysis)
+                        fullChatHistory.add(ChatHistoryMessage("JARVIS", analysis))
+                        val firstLines = analysis.lines().filter { it.isNotBlank() }.take(2).joinToString(". ")
+                        speakJarvis("Hujjat tahlili tayyorlandi, Axmadulloh sir. ${firstLines.take(150)}. To'liq tahlilni Telegram botingizga ham yubordim.")
+                    }
+                } else {
+                    val err = json.optString("error", "Tahlil xatosi")
+                    withContext(Dispatchers.Main) {
+                        tvMicStatus.text = "● Aloqada"
+                        addJarvisChatBubble("❌ Kechirasiz, tahlil qilishda xatolik: $err")
+                        showJarvisTurnCaption("❌ $err")
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    tvMicStatus.text = "● Aloqada"
+                    addJarvisChatBubble("❌ Tarmoq xatosi: ${e.message}")
+                    showJarvisTurnCaption("❌ Xatolik: ${e.message?.take(50)}")
+                }
+            }
+        }
+    }
 
     private fun toggleMicFromUi() {
         vibrateBrief(25)
@@ -720,6 +1140,9 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             showJarvisTurnCaption(replyText)
             fullChatHistory.add(ChatHistoryMessage("jarvis", replyText))
+            if (scrollOnScreenChat.visibility == View.VISIBLE) {
+                addJarvisChatBubble(replyText)
+            }
             onTurnCompleted()
             val clean = replyText.replace("'", "\\'").replace("\"", "\\\"").replace("\n", " ").trim()
             val js = "window.jarvisDeliverResponse('$clean', '$shapeEmoji');"
@@ -1844,16 +2267,22 @@ class MainActivity : AppCompatActivity() {
         val cbShowTextInput = dialog.findViewById<CheckBox>(R.id.cbDialogShowTextInput)
         val btnGrantNotif = dialog.findViewById<MaterialButton>(R.id.btnGrantNotificationAccess)
 
+        activeRoute = try { AudioRoute.valueOf(prefs.audioRoute) } catch (_: Exception) { AudioRoute.PHONE }
+
         // Route selection styling helper
         fun updateRouteUi(route: AudioRoute) {
-            btnPc?.setBackgroundResource(if (route == AudioRoute.PC) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            btnPc?.setTextColor(if (route == AudioRoute.PC) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+            val isPhone = (route == AudioRoute.PHONE)
+            val isEarbuds = (route == AudioRoute.EARBUDS)
+            val isPc = (route == AudioRoute.PC)
 
-            btnPhone?.setBackgroundResource(if (route == AudioRoute.PHONE) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            btnPhone?.setTextColor(if (route == AudioRoute.PHONE) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+            btnPhone?.setBackgroundResource(if (isPhone) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnPhone?.setTextColor(Color.parseColor(if (isPhone) "#12A550" else "#64748B"))
 
-            btnEarbuds?.setBackgroundResource(if (route == AudioRoute.EARBUDS) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
-            btnEarbuds?.setTextColor(if (route == AudioRoute.EARBUDS) Color.parseColor("#12A550") else Color.parseColor("#64748B"))
+            btnEarbuds?.setBackgroundResource(if (isEarbuds) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnEarbuds?.setTextColor(Color.parseColor(if (isEarbuds) "#12A550" else "#64748B"))
+
+            btnPc?.setBackgroundResource(if (isPc) R.drawable.bg_card_selector_selected else R.drawable.bg_card_selector_normal)
+            btnPc?.setTextColor(Color.parseColor(if (isPc) "#12A550" else "#64748B"))
         }
 
         var selectedMode = prefs.connectionMode
@@ -1926,18 +2355,24 @@ class MainActivity : AppCompatActivity() {
 
         updateRouteUi(activeRoute)
 
-        btnPc?.setOnClickListener {
-            activeRoute = AudioRoute.PC
-            updateRouteUi(activeRoute)
-            applyAudioRoute(activeRoute)
-        }
         btnPhone?.setOnClickListener {
+            vibrateBrief(20)
             activeRoute = AudioRoute.PHONE
+            prefs.audioRoute = activeRoute.name
             updateRouteUi(activeRoute)
             applyAudioRoute(activeRoute)
         }
         btnEarbuds?.setOnClickListener {
+            vibrateBrief(20)
             activeRoute = AudioRoute.EARBUDS
+            prefs.audioRoute = activeRoute.name
+            updateRouteUi(activeRoute)
+            applyAudioRoute(activeRoute)
+        }
+        btnPc?.setOnClickListener {
+            vibrateBrief(20)
+            activeRoute = AudioRoute.PC
+            prefs.audioRoute = activeRoute.name
             updateRouteUi(activeRoute)
             applyAudioRoute(activeRoute)
         }
@@ -2172,9 +2607,10 @@ class MainActivity : AppCompatActivity() {
             prefs.assistantVoice = selectedVoice
 
             val showBar = prefs.showTextInputBar
-            bottomBarContainer.visibility = if (showBar) View.VISIBLE else View.GONE
+            bottomControlGroup.visibility = if (showBar) View.VISIBLE else View.GONE
             btnFloatingKeyboard.visibility = if (showBar) View.GONE else View.VISIBLE
 
+            prefs.audioRoute = activeRoute.name
             applyAudioRoute(activeRoute)
 
             // Re-apply settings & restart service with newly selected voice
@@ -2268,6 +2704,20 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (!videoId.isNullOrBlank() && !videoId.startsWith("http")) {
+                    val thumbUrl = "https://img.youtube.com/vi/$videoId/hqdefault.jpg"
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        try {
+                            val input = java.net.URL(thumbUrl).openStream()
+                            val bmp = BitmapFactory.decodeStream(input)
+                            input.close()
+                            if (bmp != null) {
+                                withContext(Dispatchers.Main) {
+                                    ivMediaThumb.setImageBitmap(bmp)
+                                }
+                            }
+                        } catch (_: Exception) {}
+                    }
+
                     val html = """
                         <!DOCTYPE html>
                         <html>
@@ -2276,15 +2726,27 @@ class MainActivity : AppCompatActivity() {
                             <style>
                                 * { margin:0; padding:0; box-sizing:border-box; }
                                 html, body { width:100%; height:100%; background:#000000; overflow:hidden; }
-                                iframe { width:100%; height:100%; border:none; }
+                                iframe { width:100%; height:100%; border:none; display:block; }
                             </style>
                         </head>
                         <body>
-                            <iframe 
-                                src="https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1&enablejsapi=1&rel=0&controls=1" 
+                            <iframe id="ytPlayer"
+                                src="https://www.youtube-nocookie.com/embed/$videoId?autoplay=1&playsinline=1&enablejsapi=1&rel=0&controls=1&origin=https://www.youtube-nocookie.com" 
                                 allow="autoplay; encrypted-media; picture-in-picture" 
                                 allowfullscreen>
                             </iframe>
+                            <script>
+                                function sendCmd(func, args) {
+                                    var iframe = document.getElementById('ytPlayer');
+                                    if (iframe && iframe.contentWindow) {
+                                        iframe.contentWindow.postMessage(JSON.stringify({
+                                            "event": "command",
+                                            "func": func,
+                                            "args": args || []
+                                        }), "*");
+                                    }
+                                }
+                            </script>
                         </body>
                         </html>
                     """.trimIndent()
@@ -2304,7 +2766,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     private fun triggerWelcomeGreetingIfNeeded() {
         val now = System.currentTimeMillis()
         if (now - prefs.lastWelcomeTimestamp > 60_000L) { // 1 minute interval
@@ -2323,121 +2784,6 @@ class MainActivity : AppCompatActivity() {
         if (raw.startsWith("https://")) raw = raw.removePrefix("https://")
         val hostPort = raw.split("/")[0]
         return "http://$hostPort"
-    }
-
-    private fun showDocumentAnalysisOptions() {
-        val items = arrayOf(
-            "📸 Kameradan rasmga olish",
-            "🖼️ Galereyadan rasm tanlash"
-        )
-        MaterialAlertDialogBuilder(this)
-            .setTitle("📋 Hujjat tahlili (Yurist / Tadbirkor)")
-            .setItems(items) { _, which ->
-                when (which) {
-                    0 -> {
-                        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 101)
-                        } else {
-                            takePictureLauncher.launch(null)
-                        }
-                    }
-                    1 -> {
-                        pickImageLauncher.launch("image/*")
-                    }
-                }
-            }
-            .setNegativeButton("Bekor qilish", null)
-            .show()
-    }
-
-    private fun handleDocumentImage(bitmap: Bitmap) {
-        if (currentDomain.id != "YURIST" && currentDomain.id != "TADBIRKOR") {
-            applyDomain(JarvisDomainRegistry.YURIST, speakAnnouncement = true)
-        }
-
-        tvJarvisCaption.text = "🔍 Hujjat skanerlanmoqda va tahlil qilinmoqda..."
-        tvMicStatus.text = "⏳ Hujjat tahlil qilinmoqda..."
-
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val baos = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
-                val imageBytes = baos.toByteArray()
-
-                val url = "${getHttpBaseUrl()}/api/analyze-document"
-                val requestBody = MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart(
-                        "file",
-                        "doc_${System.currentTimeMillis()}.jpg",
-                        imageBytes.toRequestBody("image/jpeg".toMediaTypeOrNull())
-                    )
-                    .addFormDataPart("prompt", "Ushbu hujjatni sinchiklab tahlil qilib, huquqiy va amaliy xulosangizni bering.")
-                    .addFormDataPart("domain", currentDomain.id)
-                    .build()
-
-                val request = Request.Builder()
-                    .url(url)
-                    .post(requestBody)
-                    .build()
-
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
-                    .build()
-
-                val response = client.newCall(request).execute()
-                val respStr = response.body?.string() ?: ""
-                val json = JSONObject(respStr)
-
-                if (json.has("analysis")) {
-                    val analysis = json.getString("analysis")
-                    withContext(Dispatchers.Main) {
-                        showJarvisTurnCaption("✅ Hujjat tahlili tayyorlandi")
-                        fullChatHistory.add(ChatHistoryMessage("user", "📷 Hujjat fotosurati yuklandi"))
-                        fullChatHistory.add(ChatHistoryMessage("JARVIS", analysis))
-                        val firstLines = analysis.lines().filter { it.isNotBlank() }.take(2).joinToString(". ")
-                        speakJarvis("Hujjat tahlili tayyorlandi, Axmadulloh sir. ${firstLines.take(150)}. To'liq tahlilni Telegram botingizga ham yubordim.")
-                        showAnalysisResultDialog(analysis)
-                    }
-                } else {
-                    val err = json.optString("error", "Tahlil xatosi")
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "Xatolik: $err", Toast.LENGTH_LONG).show()
-                        tvJarvisCaption.text = "❌ $err"
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@MainActivity, "Aloqa xatosi: ${e.message}", Toast.LENGTH_SHORT).show()
-                    tvJarvisCaption.text = "❌ Tahlil xatosi: ${e.message?.take(50)}"
-                }
-            }
-        }
-    }
-
-    private fun showAnalysisResultDialog(analysis: String) {
-        val scrollView = android.widget.ScrollView(this)
-        val tv = TextView(this).apply {
-            text = analysis
-            textSize = 15f
-            setTextColor(Color.parseColor("#E2E8F0"))
-            setPadding(40, 30, 40, 30)
-            setTextIsSelectable(true)
-        }
-        scrollView.addView(tv)
-
-        MaterialAlertDialogBuilder(this)
-            .setTitle("📋 Hujjat yuridik tahlili")
-            .setView(scrollView)
-            .setPositiveButton("Tushundim", null)
-            .setNeutralButton("Telegram botni ochish") { _, _ ->
-                phoneActionManager.launchIntentSafely(
-                    Intent(Intent.ACTION_VIEW, Uri.parse("tg://resolve?domain=JarvisSecretaryBot")),
-                    "Telegram"
-                )
-            }
-            .show()
     }
 
     // ── Ruxsatlar va Xizmatni Ishga Tushirish ──────────────────────────────

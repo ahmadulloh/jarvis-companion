@@ -57,13 +57,15 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.0
-        name: Jarvis Companion v1.7.0
+        tag_name: v1.7.1
+        name: Jarvis Companion v1.7.1
         body: |
-          JARVIS Companion v1.7.0 yangilanishi:
-          - Salomlashish ovozi (Welcome Greeting) to'liq haqiqiy Gemini Live ovoziga o'tkazildi (Charon, Puck, Kore, Fenrir, Aoede). Android tizimining sun'iy robotik ovozi butunlay to'xtatildi!
-          - YouTube musiqa va videolarni to'g'ridan-to'g'ri ijro etish: qidiruv sahifasiga o'tib ketish xatosi bartaraf etildi, klip avtomatik tarzda ilova ichida darhol qo'yiladi.
-          - Inline videopleyer uchun ekranda kattalashtirish (⛶ / 🗗) tugmasi qo'shildi: videoni 360dp balandlikda qulay tomosha qilish imkoni yaratildi.
-          - Eskiz VPS serverdagi WebSocket ulanish parametrlarini tozalash va YouTube video ID ajratish kuchaytirildi.
+          JARVIS Companion v1.7.1 yangilanishi:
+          - Video chekalari silliq va sifatli qilib 20dp CardView bilan o'raldi, qirrali nuqsonlar butunlay yo'qotildi (1-rasm dizayni).
+          - Kattalashtirish (⛶) tugmasi bosilganda to'liq ekranni egallaydi, orqaga (Back) bosilganda video silliq kichrayadi.
+          - YouTube iframe postMessage orqali pauza (II), ijro (▶), oldingi va keyingi tugmalari 100% to'liq ishlaydi.
+          - Sozlamalardagi Ovoz chiqish qurilmasi (Telefon, Quloqchin, PC) yashil hoshiyali tanlanish ko'rinishiga ega bo'ldi va sozlamalar xotirada saqlanadi (2-rasm dizayni).
+          - Rasm va hujjat yuklanganda (PDF, Word, Excel, TXT, Rasm) Yurist rejimiga majburiy o'tib ketish to'xtatildi, faol rejim saqlanadi.
+          - Pastki qismda Image 3 dizayni: Yashil (+) tugmasi orqali rasm/hujjat yuklanadi, yuborishdan oldin ko'rinib turadi, yuborilgach asosiy ekranda jonli chat xabari sifatida savol va javob ko'rinadi (hech qanday xalaqit beruvchi popup muloqot oynasisiz).
         files: app/build/outputs/apk/debug/app-debug.apk
 
