@@ -57,15 +57,14 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.1
-        name: Jarvis Companion v1.7.1
+        tag_name: v1.7.2
+        name: Jarvis Companion v1.7.2
         body: |
-          JARVIS Companion v1.7.1 yangilanishi:
-          - Video chekalari silliq va sifatli qilib 20dp CardView bilan o'raldi, qirrali nuqsonlar butunlay yo'qotildi (1-rasm dizayni).
-          - Kattalashtirish (⛶) tugmasi bosilganda to'liq ekranni egallaydi, orqaga (Back) bosilganda video silliq kichrayadi.
-          - YouTube iframe postMessage orqali pauza (II), ijro (▶), oldingi va keyingi tugmalari 100% to'liq ishlaydi.
-          - Sozlamalardagi Ovoz chiqish qurilmasi (Telefon, Quloqchin, PC) yashil hoshiyali tanlanish ko'rinishiga ega bo'ldi va sozlamalar xotirada saqlanadi (2-rasm dizayni).
-          - Rasm va hujjat yuklanganda (PDF, Word, Excel, TXT, Rasm) Yurist rejimiga majburiy o'tib ketish to'xtatildi, faol rejim saqlanadi.
-          - Pastki qismda Image 3 dizayni: Yashil (+) tugmasi orqali rasm/hujjat yuklanadi, yuborishdan oldin ko'rinib turadi, yuborilgach asosiy ekranda jonli chat xabari sifatida savol va javob ko'rinadi (hech qanday xalaqit beruvchi popup muloqot oynasisiz).
+          JARVIS Companion v1.7.2 yangilanishi:
+          - O'zbekcha ovozli media boshqaruvi: "Pauza", "Pauza qil", "To'xtat", "Davom ettir", "Qo'shiqni yop", "Videoni yop", "Musiqani o'chir", "Qo'shiqdan chiq" buyruqlari Gemini Live va mahalliy darajada 100% zudlik bilan ishlaydi.
+          - 18+ va odobsiz videolar filtri: 18+, kattalar uchun va behayo videolar qat'iyan taqiqlanadi va bloklanadi.
+          - O'zbekistonda taqiqlangan domlalar filtri va Fatvo.uz integratsiyasi: Oliy Sud taqiqlagan shaxslar videolari bloklangan, diniy savollarda faqat Hanafiy mazhabi va https://fatvo.uz/ rasmiy ma'lumotlariga tayaniladi.
+          - ChatGPT uslubidagi yangi chat interfeysi: Matn yozilganda zamonaviy, silliq chat oynasi ochiladi va Markdown (qalin matn, kursiv, ro'yxatlar, kod bloklari) qo'llab-quvvatlanadi.
+          - Ovozli muloqot paytida avtomatik tozalanish: Foydalanuvchi matn yozishni to'xtatib gapira boshlaganda yoki Jarvis gapirganda, chat oynasi silliq so'nib (fade-out) ekranni to'liq markaziy animatsion orbga bo'shatadi!
         files: app/build/outputs/apk/debug/app-debug.apk
 

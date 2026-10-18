@@ -100,6 +100,12 @@ class JarvisForegroundService : Service() {
         const val EXTRA_MEDIA_URL = "extra_media_url"
         const val EXTRA_MEDIA_TITLE = "extra_media_title"
 
+        const val BROADCAST_MEDIA_PAUSE = "com.jarvis.companion.MEDIA_PAUSE"
+        const val EXTRA_MEDIA_PAUSED = "extra_media_paused"
+        const val BROADCAST_MEDIA_STOP = "com.jarvis.companion.MEDIA_STOP"
+        const val BROADCAST_MEDIA_NEXT = "com.jarvis.companion.MEDIA_NEXT"
+        const val BROADCAST_MEDIA_PREV = "com.jarvis.companion.MEDIA_PREV"
+
         const val BROADCAST_CONNECTION_GREETING = "com.jarvis.companion.CONNECTION_GREETING"
         private const val TAG = "JarvisService"
     }
@@ -337,10 +343,18 @@ class JarvisForegroundService : Service() {
                             mediaPlayer?.start()
                             broadcastActionLog("musiqa", "Ijro davom etmoqda")
                         }
+                        broadcastMediaPause(paused)
                     }
-                    "media_stop" -> {
+                    "media_stop", "media_close" -> {
                         stopMediaStream()
                         broadcastActionLog("musiqa", "To'xtatildi")
+                        broadcastMediaStop()
+                    }
+                    "media_next" -> {
+                        broadcastMediaNext()
+                    }
+                    "media_prev" -> {
+                        broadcastMediaPrev()
                     }
                     "media_seek" -> {
                         val sec = json.optDouble("seconds", 0.0)
@@ -1080,6 +1094,35 @@ class JarvisForegroundService : Service() {
         val intent = Intent(BROADCAST_MEDIA_PLAY).apply {
             putExtra(EXTRA_MEDIA_URL, url)
             putExtra(EXTRA_MEDIA_TITLE, title)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastMediaPause(paused: Boolean) {
+        val intent = Intent(BROADCAST_MEDIA_PAUSE).apply {
+            putExtra(EXTRA_MEDIA_PAUSED, paused)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastMediaStop() {
+        val intent = Intent(BROADCAST_MEDIA_STOP).apply {
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastMediaNext() {
+        val intent = Intent(BROADCAST_MEDIA_NEXT).apply {
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
+    }
+
+    private fun broadcastMediaPrev() {
+        val intent = Intent(BROADCAST_MEDIA_PREV).apply {
             setPackage(packageName)
         }
         sendBroadcast(intent)

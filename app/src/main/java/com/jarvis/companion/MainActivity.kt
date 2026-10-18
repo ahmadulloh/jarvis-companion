@@ -311,6 +311,37 @@ class MainActivity : AppCompatActivity() {
                         playInAppYouTube(url, title)
                     }
                 }
+                JarvisForegroundService.BROADCAST_MEDIA_PAUSE -> {
+                    val paused = intent.getBooleanExtra(JarvisForegroundService.EXTRA_MEDIA_PAUSED, true)
+                    runOnUiThread {
+                        isMediaPlaying = !paused
+                        btnMediaPlayPause.setImageResource(if (isMediaPlaying) R.drawable.ic_media_pause else R.drawable.ic_media_play)
+                        val func = if (isMediaPlaying) "playVideo" else "pauseVideo"
+                        webViewInlineVideo.evaluateJavascript("sendCmd('$func');", null)
+                        showCaption(if (paused) "⏸ Pauza qilindi" else "▶ Ijro davom etmoqda")
+                    }
+                }
+                JarvisForegroundService.BROADCAST_MEDIA_STOP -> {
+                    runOnUiThread {
+                        if (isVideoExpanded) {
+                            toggleVideoFullscreen()
+                        }
+                        cardInlineMedia.visibility = View.GONE
+                        webViewInlineVideo.loadUrl("about:blank")
+                        isMediaPlaying = false
+                        showCaption("⏹ Ijro to'xtatildi")
+                    }
+                }
+                JarvisForegroundService.BROADCAST_MEDIA_NEXT -> {
+                    runOnUiThread {
+                        webViewInlineVideo.evaluateJavascript("sendCmd('seekTo', [999999, true]);", null)
+                    }
+                }
+                JarvisForegroundService.BROADCAST_MEDIA_PREV -> {
+                    runOnUiThread {
+                        webViewInlineVideo.evaluateJavascript("sendCmd('seekTo', [0, true]);", null)
+                    }
+                }
                 JarvisForegroundService.BROADCAST_CONNECTION_GREETING -> {
                     runOnUiThread {
                         triggerWelcomeGreetingIfNeeded()
@@ -533,6 +564,22 @@ class MainActivity : AppCompatActivity() {
                 false
             }
         }
+
+        etCommandInput.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                showChatContainerSmoothly()
+            }
+        }
+
+        etCommandInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                if (!s.isNullOrEmpty()) {
+                    showChatContainerSmoothly()
+                }
+            }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
 
         // Ekran va Zarralar bilan interaktiv aloqa — mikrofonni boshqaradi
         jarvisParticleView.setOnClickListener {
@@ -782,17 +829,57 @@ class MainActivity : AppCompatActivity() {
         layoutAttachmentPreview.visibility = View.GONE
     }
 
+    private fun showChatContainerSmoothly() {
+        runOnUiThread {
+            if (scrollOnScreenChat.visibility != View.VISIBLE) {
+                scrollOnScreenChat.alpha = 0f
+                scrollOnScreenChat.visibility = View.VISIBLE
+                scrollOnScreenChat.animate().alpha(1f).setDuration(250).start()
+            } else if (scrollOnScreenChat.alpha < 1f) {
+                scrollOnScreenChat.animate().alpha(1f).setDuration(200).start()
+            }
+        }
+    }
+
+    private fun hideChatContainerSmoothly() {
+        runOnUiThread {
+            if (scrollOnScreenChat.visibility == View.VISIBLE && etCommandInput.text.isNullOrBlank() && !etCommandInput.hasFocus()) {
+                scrollOnScreenChat.animate().alpha(0f).setDuration(350).withEndAction {
+                    scrollOnScreenChat.visibility = View.GONE
+                }.start()
+            }
+        }
+    }
+
+    private fun formatMarkdownToSpanned(text: String): CharSequence {
+        try {
+            var html = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            // **bold**
+            html = html.replace(Regex("\\*\\*(.+?)\\*\\*"), "<b>$1</b>")
+            // *italic*
+            html = html.replace(Regex("(?<!\\*)\\*(?!\\*)(.+?)(?<!\\*)\\*(?!\\*)"), "<i>$1</i>")
+            // `code`
+            html = html.replace(Regex("`([^`]+)`"), "<tt><font color='#0F5132'><b>$1</b></font></tt>")
+            // Linebreaks
+            html = html.replace("\n", "<br/>")
+            return androidx.core.text.HtmlCompat.fromHtml(html, androidx.core.text.HtmlCompat.FROM_HTML_MODE_COMPACT)
+        } catch (_: Exception) {
+            return text
+        }
+    }
+
     private fun addUserChatBubble(userMessage: String, imageBitmap: Bitmap?, docName: String?) {
-        scrollOnScreenChat.visibility = View.VISIBLE
+        showChatContainerSmoothly()
         val density = resources.displayMetrics.density
+        val maxWidth = (resources.displayMetrics.widthPixels * 0.85).toInt()
 
         val row = LinearLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                topMargin = (4 * density).toInt()
-                bottomMargin = (4 * density).toInt()
+                topMargin = (5 * density).toInt()
+                bottomMargin = (5 * density).toInt()
             }
             gravity = android.view.Gravity.END
             orientation = LinearLayout.HORIZONTAL
@@ -805,15 +892,15 @@ class MainActivity : AppCompatActivity() {
             )
             background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_chat_bubble_user)
             orientation = LinearLayout.VERTICAL
-            setPadding((12 * density).toInt(), (10 * density).toInt(), (14 * density).toInt(), (10 * density).toInt())
+            setPadding((14 * density).toInt(), (10 * density).toInt(), (14 * density).toInt(), (10 * density).toInt())
             elevation = (2 * density)
         }
 
         if (imageBitmap != null) {
             val iv = ImageView(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
-                    (200 * density).toInt(),
-                    (140 * density).toInt()
+                    (210 * density).toInt(),
+                    (145 * density).toInt()
                 ).apply {
                     bottomMargin = (6 * density).toInt()
                 }
@@ -861,10 +948,11 @@ class MainActivity : AppCompatActivity() {
 
         if (userMessage.isNotBlank()) {
             val tvText = TextView(this).apply {
-                this.text = userMessage
-                textSize = 14f
+                this.text = formatMarkdownToSpanned(userMessage)
+                textSize = 14.5f
                 setTextColor(Color.parseColor("#0B2A18"))
-                setLineSpacing(2 * density, 1f)
+                setLineSpacing(2.5f * density, 1f)
+                this.maxWidth = maxWidth
             }
             bubble.addView(tvText)
         }
@@ -877,16 +965,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addJarvisChatBubble(replyMessage: String) {
-        scrollOnScreenChat.visibility = View.VISIBLE
+        showChatContainerSmoothly()
         val density = resources.displayMetrics.density
+        val maxWidth = (resources.displayMetrics.widthPixels * 0.85).toInt()
 
         val row = LinearLayout(this).apply {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                topMargin = (4 * density).toInt()
-                bottomMargin = (4 * density).toInt()
+                topMargin = (5 * density).toInt()
+                bottomMargin = (5 * density).toInt()
             }
             gravity = android.view.Gravity.START
             orientation = LinearLayout.HORIZONTAL
@@ -926,7 +1015,7 @@ class MainActivity : AppCompatActivity() {
                 marginStart = (6 * density).toInt()
             }
             this.text = "JARVIS"
-            textSize = 11f
+            textSize = 11.5f
             setTextColor(Color.parseColor("#12A550"))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
             letterSpacing = 0.08f
@@ -936,11 +1025,12 @@ class MainActivity : AppCompatActivity() {
         bubble.addView(header)
 
         val tvText = TextView(this).apply {
-            this.text = replyMessage
-            textSize = 14f
+            this.text = formatMarkdownToSpanned(replyMessage)
+            textSize = 14.5f
             setTextColor(Color.parseColor("#1E293B"))
             setTextIsSelectable(true)
             setLineSpacing(2.5f * density, 1f)
+            this.maxWidth = maxWidth
         }
         bubble.addView(tvText)
 
@@ -1159,6 +1249,36 @@ class MainActivity : AppCompatActivity() {
         val clean = text.trim()
         if (clean.isBlank()) return
         activeTurnUserTranscript = clean
+
+        // Fast voice media control
+        val lower = clean.lowercase()
+        if (cardInlineMedia.visibility == View.VISIBLE || isMediaPlaying) {
+            if (lower == "pauza" || lower == "pauza qil" || lower == "to'xtatib tur" || lower == "to'xtat" || lower == "stop") {
+                runOnUiThread {
+                    isMediaPlaying = false
+                    btnMediaPlayPause.setImageResource(R.drawable.ic_media_play)
+                    webViewInlineVideo.evaluateJavascript("sendCmd('pauseVideo');", null)
+                    showCaption("⏸ Pauza qilindi")
+                }
+            } else if (lower == "davom ettir" || lower == "qo'y" || lower == "play" || lower == "davom et") {
+                runOnUiThread {
+                    isMediaPlaying = true
+                    btnMediaPlayPause.setImageResource(R.drawable.ic_media_pause)
+                    webViewInlineVideo.evaluateJavascript("sendCmd('playVideo');", null)
+                    showCaption("▶ Ijro davom etmoqda")
+                }
+            } else if (lower.contains("qo'shiqni yop") || lower.contains("videoni yop") || lower.contains("musiqani o'chir") ||
+                lower.contains("qo'shiqdan chiq") || lower.contains("videodan chiq") || lower.contains("videoni to'xtat") ||
+                lower == "yop" || lower == "o'chir" || lower == "chiq") {
+                runOnUiThread {
+                    if (isVideoExpanded) toggleVideoFullscreen()
+                    cardInlineMedia.visibility = View.GONE
+                    webViewInlineVideo.loadUrl("about:blank")
+                    isMediaPlaying = false
+                    showCaption("⏹ Ijro to'xtatildi")
+                }
+            }
+        }
 
         runOnUiThread {
             tvInputTranscript.text = clean
@@ -2066,6 +2186,34 @@ class MainActivity : AppCompatActivity() {
 
         val lower = cmd.lowercase().trim()
 
+        // 0. Mahalliy tezkor musiqa/video boshqaruvi (Pauza, davom ettirish, yopish, to'xtatish)
+        if (cardInlineMedia.visibility == View.VISIBLE || isMediaPlaying) {
+            if (lower == "pauza" || lower == "pauza qil" || lower == "to'xtatib tur" || lower == "to'xtat" || lower == "stop") {
+                isMediaPlaying = false
+                btnMediaPlayPause.setImageResource(R.drawable.ic_media_play)
+                webViewInlineVideo.evaluateJavascript("sendCmd('pauseVideo');", null)
+                showCaption("⏸ Pauza qilindi")
+                return
+            }
+            if (lower == "davom ettir" || lower == "qo'y" || lower == "play" || lower == "davom et") {
+                isMediaPlaying = true
+                btnMediaPlayPause.setImageResource(R.drawable.ic_media_pause)
+                webViewInlineVideo.evaluateJavascript("sendCmd('playVideo');", null)
+                showCaption("▶ Ijro davom etmoqda")
+                return
+            }
+            if (lower.contains("qo'shiqni yop") || lower.contains("videoni yop") || lower.contains("musiqani o'chir") ||
+                lower.contains("qo'shiqdan chiq") || lower.contains("videodan chiq") || lower.contains("videoni to'xtat") ||
+                lower == "yop" || lower == "o'chir" || lower == "chiq") {
+                if (isVideoExpanded) toggleVideoFullscreen()
+                cardInlineMedia.visibility = View.GONE
+                webViewInlineVideo.loadUrl("about:blank")
+                isMediaPlaying = false
+                showCaption("⏹ Ijro to'xtatildi")
+                return
+            }
+        }
+
         // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
         if (pendingSecretaryTarget != null) {
             val target = pendingSecretaryTarget!!
@@ -2203,6 +2351,7 @@ class MainActivity : AppCompatActivity() {
                 "LISTENING" -> {
                     jarvisParticleView.setState(JarvisParticleState.LISTENING)
                     try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('listen');", null) } catch (_: Exception) {}
+                    hideChatContainerSmoothly()
                 }
                 "THINKING", "SEARCHING" -> {
                     jarvisParticleView.setState(JarvisParticleState.SEARCHING)
@@ -2211,6 +2360,7 @@ class MainActivity : AppCompatActivity() {
                 "SPEAKING" -> {
                     jarvisParticleView.setState(JarvisParticleState.SPEAKING)
                     try { webViewLivingParticle.evaluateJavascript("window.jarvisSetPhase('speak');", null) } catch (_: Exception) {}
+                    hideChatContainerSmoothly()
                 }
                 "RELEASE" -> {
                     jarvisParticleView.setState(JarvisParticleState.RELEASE)
@@ -2657,6 +2807,21 @@ class MainActivity : AppCompatActivity() {
     fun playInAppYouTube(urlOrQuery: String, title: String) {
         runOnUiThread {
             try {
+                val lowerCheck = (urlOrQuery + " " + title).lowercase()
+                val adultWords = listOf("porno", "porn", "seks", "sex", "sekis", "faxsh", "intim", "yalang'och", "yalangoch", "18+", "erotik", "erotika", "xxx", "hentai", "nude", "boobs", "vaginal", "anal", "fahisha", "jalab", "fohisha")
+                if (adultWords.any { lowerCheck.contains(it) }) {
+                    Toast.makeText(this@MainActivity, "⚠️ 18+ videolarni ko'rish qat'iyan taqiqlanadi!", Toast.LENGTH_LONG).show()
+                    showCaption("⚠️ 18+ video taqiqlangan!")
+                    return@runOnUiThread
+                }
+
+                val bannedPreachers = listOf("abdulloh zufar", "abu saloh", "rashod qori", "sodiq samarqandiy", "yahyo turkistoniy", "abdulloh buxoriy", "hizb ut-tahrir", "ishid")
+                if (bannedPreachers.any { lowerCheck.contains(it) }) {
+                    Toast.makeText(this@MainActivity, "⚠️ Oliy Sud taqiqlagan shaxslar videolari bloklangan!", Toast.LENGTH_LONG).show()
+                    showCaption("⚠️ Taqiqlangan shaxs videolari bloklangan")
+                    return@runOnUiThread
+                }
+
                 // Parse Song title and Artist from title (e.g. "Hurshid Rasulov - Bo'laverdi")
                 var songName = title.trim()
                 var artistName = "YouTube Musiqa"
@@ -2863,6 +3028,10 @@ class MainActivity : AppCompatActivity() {
             addAction(JarvisForegroundService.BROADCAST_PC_CONNECTION_FAILED)
             addAction(JarvisForegroundService.BROADCAST_DOMAIN_CHANGE)
             addAction(JarvisForegroundService.BROADCAST_MEDIA_PLAY)
+            addAction(JarvisForegroundService.BROADCAST_MEDIA_PAUSE)
+            addAction(JarvisForegroundService.BROADCAST_MEDIA_STOP)
+            addAction(JarvisForegroundService.BROADCAST_MEDIA_NEXT)
+            addAction(JarvisForegroundService.BROADCAST_MEDIA_PREV)
             addAction(JarvisForegroundService.BROADCAST_CONNECTION_GREETING)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
