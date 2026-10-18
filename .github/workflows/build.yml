@@ -57,18 +57,21 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.6
-        name: Jarvis Companion v1.7.6
+        tag_name: v1.7.7
+        name: Jarvis Companion v1.7.7
         body: |
-          JARVIS Companion v1.7.6 — Qur'on AI Ustozi Yangilanishi (Foydalanuvchi taqdim etgan dizayn asosida):
-          - Sarlavha: Yashil Qur'on nishoni, "Qur'on AI" sarlavhasi, "Alloh kalomi — har doim siz bilan" shiori va 🔍 Sura qidiruv hamda ⚙️ Sozlamalar tugmalari.
-          - 4 ta toifa tugmalari (Pills): 📖 Qiroat (faol yashil), 📄 Tafsir, 🌐 Tarjima, 💡 Hikmat.
-          - Sura banner kartasi: Islomiy masjid arkalari va muqaddas Qur'on kitobi surati, ← qaytish tugmasi, "Al-Fotiha" va "Makkiy, 7 oyat" tavsifi.
-          - 1-oyat ko'rgazmasi: "1-oyat / 7" nishoni, markaziy ❖ بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ❖ xattotligi, lotin transkripsiyasi va mint tusli o'zbekcha ma'nolar tarjimasi kartasi.
-          - Asosiy audio pleyer paneli: 🔊 Qori tanlash (Abdulbosit Mujavvad, Husoriy Muallim, Afosiy, G'omdiy), ⏮ Oldingi, ⏸/▶ Aylana yashil Play/Pause tugmasi, ⏭ Keyingi, ⏱ 1.0x tezlik sozlagichi.
-          - 🎙️ O'qishni tekshirish (AI Tajweed & Talaffuz nazoratchisi): Yashil yoqish/o'chirish svitchi, jonli mikrofon, Al-Fotiha surasining barcha 7 oyati (har biri uchun alohida 🔊 tinglash tugmasi, arabcha matn, lotincha o'qilishi va tasdiq nishoni).
-          - O'qish xatosini aniqlash (3-oyat ko'rinishi): Yumshoq qizil fonda xato talaffuz qilingan so'z to'lqinli qizil chiziq bilan belgilanadi, ✖ qizil xoch nishoni va aniq o'zbekcha tuzatish: 'Xato: "ar-Rahmoni" deb, "ar-rohmāni" emas'.
-          - O'ng boshqaruv ustuni: ⚡ O'qish rejimi (Oddiy, Zikr/takror, Tungi rejim), 🎙️ Qiroat uslubi, 🔊 Ovoz balandligi slayderi, 🔊 Xatolarni ko'rsatish svitchi, AA Yozuv o'lchamini kattalashtirish slayderi, va "Qur'on AI - Ilm, huzur va nur siz bilan" brend kartasi.
-          - To'liq oflayn va tezkor: Barcha ma'lumotlar statik saqlangan, 0 soniyada yuklanadi, tarmoq uzilsa ham avtomatik lokal aktivga o'tadi.
+          JARVIS Companion v1.7.7 — Kiber Globus va Jonli TV UI Mukammalligi (2, 3 va 4-rasmlar dizayni asosida):
+          - 1-rasm kamchiliklari to'liq bartaraf etildi:
+            • 3D Rangli Kiber Globus: Qora bo'shliq butunlay yo'q qilindi! Kosmik yulduzlar fonida ko'p rangli siyosiy mamlakatlar chegaralari, yashil-ko'k neon atmosfera halqasi va orbital aylanishi bilan 100% oflayn ishlaydigan Yer globusi (2 va 3-rasmlar bilan 1-ga-1 bir xil).
+            • Sarlavha paneli tuzatildi: "J · A · R · V · I · S" yozuvi bir qatorda chiroyli joylashdi, "S" harfi pastga tushib ketishi to'xtatildi, ortiqcha menyu tugmasi olib tashlandi, o'ngda ⚙️ sozlamalar tugmasi va status bar safe area to'liq moslashtirildi.
+            • "Kanallar" 2-ustunli ro'yxati: Qora bo'shliq o'rniga 10 ta o'zbek telekanali (Aqlvoy, BIZ Cinema, BIZ Music, BIZ TV, Bolajon, Cheksiz TV, Dasturxon TV, Dunyo bo'ylab, Farg'ona MTRK, Sport TV) O'zbekiston bayrog'i aylana nishonlari bilan 2 ustunda to'liq chiqadi.
+            • "Jonli TV" kartasi: Yashil TV nishoni, "Jonli TV", "O'zbekiston kanallari", ● Online nishoni va O'zbekiston 24 16:9 tungi teleminora prevyusi hamda ((•)) Jonli efir indikatori.
+          - 4-rasm (TV Tab & Jonli Efir):
+            • 16:9 formatdagi jonli HLS video pleer, jonli boshqaruv (Pauza/Play, Ovoz slayderi, ● LIVE qizil yorug'lik, HD, To'liq ekran).
+            • Kanal axborot banneri: Kanal nomi (Sport TV), "Jonli · O'zbekiston kanallari", ● LIVE va ⭐ Sevimlilar tugmasi.
+            • Toifalar chipchalari: 📺 Barchasi, ⚽ Sport, 🎬 Kino, 📰 Yangiliklar, 👶 Bolalar, 🎵 Musiqa, 🌍 Dunyo (famelack.com integratsiyasi).
+            • 2-ustunli brend logotipli kanallar kartalari: Sport TV, ITV HD, O'zbekiston 24, Zo'r TV, MTRK Sport, Sevimli TV, Milliy TV, Yoshlar TV.
+          - Yagona pastki panel (Dock + Input Bar): 4 ta tab (Asosiy, TV, Musiqa, Chat) va 📎 Fayl biriktirish, Buyruq yozish, 🎙️ Mikrofon va ➤ Yuborish tugmalari hamisha mavjud.
+          - 100% Oflayn va tezkor: Barcha teksturalar va ma'lumotlar APK ichida mujassam, internet zaif bo'lsa ham bir soniyada yuklanadi.
         files: app/build/outputs/apk/debug/app-debug.apk
 
