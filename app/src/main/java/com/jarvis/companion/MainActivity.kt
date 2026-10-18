@@ -2926,7 +2926,14 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
         }
-        webViewDashboard.webViewClient = WebViewClient()
+        webViewDashboard.webViewClient = object : WebViewClient() {
+            override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+                if (failingUrl?.contains("77.83.206.138") == true) {
+                    view?.loadUrl("file:///android_asset/quron/index.html")
+                }
+            }
+        }
+        webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
         webViewDashboard.webChromeClient = object : WebChromeClient() {
             override fun onPermissionRequest(request: PermissionRequest?) {
                 runOnUiThread {

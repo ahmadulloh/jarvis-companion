@@ -57,15 +57,18 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.5
-        name: Jarvis Companion v1.7.5
+        tag_name: v1.7.6
+        name: Jarvis Companion v1.7.6
         body: |
-          JARVIS Companion v1.7.5 yangilanishi — Yangi 4-Tabli Yagona UI & Jonli TV / 3D Globus (1, 2, 3-rasmlar dizayni asosida):
-          - 1-rasm (Asosiy / Home): 3D rangli Yer globusi, Jonli TV (O'zbekiston 24) prevyu kartasi, 2-ustunli kanallar (Aqlvoy, BIZ Cinema, BIZ TV, Bolajon, Cheksiz TV, Dasturxon TV, Dunyo bo'ylab, Farg'ona MTRK, Sport TV, Sevimli TV, Zo'r TV).
-          - 3-rasm (TV Tab): 16:9 Jonli HD video pleer, soxta 0:12/0:30 taymersiz haqiqiy jonli boshqaruv (Pauza/Play, Ovoz slayderi, ● LIVE qizil yorug'lik, HD, To'liq ekran), kanal ma'lumot banneri va ⭐ Sevimlilar, toifalar (Barchasi, Sport, Kino, Yangiliklar, Bolalar, Musiqa, Dunyo) va 2-ustunli brendli logotipli kanallar kartalari.
-          - 3-tab (Musiqa): Yaratuvchan Spotify-uslubidagi musiqa pleeri, aylanuvchi vinil disk, chastotali audio vizualizator, O'zbekiston xitlari (Hurshid Rasulov, Shohruhxon, Yulduz Usmonova, Munisa Rizayeva, Rayhon) va haqiqiy vaqtli progress bar.
-          - 4-tab (Chat): ChatGPT uslubidagi qulay interaktiv AI muloqot oynasi, tezkor taklif chipchalari (Bugungi yangiliklar, Ob-havo, Sport TV, Qur'on darsi) va Markdown formatlash.
-          - Status Bar to'qnashuvi tuzatildi: Telefonning soat va batareya paneli bilan xunuk ustma-ust tushgan sarlavha olib tashlandi, safe area insets to'liq moslashtirildi.
-          - Yagona pastki panel (Dock + Input Bar): Qayerda bo'lishingizdan qat'i nazar 4 ta tab va 📎 Fayl biriktirish, Buyruq yozish, 🎙️ Mikrofon va ➤ Yuborish tugmalari hamisha bir teginishda mavjud.
+          JARVIS Companion v1.7.6 — Qur'on AI Ustozi Yangilanishi (Foydalanuvchi taqdim etgan dizayn asosida):
+          - Sarlavha: Yashil Qur'on nishoni, "Qur'on AI" sarlavhasi, "Alloh kalomi — har doim siz bilan" shiori va 🔍 Sura qidiruv hamda ⚙️ Sozlamalar tugmalari.
+          - 4 ta toifa tugmalari (Pills): 📖 Qiroat (faol yashil), 📄 Tafsir, 🌐 Tarjima, 💡 Hikmat.
+          - Sura banner kartasi: Islomiy masjid arkalari va muqaddas Qur'on kitobi surati, ← qaytish tugmasi, "Al-Fotiha" va "Makkiy, 7 oyat" tavsifi.
+          - 1-oyat ko'rgazmasi: "1-oyat / 7" nishoni, markaziy ❖ بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ❖ xattotligi, lotin transkripsiyasi va mint tusli o'zbekcha ma'nolar tarjimasi kartasi.
+          - Asosiy audio pleyer paneli: 🔊 Qori tanlash (Abdulbosit Mujavvad, Husoriy Muallim, Afosiy, G'omdiy), ⏮ Oldingi, ⏸/▶ Aylana yashil Play/Pause tugmasi, ⏭ Keyingi, ⏱ 1.0x tezlik sozlagichi.
+          - 🎙️ O'qishni tekshirish (AI Tajweed & Talaffuz nazoratchisi): Yashil yoqish/o'chirish svitchi, jonli mikrofon, Al-Fotiha surasining barcha 7 oyati (har biri uchun alohida 🔊 tinglash tugmasi, arabcha matn, lotincha o'qilishi va tasdiq nishoni).
+          - O'qish xatosini aniqlash (3-oyat ko'rinishi): Yumshoq qizil fonda xato talaffuz qilingan so'z to'lqinli qizil chiziq bilan belgilanadi, ✖ qizil xoch nishoni va aniq o'zbekcha tuzatish: 'Xato: "ar-Rahmoni" deb, "ar-rohmāni" emas'.
+          - O'ng boshqaruv ustuni: ⚡ O'qish rejimi (Oddiy, Zikr/takror, Tungi rejim), 🎙️ Qiroat uslubi, 🔊 Ovoz balandligi slayderi, 🔊 Xatolarni ko'rsatish svitchi, AA Yozuv o'lchamini kattalashtirish slayderi, va "Qur'on AI - Ilm, huzur va nur siz bilan" brend kartasi.
+          - To'liq oflayn va tezkor: Barcha ma'lumotlar statik saqlangan, 0 soniyada yuklanadi, tarmoq uzilsa ham avtomatik lokal aktivga o'tadi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

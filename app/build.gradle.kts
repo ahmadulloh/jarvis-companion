@@ -11,8 +11,8 @@ android {
         applicationId = "com.jarvis.companion"
         minSdk = 26
         targetSdk = 34
-        versionCode = 21
-        versionName = "1.7.5"
+        versionCode = 22
+        versionName = "1.7.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
