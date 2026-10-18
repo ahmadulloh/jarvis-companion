@@ -31,6 +31,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.view.inputmethod.EditorInfo
 import android.webkit.WebChromeClient
@@ -558,9 +559,9 @@ class MainActivity : AppCompatActivity() {
             val density = resources.displayMetrics.density
             val newHeightDp = if (isVideoExpanded) 360 else 195
             val newHeightPx = (newHeightDp * density).toInt()
-            val params = layoutVideoContainer.layoutParams
-            params.height = newHeightPx
-            layoutVideoContainer.layoutParams = params
+            layoutVideoContainer.layoutParams = layoutVideoContainer.layoutParams.apply {
+                height = newHeightPx
+            }
             btnExpandInlineMedia.text = if (isVideoExpanded) "🗗" else "⛶"
         }
 
@@ -569,9 +570,9 @@ class MainActivity : AppCompatActivity() {
             if (isVideoExpanded) {
                 isVideoExpanded = false
                 val density = resources.displayMetrics.density
-                val params = layoutVideoContainer.layoutParams
-                params.height = (195 * density).toInt()
-                layoutVideoContainer.layoutParams = params
+                layoutVideoContainer.layoutParams = layoutVideoContainer.layoutParams.apply {
+                    height = (195 * density).toInt()
+                }
                 btnExpandInlineMedia.text = "⛶"
             }
             cardInlineMedia.visibility = View.GONE
