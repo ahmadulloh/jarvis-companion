@@ -2958,7 +2958,7 @@ class MainActivity : AppCompatActivity() {
         @android.webkit.JavascriptInterface
         fun openAttachmentPicker() {
             runOnUiThread {
-                showAttachmentOptionsBottomSheet()
+                showAttachmentSourceChooser()
             }
         }
 
@@ -2992,7 +2992,6 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     fun openWorldTv(url: String) {
         containerWebView.visibility = View.VISIBLE
-        headerWebView.visibility = View.GONE
 
         webViewDashboard.settings.apply {
             javaScriptEnabled = true
