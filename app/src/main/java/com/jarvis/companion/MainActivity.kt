@@ -782,7 +782,7 @@ class MainActivity : AppCompatActivity() {
         layoutAttachmentPreview.visibility = View.GONE
     }
 
-    private fun addUserChatBubble(text: String, imageBitmap: Bitmap?, docName: String?) {
+    private fun addUserChatBubble(userMessage: String, imageBitmap: Bitmap?, docName: String?) {
         scrollOnScreenChat.visibility = View.VISIBLE
         val density = resources.displayMetrics.density
 
@@ -847,7 +847,7 @@ class MainActivity : AppCompatActivity() {
                 ).apply {
                     marginStart = (6 * density).toInt()
                 }
-                text = docName
+                this.text = docName
                 textSize = 12.5f
                 setTextColor(Color.parseColor("#0F5132"))
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -859,9 +859,9 @@ class MainActivity : AppCompatActivity() {
             bubble.addView(docRow)
         }
 
-        if (text.isNotBlank()) {
+        if (userMessage.isNotBlank()) {
             val tvText = TextView(this).apply {
-                this.text = text
+                this.text = userMessage
                 textSize = 14f
                 setTextColor(Color.parseColor("#0B2A18"))
                 setLineSpacing(2 * density, 1f)
@@ -876,7 +876,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun addJarvisChatBubble(text: String) {
+    private fun addJarvisChatBubble(replyMessage: String) {
         scrollOnScreenChat.visibility = View.VISIBLE
         val density = resources.displayMetrics.density
 
@@ -925,7 +925,7 @@ class MainActivity : AppCompatActivity() {
             ).apply {
                 marginStart = (6 * density).toInt()
             }
-            text = "JARVIS"
+            this.text = "JARVIS"
             textSize = 11f
             setTextColor(Color.parseColor("#12A550"))
             typeface = android.graphics.Typeface.DEFAULT_BOLD
@@ -936,7 +936,7 @@ class MainActivity : AppCompatActivity() {
         bubble.addView(header)
 
         val tvText = TextView(this).apply {
-            this.text = text
+            this.text = replyMessage
             textSize = 14f
             setTextColor(Color.parseColor("#1E293B"))
             setTextIsSelectable(true)
