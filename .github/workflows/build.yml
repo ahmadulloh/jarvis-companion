@@ -57,30 +57,29 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.7.9
-        name: Jarvis Companion v1.7.9
+        tag_name: v1.8.0
+        name: Jarvis Companion v1.8.0
         body: |
-          JARVIS Companion v1.7.9 — Barcha 34 ta O'zbek telekanali, To'g'ri Fullscreen, 3 Nuqtali Tezkor Menyu va Kuchaytirilgan Qur'on AI:
-          - Zo'r TV va Barcha 34 ta O'zbekiston telekanali:
-            • Famelack rasmiy manbasidan barcha 34 ta O'zbek telekanali (Zo'r TV, Sevimli TV, Milliy TV, MY5, BIZ TV, BIZ Cinema, BIZ Music, Aqlvoy, Bolajon, Dunyo bo'ylab, Kinoteatr, UzReport TV, Sport TV, va h.k.) to'liq qo'shildi.
-            • "Zo'r TV ni qo'y" yoki istalgan kanal nomi aytilganda darhol o'sha kanal jonli efirda ochiladi.
-          - To'liq ekran (Fullscreen) to'g'irlandi:
-            • Ekran ag'darilib Jarvis UI buzilib ketishi butunlay to'xtatildi (android:configChanges to'liq joriy etildi).
-            • Video 100% ekranni egallaydi va ekrandan chiqish uchun qulay ✕ tugmasi qo'yildi.
-          - Qur'on AI TV interfeysidan chiqarildi va 3 Nuqtali Kiber Menyu qo'shildi:
-            • TV UI pastki panelidan Qur'on AI olib tashlandi (faqat Asosiy, TV, Musiqa qoldi).
-            • Jarvis logotipi tagiga 3 ta nuqta (•••) qo'yildi. Bosilganda nafis, zamonaviy menyu ochiladi:
-              1. Qur'on AI (Tajvid, Tilovat va Ovozli tekshirish)
-              2. Barcha TV (3D Globus va 34 ta telekanal)
-              3. Eslatmalar (Reja, vazifalar va budilnik)
-          - Qur'on AI Tubdan Kuchaytirildi:
-            • 3 xil ko'rinish tanlash imkoni:
-              1. Kitobli ko'rinish (Haqiqiy Mushaf sahifasi, oltin naqshli hoshiya va oyat belgilari)
-              2. Tajvidli ko'rinish (Ixfo, Qalqala, Madd, G'unna ranglari bilan oyatma-oyat)
-              3. Takrorlab o'qish (Yodlash rejimi: 1x, 3x, 5x, 10x, ∞ cheksiz takrorlash va qori orqasidan qaytarish)
-            • O'qishni haqiqiy 2 tomonlama Android ovozli tanib olish (SpeechRecognizer ar-SA) orqali tekshirish.
-            • Qorilar qiroati (Abdulbosit Mujawwad, Husariy, Afosiy, G'omdiy).
-          - Ilovalarni ochish:
-            • "YouTube ni och" va "Telegram ni och" buyruqlari kafolatli ishga tushirildi.
+          JARVIS Companion v1.8.0 — Yangi Imkoniyatlar:
+          - 3 Chiziqcha (— — —) Tezkor Menyu:
+            • Logo ostidagi nuqtalar chiziqchalarga (— — —) almashtirildi.
+            • Menyuga 5 ta asosiy bo'lim kiritildi: Qur'on AI, Barcha TV, Eslatmalar, Kunlik Rejam va Kamera AI.
+          - 📅 Kunlik Rejam (Kalendar):
+            • Haftaning barcha kunlari (Dushanba - Yakshanba) bo'yicha soatbay reja tuzish (09:00 - 12:30 Ish, 13:30 - 16:20 O'qish).
+            • Ovozli buyruq ("Kunlik rejam", "Rejamni ko'rsat") va qulay interfeys.
+          - ⏰ Eslatmalar Ro'yxati:
+            • Barcha eslatmalar ro'yxati, yangi eslatma qo'shish va o'chirish.
+            • Ovozli buyruq orqali avtomatik eslatmalar ro'yxatiga qo'shish.
+          - 📷 Kamera AI Vision va Test Yechish:
+            • Kamera orqali ko'rib turgan narsalarni jonli tasvirlab berish.
+            • Test savollarini kameraga ko'rsatganda to'g'ri javobini topib berish.
+            • Foydalanuvchi savollariga kameradagi tasvir asosida javob berish.
+          - 🌍 Barcha TV va Globus yangilanishi:
+            • Globusda yoki ro'yxatda Turkiya (TRT 1) yoki boshqa istalgan davlat tanlanganda darhol o'sha davlat kanallari ochiladi va o'ynaydi.
+            • Pleer ostidagi telekanallar ro'yxati avtomatik ravishda tanlangan davlat kanallariga yangilanadi.
+            • Jonli Musiqa radiosi (BIZ Music, Navo TV, FTV, Muz TV).
+          - 📖 Qur'on AI takomillashtirildi:
+            • Kitobli (Mushaf), Tajvidli va Takrorlash rejimlari to'liq ishlaydi.
+            • Har bir oyat ustiga bosganda darhol qiroat yangraydi va xatoliklar bartaraf etildi.
         files: app/build/outputs/apk/debug/app-debug.apk
 

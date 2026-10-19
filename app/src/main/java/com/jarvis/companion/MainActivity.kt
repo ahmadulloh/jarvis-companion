@@ -56,6 +56,7 @@ import android.media.AudioManager
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.children
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -642,6 +643,8 @@ class MainActivity : AppCompatActivity() {
         val itemMenuQuronAi = findViewById<View>(R.id.itemMenuQuronAi)
         val itemMenuBarchaTv = findViewById<View>(R.id.itemMenuBarchaTv)
         val itemMenuEslatmalar = findViewById<View>(R.id.itemMenuEslatmalar)
+        val itemMenuKunlikReja = findViewById<View>(R.id.itemMenuKunlikReja)
+        val itemMenuKameraAI = findViewById<View>(R.id.itemMenuKameraAI)
 
         btnJarvisMenuDots?.setOnClickListener {
             vibrateBrief(20)
@@ -668,7 +671,17 @@ class MainActivity : AppCompatActivity() {
         itemMenuEslatmalar?.setOnClickListener {
             vibrateBrief(25)
             cardJarvisQuickMenu?.visibility = View.GONE
-            showDomainBottomSheet()
+            showEslatmalarSheet()
+        }
+        itemMenuKunlikReja?.setOnClickListener {
+            vibrateBrief(25)
+            cardJarvisQuickMenu?.visibility = View.GONE
+            showKunlikRejaSheet()
+        }
+        itemMenuKameraAI?.setOnClickListener {
+            vibrateBrief(25)
+            cardJarvisQuickMenu?.visibility = View.GONE
+            openKameraAI()
         }
 
         // Matnli buyruq yoki biriktirilgan fayl yuborish
@@ -1272,6 +1285,187 @@ class MainActivity : AppCompatActivity() {
                 openSettingsDialog()
             }
         }
+    }
+
+    // ── Eslatmalar Sheet ──────────────────────────────────────────────────
+    private val reminderList = mutableListOf<Pair<String, String>>()
+
+    private fun showEslatmalarSheet() {
+        val sheet = BottomSheetDialog(this, R.style.Theme_JarvisCompanion_BottomSheet)
+        val sv = layoutInflater.inflate(R.layout.sheet_eslatmalar, null)
+        sheet.setContentView(sv)
+        val rvReminders = sv.findViewById<RecyclerView>(R.id.rvReminderList)
+        val btnAdd = sv.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnAddReminderFromSheet)
+        val tvEmpty = sv.findViewById<TextView>(R.id.tvRemindersEmpty)
+
+        var adapter: ReminderListAdapter? = null
+        fun refreshList() {
+            tvEmpty?.visibility = if (reminderList.isEmpty()) View.VISIBLE else View.GONE
+            adapter?.notifyDataSetChanged()
+        }
+
+        adapter = ReminderListAdapter(reminderList) { pos ->
+            if (pos >= 0 && pos < reminderList.size) {
+                reminderList.removeAt(pos)
+                refreshList()
+            }
+        }
+        rvReminders?.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            this.adapter = adapter
+        }
+        refreshList()
+
+        btnAdd?.setOnClickListener {
+            sheet.dismiss()
+            showAddReminderDialog { title, time ->
+                reminderList.add(0, Pair(title, time))
+                deliverJarvisResponseToUi("Eslatma qo'shildi: \"$title\" — $time", "⏰")
+            }
+        }
+        sheet.show()
+    }
+
+    private fun showAddReminderDialog(onSaved: (String, String) -> Unit) {
+        val dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Yangi eslatma")
+            .create()
+        val v = layoutInflater.inflate(R.layout.dialog_reminder_quick, null)
+        dialog.setView(v)
+        val etTitle = v.findViewById<EditText>(R.id.etReminderTitle)
+        val etTime = v.findViewById<EditText>(R.id.etReminderTime)
+        val btnSave = v.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSaveReminder)
+        val btnCancel = v.findViewById<TextView>(R.id.btnCancelReminder)
+        btnSave?.setOnClickListener {
+            val title = etTitle?.text?.toString()?.trim() ?: ""
+            val time = etTime?.text?.toString()?.trim() ?: ""
+            if (title.isNotEmpty()) {
+                onSaved(title, time.ifEmpty { "Vaqt belgilanmagan" })
+                try { phoneActionManager.setReminder(title, time) } catch (_: Exception) {}
+            }
+            dialog.dismiss()
+        }
+        btnCancel?.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    inner class ReminderListAdapter(
+        private val items: MutableList<Pair<String, String>>,
+        private val onDelete: (Int) -> Unit
+    ) : RecyclerView.Adapter<ReminderListAdapter.VH>() {
+        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tvTitle: TextView = v.findViewById(R.id.tvReminderItemTitle)
+            val tvTime: TextView = v.findViewById(R.id.tvReminderItemTime)
+            val btnDelete: View = v.findViewById(R.id.btnReminderItemDelete)
+        }
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_reminder, parent, false)
+            return VH(v)
+        }
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val (title, time) = items[position]
+            holder.tvTitle.text = title
+            holder.tvTime.text = time
+            holder.btnDelete.setOnClickListener { onDelete(holder.adapterPosition) }
+        }
+        override fun getItemCount() = items.size
+    }
+
+    // ── Kunlik Reja Sheet ─────────────────────────────────────────────────
+    private val dailyScheduleMap = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
+    private val daysUz = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba")
+
+    private fun showKunlikRejaSheet() {
+        val sheet = BottomSheetDialog(this, R.style.Theme_JarvisCompanion_BottomSheet)
+        val sv = layoutInflater.inflate(R.layout.sheet_kunlik_reja, null)
+        sheet.setContentView(sv)
+        val llTabs = sv.findViewById<LinearLayout>(R.id.llDayTabs)
+        val rvSlots = sv.findViewById<RecyclerView>(R.id.rvDaySlots)
+        val btnAddSlot = sv.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnAddSlot)
+        val tvSelDay = sv.findViewById<TextView>(R.id.tvSelectedDay)
+        var selectedDay = daysUz[0]
+
+        fun renderDay(day: String) {
+            selectedDay = day
+            tvSelDay?.text = day
+            val slots = dailyScheduleMap.getOrPut(day) { mutableListOf() }
+            rvSlots?.adapter = DaySlotAdapter(slots)
+        }
+
+        llTabs?.removeAllViews()
+        daysUz.forEachIndexed { _, day ->
+            val btn = TextView(this).apply {
+                text = day.take(3)
+                textSize = 11f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(if (day == selectedDay) 0xFF00E676.toInt() else 0xFF64748B.toInt())
+                setPadding(22, 14, 22, 14)
+                background = ContextCompat.getDrawable(this@MainActivity, R.drawable.bg_caption_glass)
+                val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.marginEnd = 8
+                layoutParams = lp
+                setOnClickListener {
+                    (parent as? LinearLayout)?.children?.forEach { v ->
+                        (v as? TextView)?.setTextColor(0xFF64748B.toInt())
+                    }
+                    setTextColor(0xFF00E676.toInt())
+                    renderDay(day)
+                }
+            }
+            llTabs?.addView(btn)
+        }
+
+        btnAddSlot?.setOnClickListener {
+            showAddSlotDialog(selectedDay) { renderDay(selectedDay) }
+        }
+        renderDay(selectedDay)
+        sheet.show()
+    }
+
+    private fun showAddSlotDialog(day: String, onAdded: () -> Unit) {
+        val dialog = MaterialAlertDialogBuilder(this).setTitle("$day — Yangi reja").create()
+        val v = layoutInflater.inflate(R.layout.dialog_add_slot, null)
+        dialog.setView(v)
+        val etStart = v.findViewById<EditText>(R.id.etSlotStart)
+        val etEnd = v.findViewById<EditText>(R.id.etSlotEnd)
+        val etTitle = v.findViewById<EditText>(R.id.etSlotTitle)
+        val btnSave = v.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSaveSlot)
+        val btnCancel = v.findViewById<TextView>(R.id.btnCancelSlot)
+        btnSave?.setOnClickListener {
+            val start = etStart?.text?.toString()?.trim() ?: ""
+            val end = etEnd?.text?.toString()?.trim() ?: ""
+            val title = etTitle?.text?.toString()?.trim() ?: ""
+            if (title.isNotEmpty()) {
+                dailyScheduleMap.getOrPut(day) { mutableListOf() }.add(Triple(start, end, title))
+                dailyScheduleMap[day]?.sortBy { it.first }
+                onAdded()
+            }
+            dialog.dismiss()
+        }
+        btnCancel?.setOnClickListener { dialog.dismiss() }
+        dialog.show()
+    }
+
+    inner class DaySlotAdapter(private val slots: List<Triple<String, String, String>>) :
+        RecyclerView.Adapter<DaySlotAdapter.VH>() {
+        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tvTime: TextView = v.findViewById(R.id.tvSlotTime)
+            val tvTitle: TextView = v.findViewById(R.id.tvSlotTitle)
+        }
+        override fun onCreateViewHolder(p: ViewGroup, t: Int) =
+            VH(LayoutInflater.from(p.context).inflate(R.layout.item_day_slot, p, false))
+        override fun onBindViewHolder(h: VH, pos: Int) {
+            val (start, end, title) = slots[pos]
+            h.tvTime.text = if (end.isNotEmpty()) "$start – $end" else start
+            h.tvTitle.text = title
+        }
+        override fun getItemCount() = slots.size
+    }
+
+    // ── Camera AI Vision Mode ─────────────────────────────────────────────
+    private fun openKameraAI() {
+        openQuronLesson("http://77.83.206.138:8000/camera")
+        deliverJarvisResponseToUi("Kamera AI yoqildi! Kameraga ko'rsating — nimani ko'rayotganimni tahlil qilaman va savollaringizga javob beraman.", "📷")
     }
 
     private fun showSetReminderDialog(defaultReminderText: String) {
@@ -2341,6 +2535,26 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // 0. Kamera AI ochish buyruqlari
+        if (lower.contains("kamera") || lower.contains("kamerani och") || lower.contains("kamerani yoq") || lower.contains("ko'rib ayt") || lower.contains("testni yech") || lower.contains("savolni yech")) {
+            openKameraAI()
+            return
+        }
+
+        // 0. Kunlik Reja buyruqlari
+        if (lower.contains("kunlik reja") || lower.contains("rejam") || lower.contains("jadval") || lower.contains("dars jadval")) {
+            runOnUiThread { showKunlikRejaSheet() }
+            deliverJarvisResponseToUi("Kunlik rejalaringiz jadvalini ochdim, Axmadulloh sir!", "📅")
+            return
+        }
+
+        // 0. Eslatmalar ro'yxatini ochish
+        if (lower.contains("eslatmalar ro'yxati") || lower.contains("eslatmalarni och") || lower.contains("eslatmalarni ko'rsat")) {
+            runOnUiThread { showEslatmalarSheet() }
+            deliverJarvisResponseToUi("Barcha eslatmalaringiz ro'yxatini ochdim, Axmadulloh sir!", "⏰")
+            return
+        }
+
         // 0. YouTube ochish buyrug'i
         if (lower.contains("youtube") || lower.contains("yutub") || lower == "yt") {
             if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "youtube" || lower.trim() == "yutub") {
@@ -2478,8 +2692,9 @@ class MainActivity : AppCompatActivity() {
 
         // 2. Eslatmalar (Reminders / Alarms in all domains)
         if (lower.contains("eslat") || lower.contains("budilnik") || lower.contains("taymer") || lower.contains("reminder")) {
-            val res = phoneActionManager.setReminder(cmd, "")
-            deliverJarvisResponseToUi(res, "⏰")
+            try { phoneActionManager.setReminder(cmd, "") } catch (_: Exception) {}
+            reminderList.add(0, Pair(cmd, "Ovozli buyruq bilan"))
+            deliverJarvisResponseToUi("Eslatma qo'shildi: \"$cmd\"! Eslatmalar ro'yxatiga kiritildi.", "⏰")
             return
         }
 

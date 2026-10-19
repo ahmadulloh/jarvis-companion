@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="#F8FAFC">
+
+    <TextView
+        android:text="⏰"
+        android:textSize="22sp"
+        android:layout_width="36dp"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvReminderItemTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Eslatma"
+            android:textColor="#0B2A18"
+            android:fontFamily="sans-serif-bold"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvReminderItemTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vaqt"
+            android:textColor="#64748B"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/btnReminderItemDelete"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:text="✕"
+        android:gravity="center"
+        android:textColor="#EF4444"
+        android:textSize="14sp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true" />
+
+</LinearLayout>

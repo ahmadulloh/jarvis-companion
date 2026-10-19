@@ -675,8 +675,8 @@
       </button>
     </div>
 
-    <!-- 3. ACTIVE AYAH SHOWCASE CARD -->
-    <div class="showcase-card">
+    <!-- 3. ACTIVE AYAH SHOWCASE CARD (Displayed in Tajvid & Takrorlash modes) -->
+    <div class="showcase-card" id="showcaseCard" style="display: none;">
       <span class="showcase-badge" id="lblShowcaseAyahNum">1-Oyat</span>
       <div class="showcase-ar-text" id="lblShowcaseArabic">
         بِسْمِ <span class="tg">ٱللَّهِ</span> <span class="tb">ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ
@@ -809,14 +809,18 @@
       currentViewMode = mode;
       document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
+      const sc = document.getElementById('showcaseCard');
 
       if (mode === 'mushaf') {
+        if (sc) sc.style.display = 'none';
         document.getElementById('btnModeMushaf').classList.add('active');
         document.getElementById('pane-mushaf').classList.add('active');
       } else if (mode === 'tajweed') {
+        if (sc) sc.style.display = 'flex';
         document.getElementById('btnModeTajweed').classList.add('active');
         document.getElementById('pane-tajweed').classList.add('active');
       } else if (mode === 'repeat') {
+        if (sc) sc.style.display = 'flex';
         document.getElementById('btnModeRepeat').classList.add('active');
         document.getElementById('pane-repeat').classList.add('active');
       }
@@ -841,7 +845,10 @@
         const span = document.createElement('span');
         span.className = `m-ayah-span ${item.a === currentAyah ? 'active' : ''}`;
         span.id = `mushafAyah_${item.a}`;
-        span.onclick = () => selectAyah(item.a);
+        span.onclick = () => {
+          selectAyah(item.a);
+          playCurrentAudio();
+        };
         span.innerHTML = `${item.ar} <span class="m-ayah-end">۝${item.a}</span> `;
         container.appendChild(span);
       });
@@ -940,12 +947,23 @@
     }
 
     function playCurrentAudio() {
-      audioPlayer.src = getAudioUrl(currentSurah, currentAyah);
+      const primaryUrl = getAudioUrl(currentSurah, currentAyah);
+      audioPlayer.src = primaryUrl;
       audioPlayer.playbackRate = currentSpeed;
+      audioPlayer.onerror = () => {
+        console.warn("Primary audio failed, loading CDN fallback...");
+        // Fallback to alafasy global CDN
+        const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${currentAyah}.mp3`;
+        audioPlayer.src = fallbackUrl;
+        audioPlayer.play().catch(e => console.warn("Fallback audio failed:", e));
+      };
       audioPlayer.play().then(() => {
         isPlaying = true;
-        document.getElementById('btnAudioPlay').textContent = '⏸';
-      }).catch(err => console.warn("Audio play err:", err));
+        const btn = document.getElementById('btnAudioPlay');
+        if (btn) btn.textContent = '⏸';
+      }).catch(err => {
+        console.warn("Audio play err:", err);
+      });
     }
 
     function toggleAudioPlay() {

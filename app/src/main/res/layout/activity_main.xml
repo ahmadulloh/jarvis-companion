@@ -73,11 +73,11 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="● ● ●"
-                    android:textColor="#12A550"
-                    android:textSize="8sp"
-                    android:letterSpacing="0.2"
-                    android:fontFamily="sans-serif-bold" />
+                    android:text="— — —"
+                    android:textColor="#00E676"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.15"
+                    android:fontFamily="sans-serif-black" />
             </LinearLayout>
         </LinearLayout>
 
@@ -350,7 +350,126 @@
                     android:fontFamily="sans-serif-bold" />
             </LinearLayout>
 
+            <!-- 4. Kunlik Rejam Item -->
+            <LinearLayout
+                android:id="@+id/itemMenuKunlikReja"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/bg_quick_menu_item"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <TextView
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="@drawable/bg_caption_glass"
+                    android:gravity="center"
+                    android:text="&#128197;"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Kunlik Rejam"
+                        android:textColor="#0B2A18"
+                        android:textSize="13.5sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="Haftalik jadval va darslar"
+                        android:textColor="#64748B"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_domain_chip"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="2dp"
+                    android:text="Jadval"
+                    android:textColor="#F59E0B"
+                    android:textSize="10sp"
+                    android:fontFamily="sans-serif-bold" />
+            </LinearLayout>
+
+            <!-- 5. Kamera AI Item -->
+            <LinearLayout
+                android:id="@+id/itemMenuKameraAI"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_quick_menu_item"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <TextView
+                    android:layout_width="38dp"
+                    android:layout_height="38dp"
+                    android:background="@drawable/bg_caption_glass"
+                    android:gravity="center"
+                    android:text="&#128247;"
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-black"
+                        android:text="Kamera AI"
+                        android:textColor="#0B2A18"
+                        android:textSize="13.5sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif"
+                        android:text="Ko'rgan narsasini tahlil qiladi"
+                        android:textColor="#64748B"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_domain_chip"
+                    android:paddingStart="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingEnd="6dp"
+                    android:paddingBottom="2dp"
+                    android:text="AI Ko'z"
+                    android:textColor="#EC4899"
+                    android:textSize="10sp"
+                    android:fontFamily="sans-serif-bold" />
+            </LinearLayout>
+
         </LinearLayout>
+
     </androidx.cardview.widget.CardView>
 
     <!-- Center reference anchor for the living particle Orb -->
