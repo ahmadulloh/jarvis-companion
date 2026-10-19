@@ -1291,7 +1291,7 @@ class MainActivity : AppCompatActivity() {
     private val reminderList = mutableListOf<Pair<String, String>>()
 
     private fun showEslatmalarSheet() {
-        val sheet = BottomSheetDialog(this, R.style.Theme_JarvisCompanion_BottomSheet)
+        val sheet = BottomSheetDialog(this)
         val sv = layoutInflater.inflate(R.layout.sheet_eslatmalar, null)
         sheet.setContentView(sv)
         val rvReminders = sv.findViewById<RecyclerView>(R.id.rvReminderList)
@@ -1376,7 +1376,7 @@ class MainActivity : AppCompatActivity() {
     private val daysUz = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba")
 
     private fun showKunlikRejaSheet() {
-        val sheet = BottomSheetDialog(this, R.style.Theme_JarvisCompanion_BottomSheet)
+        val sheet = BottomSheetDialog(this)
         val sv = layoutInflater.inflate(R.layout.sheet_kunlik_reja, null)
         sheet.setContentView(sv)
         val llTabs = sv.findViewById<LinearLayout>(R.id.llDayTabs)
