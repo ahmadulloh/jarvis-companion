@@ -30,7 +30,22 @@ class JarvisApp : Application() {
                 return@setDefaultUncaughtExceptionHandler
             }
 
-            // On main thread, try to recover or restart
+            // Guard against main-thread Audio/Bluetooth/Headset/Security exceptions
+            val stack = Log.getStackTraceString(throwable)
+            val isAudioOrHeadsetCrash = throwable is SecurityException ||
+                    throwable is IllegalStateException && stack.contains("service", ignoreCase = true) ||
+                    stack.contains("audio", ignoreCase = true) ||
+                    stack.contains("bluetooth", ignoreCase = true) ||
+                    stack.contains("headset", ignoreCase = true) ||
+                    stack.contains("MediaButton", ignoreCase = true) ||
+                    stack.contains("ForegroundServiceStartNotAllowedException")
+
+            if (isAudioOrHeadsetCrash) {
+                Log.w("JarvisApp", "Silently recovered from main-thread audio/headset error: ${throwable.message}")
+                return@setDefaultUncaughtExceptionHandler
+            }
+
+            // On other main thread errors, try to show toast before fallback
             try {
                 Handler(Looper.getMainLooper()).post {
                     Toast.makeText(this@JarvisApp, "JARVIS qayta tiklandi", Toast.LENGTH_SHORT).show()

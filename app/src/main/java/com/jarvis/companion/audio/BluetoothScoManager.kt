@@ -32,31 +32,62 @@ class BluetoothScoManager(
 
     private val deviceCallback = object : AudioDeviceCallback() {
         override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>?) {
-            Log.d("BluetoothScoManager", "Audio devices added, re-checking headset")
-            routeBluetoothAudio()
+            try {
+                Log.d("BluetoothScoManager", "Audio devices added, re-checking headset")
+                if (currentRoute == AudioRoute.EARBUDS) {
+                    if (isBluetoothHeadsetConnected()) {
+                        routeBluetoothAudio()
+                    } else if (isWiredHeadsetConnected()) {
+                        Log.d("BluetoothScoManager", "Wired headset connected")
+                        notifyStateChanged(true)
+                    }
+                }
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "onAudioDevicesAdded error: ${e.message}")
+            }
         }
 
         override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>?) {
-            Log.d("BluetoothScoManager", "Audio devices removed, re-checking headset")
-            routeBluetoothAudio()
+            try {
+                Log.d("BluetoothScoManager", "Audio devices removed, re-checking headset")
+                if (currentRoute == AudioRoute.EARBUDS) {
+                    if (isBluetoothHeadsetConnected()) {
+                        routeBluetoothAudio()
+                    } else if (isWiredHeadsetConnected()) {
+                        notifyStateChanged(true)
+                    } else {
+                        notifyStateChanged(false)
+                    }
+                }
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "onAudioDevicesRemoved error: ${e.message}")
+            }
         }
     }
 
     private var lastReportedState: Boolean? = null
     private fun notifyStateChanged(state: Boolean) {
-        if (lastReportedState == state) return
-        lastReportedState = state
-        onScoStateChanged(state)
+        try {
+            if (lastReportedState == state) return
+            lastReportedState = state
+            onScoStateChanged(state)
+        } catch (e: Throwable) {
+            Log.w("BluetoothScoManager", "notifyStateChanged error: ${e.message}")
+        }
     }
 
     fun isBluetoothAudioRouted(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val comm = audioManager.communicationDevice
-            if (comm != null && (comm.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || comm.type == AudioDeviceInfo.TYPE_BLE_HEADSET)) {
-                return true
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val comm = audioManager.communicationDevice
+                if (comm != null && (comm.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO || comm.type == AudioDeviceInfo.TYPE_BLE_HEADSET)) {
+                    return true
+                }
             }
+            return audioManager.isBluetoothScoOn
+        } catch (_: Throwable) {
+            return false
         }
-        return audioManager.isBluetoothScoOn
     }
 
     var currentRoute: AudioRoute = AudioRoute.EARBUDS
@@ -68,8 +99,12 @@ class BluetoothScoManager(
             AudioRoute.EARBUDS -> {
                 try {
                     audioManager.isSpeakerphoneOn = false
-                } catch (_: Exception) {}
-                routeBluetoothAudio()
+                } catch (_: Throwable) {}
+                if (isBluetoothHeadsetConnected()) {
+                    routeBluetoothAudio()
+                } else if (isWiredHeadsetConnected()) {
+                    notifyStateChanged(true)
+                }
             }
             AudioRoute.PHONE -> {
                 try {
@@ -85,7 +120,7 @@ class BluetoothScoManager(
                     audioManager.stopBluetoothSco()
                     audioManager.isBluetoothScoOn = false
                     audioManager.isSpeakerphoneOn = true
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Log.w("BluetoothScoManager", "setAudioRoute PHONE error: ${e.message}")
                 }
                 notifyStateChanged(false)
@@ -98,7 +133,7 @@ class BluetoothScoManager(
                     audioManager.stopBluetoothSco()
                     audioManager.isBluetoothScoOn = false
                     audioManager.isSpeakerphoneOn = false
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     Log.w("BluetoothScoManager", "setAudioRoute PC error: ${e.message}")
                 }
                 notifyStateChanged(false)
@@ -108,42 +143,50 @@ class BluetoothScoManager(
 
     private val scoReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED) {
-                val state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_ERROR)
-                when (state) {
-                    AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
-                        Log.d("BluetoothScoManager", "Bluetooth SCO Connected")
-                        audioManager.isBluetoothScoOn = true
-                        isReconnecting = false
-                        notifyStateChanged(true)
-                    }
-                    AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
-                        Log.d("BluetoothScoManager", "Bluetooth SCO Disconnected")
-                        audioManager.isBluetoothScoOn = false
-                        if (!isBluetoothAudioRouted()) {
-                            notifyStateChanged(false)
-                            if (currentRoute == AudioRoute.EARBUDS) {
-                                scheduleScoReconnect(1500L)
+            try {
+                if (intent?.action == AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED) {
+                    val state = intent.getIntExtra(AudioManager.EXTRA_SCO_AUDIO_STATE, AudioManager.SCO_AUDIO_STATE_ERROR)
+                    when (state) {
+                        AudioManager.SCO_AUDIO_STATE_CONNECTED -> {
+                            Log.d("BluetoothScoManager", "Bluetooth SCO Connected")
+                            audioManager.isBluetoothScoOn = true
+                            isReconnecting = false
+                            notifyStateChanged(true)
+                        }
+                        AudioManager.SCO_AUDIO_STATE_DISCONNECTED -> {
+                            Log.d("BluetoothScoManager", "Bluetooth SCO Disconnected")
+                            audioManager.isBluetoothScoOn = false
+                            if (!isBluetoothAudioRouted() && !isWiredHeadsetConnected()) {
+                                notifyStateChanged(false)
+                                if (currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected()) {
+                                    scheduleScoReconnect(2000L)
+                                }
                             }
                         }
                     }
                 }
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "scoReceiver error: ${e.message}")
             }
         }
     }
 
     private val watchdogRunnable = object : Runnable {
         override fun run() {
-            if (isScoStarted && currentRoute == AudioRoute.EARBUDS) {
-                if (isBluetoothHeadsetConnected()) {
-                    if (!isBluetoothAudioRouted() && !isReconnecting) {
-                        Log.d("BluetoothScoManager", "Watchdog: Audio route lost but headset connected, reconnecting...")
-                        routeBluetoothAudio()
+            try {
+                if (isScoStarted && currentRoute == AudioRoute.EARBUDS) {
+                    if (isBluetoothHeadsetConnected()) {
+                        if (!isBluetoothAudioRouted() && !isReconnecting) {
+                            Log.d("BluetoothScoManager", "Watchdog: BT route lost but headset connected, reconnecting...")
+                            routeBluetoothAudio()
+                        }
                     }
                 }
-                handler.postDelayed(this, 5000L)
-            } else if (isScoStarted) {
-                handler.postDelayed(this, 5000L)
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "watchdogRunnable error: ${e.message}")
+            }
+            if (isScoStarted) {
+                handler.postDelayed(this, 6000L)
             }
         }
     }
@@ -151,9 +194,13 @@ class BluetoothScoManager(
     private fun scheduleScoReconnect(delayMs: Long) {
         if (!isScoStarted || currentRoute != AudioRoute.EARBUDS) return
         handler.postDelayed({
-            if (isScoStarted && currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected() && !isBluetoothAudioRouted()) {
-                Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth audio...")
-                routeBluetoothAudio()
+            try {
+                if (isScoStarted && currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected() && !isBluetoothAudioRouted()) {
+                    Log.d("BluetoothScoManager", "Auto-reconnecting Bluetooth audio...")
+                    routeBluetoothAudio()
+                }
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "scheduleScoReconnect error: ${e.message}")
             }
         }, delayMs)
     }
@@ -161,37 +208,46 @@ class BluetoothScoManager(
     fun start() {
         if (isScoStarted) return
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-                    Log.w("BluetoothScoManager", "BLUETOOTH_CONNECT permission not granted, skipping SCO start")
-                    return
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    audioManager.registerAudioDeviceCallback(deviceCallback, null)
+                    isDeviceCallbackRegistered = true
+                } catch (e: Throwable) {
+                    Log.w("BluetoothScoManager", "registerAudioDeviceCallback: ${e.message}")
                 }
             }
-            if (currentRoute == AudioRoute.EARBUDS && isBluetoothHeadsetConnected()) {
-                requestAudioFocus()
-                audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+
+            try {
+                val filter = IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(scoReceiver, filter, Context.RECEIVER_EXPORTED)
+                } else {
+                    context.registerReceiver(scoReceiver, filter)
+                }
+                isReceiverRegistered = true
+            } catch (e: Throwable) {
+                Log.w("BluetoothScoManager", "registerReceiver scoReceiver: ${e.message}")
+            }
+
+            if (currentRoute == AudioRoute.EARBUDS) {
+                if (isBluetoothHeadsetConnected()) {
+                    requestAudioFocus()
+                    audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
+                    routeBluetoothAudio()
+                } else if (isWiredHeadsetConnected()) {
+                    audioManager.mode = AudioManager.MODE_NORMAL
+                    notifyStateChanged(true)
+                } else {
+                    audioManager.mode = AudioManager.MODE_NORMAL
+                }
             } else {
                 audioManager.mode = AudioManager.MODE_NORMAL
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                audioManager.registerAudioDeviceCallback(deviceCallback, null)
-                isDeviceCallbackRegistered = true
-            }
-
-            val filter = IntentFilter(AudioManager.ACTION_SCO_AUDIO_STATE_UPDATED)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.registerReceiver(scoReceiver, filter, Context.RECEIVER_EXPORTED)
-            } else {
-                context.registerReceiver(scoReceiver, filter)
-            }
-            isReceiverRegistered = true
-
-            routeBluetoothAudio()
             isScoStarted = true
             handler.postDelayed(watchdogRunnable, 3000L)
             Log.d("BluetoothScoManager", "Bluetooth SCO manager started with watchdog")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e("BluetoothScoManager", "Failed to start SCO: ${e.message}")
         }
     }
@@ -199,42 +255,77 @@ class BluetoothScoManager(
     fun isBluetoothHeadsetConnected(): Boolean {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    return false
+                }
                 val devices = audioManager.availableCommunicationDevices
                 if (devices.any {
                     it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
                     it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
                 }) return true
             }
-            val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
-            return inputDevices.any {
-                it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val inputDevices = audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS)
+                return inputDevices.any {
+                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                }
             }
-        } catch (_: Exception) {
+            @Suppress("DEPRECATION")
+            return audioManager.isBluetoothScoAvailableOffCall || audioManager.isBluetoothA2dpOn
+        } catch (_: Throwable) {
             return false
         }
     }
 
-    private fun routeBluetoothAudio() {
-        if (isBluetoothAudioRouted()) {
-            Log.d("BluetoothScoManager", "Already routed to Bluetooth, skipping")
-            return
-        }
+    fun isWiredHeadsetConnected(): Boolean {
         try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val devices = audioManager.getDevices(AudioManager.GET_DEVICES_ALL)
+                return devices.any {
+                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_WIRED_HEADPHONES ||
+                    it.type == AudioDeviceInfo.TYPE_USB_HEADSET ||
+                    it.type == AudioDeviceInfo.TYPE_USB_DEVICE
+                }
+            }
+            @Suppress("DEPRECATION")
+            return audioManager.isWiredHeadsetOn
+        } catch (_: Throwable) {
+            return false
+        }
+    }
+
+    fun isAnyHeadsetConnected(): Boolean {
+        return isBluetoothHeadsetConnected() || isWiredHeadsetConnected()
+    }
+
+    private fun routeBluetoothAudio() {
+        try {
+            if (isBluetoothAudioRouted()) {
+                Log.d("BluetoothScoManager", "Already routed to Bluetooth, skipping")
+                return
+            }
+            if (!isBluetoothHeadsetConnected()) {
+                Log.d("BluetoothScoManager", "No Bluetooth headset connected, skipping SCO routing")
+                return
+            }
             isReconnecting = true
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val devices = audioManager.availableCommunicationDevices
-                val btDevice = devices.find {
-                    it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
-                    it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
-                }
-                if (btDevice != null) {
-                    val commDeviceSet = audioManager.setCommunicationDevice(btDevice)
-                    Log.d("BluetoothScoManager", "setCommunicationDevice: $commDeviceSet (${btDevice.productName})")
-                    if (commDeviceSet) {
-                        isReconnecting = false
-                        notifyStateChanged(true)
-                        return
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                    val devices = audioManager.availableCommunicationDevices
+                    val btDevice = devices.find {
+                        it.type == AudioDeviceInfo.TYPE_BLUETOOTH_SCO ||
+                        it.type == AudioDeviceInfo.TYPE_BLE_HEADSET
+                    }
+                    if (btDevice != null) {
+                        val commDeviceSet = audioManager.setCommunicationDevice(btDevice)
+                        Log.d("BluetoothScoManager", "setCommunicationDevice: $commDeviceSet")
+                        if (commDeviceSet) {
+                            isReconnecting = false
+                            notifyStateChanged(true)
+                            return
+                        }
                     }
                 }
             }
@@ -243,10 +334,10 @@ class BluetoothScoManager(
                 audioManager.startBluetoothSco()
                 audioManager.isBluetoothScoOn = true
                 Log.d("BluetoothScoManager", "startBluetoothSco requested (legacy)")
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.w("BluetoothScoManager", "startBluetoothSco: ${e.message}")
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("BluetoothScoManager", "routeBluetoothAudio error: ${e.message}")
         }
     }
@@ -268,7 +359,7 @@ class BluetoothScoManager(
                 @Suppress("DEPRECATION")
                 audioManager.requestAudioFocus(null, AudioManager.STREAM_VOICE_CALL, AudioManager.AUDIOFOCUS_GAIN)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("BluetoothScoManager", "requestAudioFocus error: ${e.message}")
         }
     }
@@ -278,29 +369,39 @@ class BluetoothScoManager(
         try {
             handler.removeCallbacksAndMessages(null)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isDeviceCallbackRegistered) {
-                audioManager.unregisterAudioDeviceCallback(deviceCallback)
+                try {
+                    audioManager.unregisterAudioDeviceCallback(deviceCallback)
+                } catch (_: Throwable) {}
                 isDeviceCallbackRegistered = false
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                audioManager.clearCommunicationDevice()
+                try {
+                    audioManager.clearCommunicationDevice()
+                } catch (_: Throwable) {}
             }
-            audioManager.stopBluetoothSco()
-            audioManager.isBluetoothScoOn = false
-            audioManager.mode = AudioManager.MODE_NORMAL
+            try {
+                audioManager.stopBluetoothSco()
+                audioManager.isBluetoothScoOn = false
+                audioManager.mode = AudioManager.MODE_NORMAL
+            } catch (_: Throwable) {}
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioFocusRequest != null) {
-                audioManager.abandonAudioFocusRequest(audioFocusRequest!!)
+                try {
+                    audioManager.abandonAudioFocusRequest(audioFocusRequest!!)
+                } catch (_: Throwable) {}
                 audioFocusRequest = null
             }
 
             if (isReceiverRegistered) {
-                context.unregisterReceiver(scoReceiver)
+                try {
+                    context.unregisterReceiver(scoReceiver)
+                } catch (_: Throwable) {}
                 isReceiverRegistered = false
             }
             isScoStarted = false
-            onScoStateChanged(false)
+            notifyStateChanged(false)
             Log.d("BluetoothScoManager", "Bluetooth SCO Stopped")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.e("BluetoothScoManager", "Failed to stop SCO: ${e.message}")
         }
     }

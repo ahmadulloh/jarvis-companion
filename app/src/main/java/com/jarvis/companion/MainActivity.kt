@@ -3197,11 +3197,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun applyAudioRoute(route: AudioRoute) {
-        val intent = Intent(this, JarvisForegroundService::class.java).apply {
-            action = JarvisForegroundService.ACTION_SET_ROUTE
-            putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
+        try {
+            val intent = Intent(this, JarvisForegroundService::class.java).apply {
+                action = JarvisForegroundService.ACTION_SET_ROUTE
+                putExtra(JarvisForegroundService.EXTRA_ROUTE, route.name)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        } catch (e: Throwable) {
+            Log.e("MainActivity", "applyAudioRoute error: ${e.message}")
         }
-        startService(intent)
     }
 
     fun setTvFullscreen(enabled: Boolean) {
@@ -3680,6 +3688,11 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 perms.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                perms.add(Manifest.permission.BLUETOOTH_CONNECT)
             }
         }
 

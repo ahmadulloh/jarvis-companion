@@ -681,7 +681,11 @@ class JarvisForegroundService : Service() {
                 }
             }
             ACTION_EARBUD_TAP -> {
-                handleEarbudTap()
+                try {
+                    handleEarbudTap()
+                } catch (t: Throwable) {
+                    Log.e("JarvisService", "ACTION_EARBUD_TAP error: ${t.message}")
+                }
             }
             ACTION_SEND_TEXT -> {
                 val cmd = intent?.getStringExtra(EXTRA_COMMAND_TEXT) ?: ""
@@ -736,99 +740,115 @@ class JarvisForegroundService : Service() {
     private var pendingTapRunnable: Runnable? = null
 
     private fun handleEarbudTap(keyCode: Int = KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
-        // 1. If JARVIS is speaking, ANY touch/button on the earbud interrupts immediately!
-        if (isSpeaking) {
-            Log.d("JarvisService", "Earbud tapped while speaking -> Immediate Interrupt!")
-            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
-            pendingTapRunnable = null
-            lastTapTime = 0L
-            onEarbudDoubleTap()
-            return
-        }
-
-        // 2. i12 TWS and other Bluetooth earbuds send KEYCODE_MEDIA_NEXT / PREVIOUS on hardware double-tap
-        when (keyCode) {
-            KeyEvent.KEYCODE_MEDIA_NEXT,
-            KeyEvent.KEYCODE_MEDIA_PREVIOUS,
-            KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
-            KeyEvent.KEYCODE_MEDIA_REWIND -> {
-                Log.d("JarvisService", "Hardware double-tap keycode ($keyCode) -> Interrupted/Listening")
+        try {
+            // 1. If JARVIS is speaking, ANY touch/button on the earbud interrupts immediately!
+            if (isSpeaking) {
+                Log.d("JarvisService", "Earbud tapped while speaking -> Immediate Interrupt!")
                 pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
                 pendingTapRunnable = null
                 lastTapTime = 0L
                 onEarbudDoubleTap()
                 return
             }
-        }
 
-        // 3. Single vs double tap detection on generic click events
-        val now = SystemClock.elapsedRealtime()
-        val diff = now - lastTapTime
-
-        if (diff in 50..500) {
-            // DOUBLE TAP! (2 marta urildi)
-            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
-            pendingTapRunnable = null
-            lastTapTime = 0L
-            onEarbudDoubleTap()
-        } else {
-            // SINGLE TAP (1 marta bosildi) — 400ms kutib, 2-marta bosilmasa bajariladi
-            lastTapTime = now
-            pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
-            val r = Runnable {
-                pendingTapRunnable = null
-                onEarbudSingleTap()
+            // 2. i12 TWS and other Bluetooth earbuds send KEYCODE_MEDIA_NEXT / PREVIOUS on hardware double-tap
+            when (keyCode) {
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+                KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                    Log.d("JarvisService", "Hardware double-tap keycode ($keyCode) -> Interrupted/Listening")
+                    pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+                    pendingTapRunnable = null
+                    lastTapTime = 0L
+                    onEarbudDoubleTap()
+                    return
+                }
             }
-            pendingTapRunnable = r
-            tapHandler.postDelayed(r, 400)
+
+            // 3. Single vs double tap detection on generic click events
+            val now = SystemClock.elapsedRealtime()
+            val diff = now - lastTapTime
+
+            if (diff in 50..500) {
+                // DOUBLE TAP! (2 marta urildi)
+                pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+                pendingTapRunnable = null
+                lastTapTime = 0L
+                onEarbudDoubleTap()
+            } else {
+                // SINGLE TAP (1 marta bosildi) — 400ms kutib, 2-marta bosilmasa bajariladi
+                lastTapTime = now
+                pendingTapRunnable?.let { tapHandler.removeCallbacks(it) }
+                val r = Runnable {
+                    pendingTapRunnable = null
+                    onEarbudSingleTap()
+                }
+                pendingTapRunnable = r
+                tapHandler.postDelayed(r, 400)
+            }
+        } catch (t: Throwable) {
+            Log.e("JarvisService", "handleEarbudTap error: ${t.message}")
         }
     }
 
     private fun onEarbudSingleTap() {
-        Log.d("JarvisService", "Earbud Single Tap: Labbay, eshitaman")
-        playBeep(highPitch = true)
+        try {
+            Log.d("JarvisService", "Earbud Single Tap: Labbay, eshitaman")
+            playBeep(highPitch = true)
 
-        broadcastChatLog("jarvis", "Labbay, Axmadulloh sir, eshitaman!")
-        broadcastState("LISTENING")
+            broadcastChatLog("jarvis", "Labbay, Axmadulloh sir, eshitaman!")
+            broadcastState("LISTENING")
 
-        if (prefs.connectionMode == "GEMINI_DIRECT") {
-            if (!geminiLiveClient.isConnected.get()) {
-                geminiLiveClient.connect(prefs.geminiApiKey)
+            if (prefs.connectionMode == "GEMINI_DIRECT") {
+                if (!geminiLiveClient.isConnected.get()) {
+                    geminiLiveClient.connect(prefs.geminiApiKey)
+                }
+                geminiLiveClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
+            } else {
+                try { wsClient.sendWake() } catch (_: Throwable) {}
+                try { wsClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar") } catch (_: Throwable) {}
             }
-            geminiLiveClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
-        } else {
-            wsClient.sendWake()
-            wsClient.sendText("Labbay, Axmadulloh sir, eshitaman deb qisqa javob qaytar")
-        }
 
-        if (!isMicStreaming) {
-            isMicStreaming = true
-            audioRecorder.start()
+            if (!isMicStreaming) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    startForegroundSafely()
+                    isMicStreaming = true
+                    audioRecorder.start()
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e("JarvisService", "onEarbudSingleTap error: ${t.message}")
         }
     }
 
     private fun onEarbudDoubleTap() {
-        Log.d("JarvisService", "Earbud Double Tap: Interrupted — listening...")
-        playDoubleBeep()
-
-        // Flush and stop audio output immediately
-        audioPlayer.flush()
         try {
-            mediaPlayer?.pause()
-        } catch (_: Exception) {}
+            Log.d("JarvisService", "Earbud Double Tap: Interrupted — listening...")
+            playDoubleBeep()
 
-        if (prefs.connectionMode == "GEMINI_DIRECT") {
-            // AudioTrack flushed
-        } else {
-            wsClient.sendInterrupt()
-        }
+            // Flush and stop audio output immediately
+            try { audioPlayer.flush() } catch (_: Throwable) {}
+            try { mediaPlayer?.pause() } catch (_: Throwable) {}
 
-        broadcastChatLog("jarvis", "⚡ Interrupted — listening...")
-        broadcastState("LISTENING")
+            if (prefs.connectionMode == "GEMINI_DIRECT") {
+                // AudioTrack flushed
+            } else {
+                try { wsClient.sendInterrupt() } catch (_: Throwable) {}
+            }
 
-        if (!isMicStreaming) {
-            isMicStreaming = true
-            audioRecorder.start()
+            broadcastChatLog("jarvis", "⚡ Interrupted — listening...")
+            broadcastState("LISTENING")
+
+            if (!isMicStreaming) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                    startForegroundSafely()
+                    isMicStreaming = true
+                    audioRecorder.start()
+                }
+            }
+        } catch (t: Throwable) {
+            Log.e("JarvisService", "onEarbudDoubleTap error: ${t.message}")
         }
     }
 

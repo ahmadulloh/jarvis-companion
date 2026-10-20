@@ -3,28 +3,44 @@ package com.jarvis.companion.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import android.util.Log
 import android.view.KeyEvent
+import androidx.core.content.ContextCompat
 import com.jarvis.companion.service.JarvisForegroundService
 
 class MediaButtonReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (Intent.ACTION_MEDIA_BUTTON == intent.action) {
-            val keyEvent = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
-            if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
-                when (keyEvent.keyCode) {
-                    KeyEvent.KEYCODE_HEADSETHOOK,
-                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
-                    KeyEvent.KEYCODE_MEDIA_PLAY,
-                    KeyEvent.KEYCODE_MEDIA_PAUSE,
-                    KeyEvent.KEYCODE_MEDIA_NEXT,
-                    KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
-                        val serviceIntent = Intent(context, JarvisForegroundService::class.java).apply {
-                            action = JarvisForegroundService.ACTION_EARBUD_TAP
+        try {
+            if (Intent.ACTION_MEDIA_BUTTON == intent.action) {
+                @Suppress("DEPRECATION")
+                val keyEvent = intent.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+                if (keyEvent != null && keyEvent.action == KeyEvent.ACTION_DOWN) {
+                    when (keyEvent.keyCode) {
+                        KeyEvent.KEYCODE_HEADSETHOOK,
+                        KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+                        KeyEvent.KEYCODE_MEDIA_PLAY,
+                        KeyEvent.KEYCODE_MEDIA_PAUSE,
+                        KeyEvent.KEYCODE_MEDIA_NEXT,
+                        KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
+                            val serviceIntent = Intent(context, JarvisForegroundService::class.java).apply {
+                                action = JarvisForegroundService.ACTION_EARBUD_TAP
+                            }
+                            try {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    ContextCompat.startForegroundService(context, serviceIntent)
+                                } else {
+                                    context.startService(serviceIntent)
+                                }
+                            } catch (e: Throwable) {
+                                Log.w("MediaButtonReceiver", "Could not start service from media button: ${e.message}")
+                            }
                         }
-                        context.startService(serviceIntent)
                     }
                 }
             }
+        } catch (t: Throwable) {
+            Log.e("MediaButtonReceiver", "Error in MediaButtonReceiver onReceive: ${t.message}")
         }
     }
 }
