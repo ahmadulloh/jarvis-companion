@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>JARVIS Qur'on AI — Tilovat, Tajvid va Yodlash Ustozi</title>
+  <title>JARVIS Qur'on AI — Barcha Suralar, 30 Pora & Takrorlash</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,16 +12,19 @@
   <style>
     :root {
       --bg-page: #040812;
-      --card-bg: rgba(10, 22, 36, 0.85);
+      --card-bg: rgba(10, 22, 36, 0.92);
       --card-border: rgba(0, 229, 255, 0.18);
       --primary-green: #00E676;
       --primary-cyan: #00E5FF;
       --primary-light: rgba(0, 230, 118, 0.12);
+      --accent-gold: #F59E0B;
       --text-main: #FFFFFF;
       --text-muted: #94A3B8;
       --mushaf-paper: #081422;
       --mushaf-border: #D4AF37;
       --mushaf-text: #F8FAFC;
+      --active-glow: rgba(0, 230, 118, 0.35);
+      --ar-font-size: 26px;
     }
 
     body.light-mode {
@@ -31,11 +34,13 @@
       --primary-green: #12A550;
       --primary-cyan: #0284C7;
       --primary-light: rgba(18, 165, 80, 0.1);
+      --accent-gold: #D97706;
       --text-main: #0B2A18;
       --text-muted: #64748B;
       --mushaf-paper: #FFFDF7;
       --mushaf-border: #C5A059;
       --mushaf-text: #1C1917;
+      --active-glow: rgba(18, 165, 80, 0.3);
     }
 
     * {
@@ -43,7 +48,6 @@
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
 
     html, body {
@@ -61,8 +65,8 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      padding: 12px 16px 40px 16px;
-      max-width: 650px;
+      padding: 12px 16px 80px 16px;
+      max-width: 720px;
       margin: 0 auto;
     }
 
@@ -71,23 +75,26 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-page);
+      z-index: 100;
     }
     .btn-header-back {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
-      padding: 8px 14px;
-      border-radius: 16px;
+      padding: 8px 12px;
+      border-radius: 14px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 4px;
-      transition: all 0.2s;
     }
     .btn-header-back:active { transform: scale(0.95); }
 
@@ -97,29 +104,40 @@
       align-items: center;
       cursor: pointer;
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      padding: 6px 16px;
-      border-radius: 20px;
-      transition: all 0.2s;
+      border: 1.5px solid var(--primary-green);
+      padding: 6px 14px;
+      border-radius: 18px;
+      box-shadow: 0 2px 10px rgba(0, 230, 118, 0.15);
+      flex: 1;
+      max-width: 280px;
     }
-    .surah-title-pill:active { transform: scale(0.96); border-color: var(--primary-green); }
+    .surah-title-pill:active { transform: scale(0.97); }
     .stp-name {
-      font-size: 14.5px;
+      font-size: 14px;
       font-weight: 800;
       color: var(--text-main);
       display: flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .stp-meta {
       font-size: 11px;
       color: var(--text-muted);
+      font-weight: 600;
     }
 
-    .btn-header-theme {
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-header-icon {
       width: 36px;
       height: 36px;
-      border-radius: 50%;
+      border-radius: 12px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       color: var(--text-main);
@@ -127,24 +145,25 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 14px;
+      font-weight: 800;
     }
 
-    /* ── 2. VIEW MODES SWITCHER (USER INSTRUCTION: KITOB, TAJVID, TAKRORLASH) ── */
+    /* ── VIEW MODES SWITCHER ── */
     .view-modes-bar {
       display: flex;
       align-items: center;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 4px;
-      margin-top: 12px;
+      margin-top: 10px;
       gap: 4px;
     }
     .view-mode-btn {
       flex: 1;
-      padding: 8px 10px;
-      border-radius: 14px;
+      padding: 8px 6px;
+      border-radius: 12px;
       border: none;
       background: transparent;
       color: var(--text-muted);
@@ -159,61 +178,108 @@
     }
     .view-mode-btn.active {
       background: var(--primary-green);
-      color: #FFFFFF;
+      color: #040812;
       box-shadow: 0 2px 10px rgba(0, 230, 118, 0.35);
     }
 
-    /* ── 3. SHOWCASE HERO CARD (ACTIVE AYAH) ── */
-    .showcase-card {
+    /* ── TAKRORLASH (REPEAT) HERO PANEL ── */
+    .repeat-hero-card {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 20px 18px;
-      margin-top: 12px;
+      border: 1.5px solid var(--primary-green);
+      border-radius: 18px;
+      padding: 14px 16px;
+      margin-top: 10px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      text-align: center;
-      position: relative;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 230, 118, 0.12);
     }
-    .showcase-badge {
-      background: var(--primary-light);
+    .repeat-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .repeat-badge {
+      font-size: 12px;
+      font-weight: 800;
       color: var(--primary-green);
-      border: 1px solid var(--primary-green);
-      padding: 3px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .repeat-type-toggle {
+      display: flex;
+      background: var(--bg-page);
+      border: 1px solid var(--card-border);
       border-radius: 12px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .btn-rep-type {
+      padding: 4px 10px;
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
       font-size: 11px;
       font-weight: 800;
-      margin-bottom: 12px;
+      cursor: pointer;
     }
-    .showcase-ar-text {
-      font-family: 'Amiri', 'Scheherazade New', serif;
-      font-size: 26px;
-      line-height: 2;
-      direction: rtl;
-      font-weight: 700;
+    .btn-rep-type.active {
+      background: var(--primary-green);
+      color: #040812;
+    }
+
+    .repeat-counts-scroll {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .btn-rep-val {
+      flex-shrink: 0;
+      padding: 7px 12px;
+      border-radius: 12px;
+      background: var(--bg-page);
+      border: 1px solid var(--card-border);
       color: var(--text-main);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-rep-val.active {
+      background: var(--primary-green);
+      color: #040812;
+      border-color: var(--primary-green);
+      box-shadow: 0 2px 8px rgba(0, 230, 118, 0.4);
+    }
+    .btn-rep-val:active { transform: scale(0.95); }
+
+    .repeat-status-banner {
+      background: rgba(0, 230, 118, 0.08);
+      border-radius: 10px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-green);
     }
 
-    /* Tajweed Colors */
-    .tg { color: #10B981; font-weight: 800; } /* Ixfo, G'unna */
-    .tb { color: #0284C7; font-weight: 800; } /* Qalqala */
-    .tr { color: #EF4444; font-weight: 800; } /* Madd */
-    .trd { color: #B91C1C; font-weight: 800; text-decoration: underline; } /* Madd Lazim */
-    .tgr { color: #94A3B8; } /* Idg'om */
-
-    /* ── 4. AUDIO PLAYER CONTROLS ── */
+    /* ── AUDIO PLAYER CONTROLS (ALWAYS PROMINENT) ── */
     .audio-player-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 20px;
+      border-radius: 18px;
       padding: 10px 14px;
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .qori-select-pill {
       display: flex;
@@ -222,23 +288,28 @@
       background: var(--primary-light);
       border: 1px solid var(--primary-green);
       color: var(--primary-green);
-      padding: 6px 12px;
-      border-radius: 14px;
-      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 11.5px;
       font-weight: 800;
       cursor: pointer;
+      max-width: 170px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .audio-center-ctrls {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     .btn-audio-nav {
       background: transparent;
       border: none;
       color: var(--text-main);
-      font-size: 18px;
+      font-size: 20px;
       cursor: pointer;
+      padding: 4px;
     }
     .btn-audio-play {
       width: 44px;
@@ -246,133 +317,62 @@
       border-radius: 50%;
       background: var(--primary-green);
       border: none;
-      color: #FFFFFF;
+      color: #040812;
       font-size: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 230, 118, 0.45);
+      font-weight: 900;
     }
-    .btn-speed-pill {
-      background: var(--card-bg);
+    .btn-audio-play:active { transform: scale(0.92); }
+
+    .player-tools {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-player-pill {
+      background: var(--bg-page);
       border: 1px solid var(--card-border);
       color: var(--text-muted);
-      padding: 6px 10px;
-      border-radius: 12px;
-      font-size: 11.5px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      font-size: 11px;
       font-weight: 800;
       cursor: pointer;
     }
-
-    /* ── 5. MICROPHONE RECITATION CHECK (NATIVE ANDROID & WEB AUDIO) ── */
-    .recitation-practice-bar {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .btn-mic-practice {
-      width: 100%;
-      padding: 14px;
-      border-radius: 18px;
-      background: linear-gradient(135deg, #0284C7 0%, #12A550 100%);
-      border: none;
-      color: #FFFFFF;
-      font-size: 14.5px;
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(2, 132, 199, 0.35);
-      transition: all 0.2s;
-    }
-    .btn-mic-practice:active { transform: scale(0.98); }
-    .btn-mic-practice.recording {
-      background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
-      box-shadow: 0 4px 25px rgba(239, 68, 68, 0.5);
-      animation: pulseMic 1.2s infinite;
-    }
-    @keyframes pulseMic {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-      100% { transform: scale(1); }
-    }
-
-    .recitation-result-box {
-      display: none;
-      flex-direction: column;
-      gap: 6px;
-      background: var(--card-bg);
-      border: 1.5px solid var(--primary-green);
-      border-radius: 16px;
-      padding: 14px 16px;
-      animation: fadeInBox 0.25s ease-out;
-    }
-    @keyframes fadeInBox {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .recitation-result-box.success {
+    .btn-player-pill.active {
+      color: var(--primary-green);
       border-color: var(--primary-green);
-      background: var(--primary-light);
     }
-    .recitation-result-box.error {
-      border-color: #EF4444;
-      background: rgba(239, 68, 68, 0.1);
-    }
-    .res-title-row {
+
+    /* Tajweed Legend */
+    .tajweed-legend {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13.5px;
-      font-weight: 800;
-    }
-    .res-desc {
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--text-main);
-    }
-    .res-spoken {
-      font-family: 'Amiri', serif;
-      font-size: 18px;
-      direction: rtl;
-      color: var(--primary-cyan);
-      margin-top: 4px;
-    }
-
-    /* ── SOUNDWAVE EQUALIZER ANIMATION ── */
-    .soundwave-wrap {
-      display: none;
-      align-items: center;
       justify-content: center;
-      gap: 4px;
-      height: 24px;
-      margin-top: 6px;
+      gap: 14px;
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
     }
-    .sw-bar {
-      width: 3.5px;
-      height: 6px;
-      background: #FFFFFF;
-      border-radius: 3px;
-      animation: soundwaveAnim 0.8s ease-in-out infinite alternate;
-    }
-    .sw-bar:nth-child(2) { animation-delay: 0.15s; }
-    .sw-bar:nth-child(3) { animation-delay: 0.3s; }
-    .sw-bar:nth-child(4) { animation-delay: 0.45s; }
-    .sw-bar:nth-child(5) { animation-delay: 0.2s; }
-    @keyframes soundwaveAnim {
-      0% { height: 4px; }
-      100% { height: 22px; }
-    }
+    .tg-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .tg-dot.green { background: #10B981; }
+    .tg-dot.blue { background: #0284C7; }
+    .tg-dot.red { background: #EF4444; }
 
-    /* ── 6. VIEW MODE 1: KITOBLI (MUSHAF SAHIFA) ── */
+    /* Tajweed Spans in Arabic */
+    .tg { color: #10B981 !important; font-weight: 800; } /* G'unna / Ixfo */
+    .tb { color: #0284C7 !important; font-weight: 800; } /* Qalqala */
+    .tr { color: #EF4444 !important; font-weight: 800; } /* Madd */
+
+    /* ── VIEW 1: KITOBLI (MUSHAF FLOW) ── */
     .view-pane {
       display: none;
-      margin-top: 14px;
-      animation: fadeInTab 0.25s ease-out;
+      margin-top: 12px;
     }
     .view-pane.active {
       display: block;
@@ -381,9 +381,9 @@
     .mushaf-book-page {
       background: var(--mushaf-paper);
       border: 3px double var(--mushaf-border);
-      border-radius: 20px;
-      padding: 24px 20px;
-      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+      border-radius: 18px;
+      padding: 22px 18px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       position: relative;
     }
     .mushaf-ornament-header {
@@ -392,39 +392,47 @@
       margin-bottom: 16px;
       border-bottom: 1.5px solid var(--mushaf-border);
       font-family: 'Amiri', serif;
-      font-size: 19px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--mushaf-border);
     }
+    .mushaf-bismillah {
+      text-align: center;
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      color: var(--mushaf-border);
+      margin-bottom: 16px;
+    }
     .mushaf-flow-text {
       font-family: 'Amiri', 'Scheherazade New', serif;
-      font-size: 24px;
+      font-size: var(--ar-font-size);
       line-height: 2.3;
       direction: rtl;
       text-align: justify;
       text-align-last: center;
       color: var(--mushaf-text);
-      word-spacing: 3px;
+      word-spacing: 4px;
     }
     .m-ayah-span {
       cursor: pointer;
       border-radius: 6px;
       padding: 2px 4px;
-      transition: all 0.2s;
+      transition: background 0.2s, color 0.2s;
     }
     .m-ayah-span.active {
-      background: rgba(0, 230, 118, 0.25);
+      background: var(--active-glow);
       color: var(--primary-green);
+      font-weight: bold;
     }
     .m-ayah-end {
       display: inline-block;
-      margin: 0 6px;
+      margin: 0 5px;
       color: var(--mushaf-border);
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 800;
     }
 
-    /* ── 7. VIEW MODE 2: TAJVIDLI KARTALAR ── */
+    /* ── VIEW 2: TAJVIDLI & TARJIMA KARTALARI ── */
     .ayahs-container {
       display: flex;
       flex-direction: column;
@@ -433,120 +441,110 @@
     .ayah-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 18px;
+      border-radius: 16px;
       padding: 14px 16px;
       display: flex;
-      align-items: flex-start;
-      gap: 12px;
+      flex-direction: column;
+      gap: 10px;
       cursor: pointer;
       transition: all 0.2s;
     }
     .ayah-card.active-reading {
       border-color: var(--primary-green);
       background: var(--primary-light);
+      box-shadow: 0 4px 18px var(--active-glow);
     }
-    .ayah-num-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--primary-light);
-      color: var(--primary-green);
+    .ayah-card-top {
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 800;
-      flex-shrink: 0;
+      justify-content: space-between;
     }
-    .ayah-text-wrap {
-      flex: 1;
-      direction: rtl;
-      text-align: right;
-    }
-    .ayah-ar-content {
-      font-family: 'Amiri', 'Scheherazade New', serif;
-      font-size: 23px;
-      line-height: 1.85;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-    .ayah-right-actions {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      flex-shrink: 0;
-    }
-    .btn-ayah-audio {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .ayah-verified-badge {
-      font-size: 14px;
-      font-weight: 900;
-      color: var(--primary-green);
-      display: none;
-    }
-    .ayah-card.verified .ayah-verified-badge {
-      display: block;
-    }
-
-    /* ── 8. VIEW MODE 3: TAKRORLASH VA YODLASH REJIMI ── */
-    .repeat-config-box {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 20px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    .rc-title {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--text-main);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .repeat-counts-row {
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-    }
-    .btn-rep-count {
-      flex: 1;
-      padding: 8px 10px;
-      border-radius: 12px;
+    .ayah-num-badge {
       background: var(--bg-page);
       border: 1px solid var(--card-border);
-      color: var(--text-muted);
+      color: var(--primary-green);
+      padding: 4px 10px;
+      border-radius: 10px;
       font-size: 12px;
       font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s;
     }
-    .btn-rep-count.active {
-      background: var(--primary-green);
-      color: #FFFFFF;
-      border-color: var(--primary-green);
+    .btn-ayah-play-mini {
+      background: var(--primary-light);
+      border: 1px solid var(--primary-green);
+      color: var(--primary-green);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .ayah-ar-text {
+      font-family: 'Amiri', 'Scheherazade New', serif;
+      font-size: var(--ar-font-size);
+      line-height: 1.9;
+      direction: rtl;
+      text-align: right;
+      color: var(--text-main);
+      font-weight: 700;
+    }
+    .ayah-uz-translation {
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--card-border);
+      padding-top: 8px;
     }
 
-    /* ── SURAH PICKER MODAL ── */
+    /* ── VIEW 3: TAKRORLASH (YODLASH MARKAZI) ── */
+    .focus-memorize-card {
+      background: var(--card-bg);
+      border: 2px solid var(--primary-green);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 8px 30px rgba(0, 230, 118, 0.2);
+    }
+    .focus-badge {
+      align-self: center;
+      background: var(--primary-light);
+      color: var(--primary-green);
+      border: 1px solid var(--primary-green);
+      padding: 4px 14px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .focus-ar-text {
+      font-family: 'Amiri', 'Scheherazade New', serif;
+      font-size: 32px;
+      line-height: 2.1;
+      direction: rtl;
+      color: var(--text-main);
+      font-weight: 700;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .focus-uz-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      border-top: 1px dashed var(--card-border);
+      padding-top: 12px;
+    }
+
+    /* ── MODALS (SURAHS & PORAS PICKER) ── */
     .surah-modal {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       z-index: 2000;
@@ -556,11 +554,11 @@
     }
     .surah-modal-content {
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       background: var(--card-bg);
       border-top-left-radius: 24px;
       border-top-right-radius: 24px;
-      max-height: 80vh;
+      max-height: 85vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -571,7 +569,7 @@
       to { transform: translateY(0); }
     }
     .sm-header {
-      padding: 16px 20px;
+      padding: 16px 18px 10px 18px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -585,14 +583,55 @@
     .btn-sm-close {
       background: transparent;
       border: none;
-      font-size: 20px;
+      font-size: 22px;
       color: var(--text-muted);
       cursor: pointer;
     }
+
+    .sm-tabs-row {
+      display: flex;
+      padding: 10px 18px 4px 18px;
+      gap: 8px;
+    }
+    .btn-sm-tab {
+      flex: 1;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: var(--bg-page);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .btn-sm-tab.active {
+      background: var(--primary-green);
+      color: #040812;
+      border-color: var(--primary-green);
+    }
+
+    .sm-search-wrap {
+      padding: 8px 18px;
+    }
+    .sm-search-input {
+      width: 100%;
+      background: var(--bg-page);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-size: 13.5px;
+      font-family: inherit;
+    }
+    .sm-search-input:focus {
+      outline: none;
+      border-color: var(--primary-green);
+    }
+
     .sm-list {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 16px;
+      padding: 10px 18px 24px 18px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -618,8 +657,8 @@
       gap: 12px;
     }
     .sm-num {
-      width: 28px; height: 28px;
-      border-radius: 50%;
+      width: 32px; height: 32px;
+      border-radius: 10px;
       background: var(--primary-light);
       color: var(--primary-green);
       font-size: 12px;
@@ -627,17 +666,99 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
     .sm-name {
       font-size: 14.5px;
       font-weight: 700;
       color: var(--text-main);
     }
+    .sm-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
     .sm-ar {
       font-family: 'Amiri', serif;
-      font-size: 19px;
+      font-size: 20px;
       font-weight: 700;
       color: var(--primary-green);
+    }
+
+    /* Pora Grid in Modal */
+    .pora-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      padding: 8px 18px 24px 18px;
+      overflow-y: auto;
+      max-height: 60vh;
+    }
+    .pora-card {
+      background: var(--bg-page);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pora-card:active {
+      transform: scale(0.97);
+      border-color: var(--primary-green);
+    }
+    .pora-card-num {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--primary-green);
+    }
+    .pora-card-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Loading Spinner */
+    .loading-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 10px;
+      color: var(--primary-green);
+      font-weight: 700;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(0, 230, 118, 0.2);
+      border-top-color: var(--primary-green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast Notification */
+    .q-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--card-bg);
+      border: 1.5px solid var(--primary-green);
+      color: var(--text-main);
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+      z-index: 3000;
+      transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .q-toast.show {
+      transform: translateX(-50%) translateY(0);
     }
   </style>
 </head>
@@ -647,19 +768,21 @@
     <!-- 1. HEADER -->
     <header class="q-header">
       <button class="btn-header-back" onclick="exitQuron()">
-        <span>‹</span> <span>Chiqish</span>
+        <span>‹ Chiqish</span>
       </button>
 
       <div class="surah-title-pill" onclick="openSurahPicker()">
         <div class="stp-name" id="lblSurahName">
           <span>📖 1. Al-Fotiha</span> <span>▼</span>
         </div>
-        <div class="stp-meta" id="lblSurahMeta">Makkiy, 7 oyat</div>
+        <div class="stp-meta" id="lblSurahMeta">Makkiy · 7 oyat · 1-Pora</div>
       </div>
 
-      <button class="btn-header-theme" onclick="toggleTheme()" title="Mavzu">
-        🌙
-      </button>
+      <div class="header-actions">
+        <button class="btn-header-icon" onclick="adjustFontSize(-2)" title="Kichraytirish">A-</button>
+        <button class="btn-header-icon" onclick="adjustFontSize(2)" title="Kattalashtirish">A+</button>
+        <button class="btn-header-icon" onclick="toggleTheme()" title="Mavzu">🌙</button>
+      </div>
     </header>
 
     <!-- 2. VIEW MODES SWITCHER -->
@@ -675,19 +798,38 @@
       </button>
     </div>
 
-    <!-- 3. ACTIVE AYAH SHOWCASE CARD (Displayed in Tajvid & Takrorlash modes) -->
-    <div class="showcase-card" id="showcaseCard" style="display: none;">
-      <span class="showcase-badge" id="lblShowcaseAyahNum">1-Oyat</span>
-      <div class="showcase-ar-text" id="lblShowcaseArabic">
-        بِسْمِ <span class="tg">ٱللَّهِ</span> <span class="tb">ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ
+    <!-- 3. TAKRORLASH (REPEAT / LOOP) CONTROLS -->
+    <div class="repeat-hero-card">
+      <div class="repeat-top-row">
+        <div class="repeat-badge">
+          <span>🔁</span> <span id="lblRepeatModeTitle">Surani takrorlash</span>
+        </div>
+        <div class="repeat-type-toggle">
+          <button class="btn-rep-type active" id="btnTypeSurah" onclick="setRepeatType('surah')">Butun sura</button>
+          <button class="btn-rep-type" id="btnTypeAyah" onclick="setRepeatType('ayah')">Oyatma-oyat</button>
+        </div>
+      </div>
+
+      <div class="repeat-counts-scroll">
+        <button class="btn-rep-val" onclick="setRepeatCount(1)">1x</button>
+        <button class="btn-rep-val" onclick="setRepeatCount(3)">3x</button>
+        <button class="btn-rep-val" onclick="setRepeatCount(5)">5x</button>
+        <button class="btn-rep-val active" onclick="setRepeatCount(10)">10x (Yodlash)</button>
+        <button class="btn-rep-val" onclick="setRepeatCount(20)">20x</button>
+        <button class="btn-rep-val" onclick="setRepeatCount(999)">∞ Cheksiz</button>
+      </div>
+
+      <div class="repeat-status-banner">
+        <span id="lblRepeatProgress">Takrorlash: 0 / 10 marta</span>
+        <span id="lblRepeatActiveAyah">1-oyat</span>
       </div>
     </div>
 
-    <!-- 4. AUDIO PLAYER CONTROLS -->
+    <!-- 4. AUDIO PLAYER BAR (ARAB & UZBEK RECITERS) -->
     <div class="audio-player-bar">
-      <button class="qori-select-pill" onclick="cycleQori()" id="btnQoriName">
-        <span>🎙️</span> <span id="lblQoriTitle">Abdulbosit</span>
-      </button>
+      <div class="qori-select-pill" onclick="cycleQori()" id="btnQoriPill" title="Qorini almashtirish">
+        <span>🎙️</span> <span id="lblQoriName">Mishariy al-Afosiy</span>
+      </div>
 
       <div class="audio-center-ctrls">
         <button class="btn-audio-nav" onclick="prevAyah()" title="Oldingi oyat">⏮</button>
@@ -695,153 +837,266 @@
         <button class="btn-audio-nav" onclick="nextAyah()" title="Keyingi oyat">⏭</button>
       </div>
 
-      <button class="btn-speed-pill" onclick="cycleSpeed()" id="btnSpeed">1.0x</button>
-    </div>
-
-    <!-- 5. MICROPHONE RECITATION CHECK -->
-    <div class="recitation-practice-bar">
-      <button class="btn-mic-practice" id="btnMicPractice" onclick="toggleRecitationPractice()">
-        <span id="micIcon">🎙️</span>
-        <span id="micBtnText">O'qishni tekshirish (Mikrofon)</span>
-        <div class="soundwave-wrap" id="soundwaveWrap">
-          <div class="sw-bar"></div>
-          <div class="sw-bar"></div>
-          <div class="sw-bar"></div>
-          <div class="sw-bar"></div>
-          <div class="sw-bar"></div>
-        </div>
-      </button>
-      
-      <div class="recitation-result-box" id="recitationResultBox">
-        <!-- Result feedback inserted dynamically -->
+      <div class="player-tools">
+        <button class="btn-player-pill" id="btnToggleUzbek" onclick="toggleUzbekTranslation()" title="O'zbekcha tarjimani ko'rsatish">Tarjima</button>
+        <button class="btn-player-pill" id="btnSpeed" onclick="cycleSpeed()" title="Tezlik">1.0x</button>
       </div>
     </div>
 
-    <!-- 6. VIEW 1: KITOBLI (MUSHAF SAHIFA) -->
+    <!-- Tajweed Legend -->
+    <div class="tajweed-legend">
+      <span><span class="tg-dot green"></span> G'unna/Ixfo</span>
+      <span><span class="tg-dot blue"></span> Qalqala</span>
+      <span><span class="tg-dot red"></span> Cho'ziq (Madd)</span>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div class="loading-wrap" id="loadingWrap">
+      <div class="spinner"></div>
+      <div id="loadingText">Suraning oyatlari yuklanmoqda...</div>
+    </div>
+
+    <!-- 5. VIEW PANE 1: KITOBLI (MUSHAF SAHIFA) -->
     <div class="view-pane active" id="pane-mushaf">
       <div class="mushaf-book-page">
-        <div class="mushaf-ornament-header" id="mushafHeaderTitle">
-          سُورَةُ الفَاتِحَةِ
-        </div>
+        <div class="mushaf-ornament-header" id="mushafHeaderTitle">سُورَةُ الفَاتِحَةِ</div>
+        <div class="mushaf-bismillah" id="mushafBismillah">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
         <div class="mushaf-flow-text" id="mushafFlowContent">
-          <!-- Flowing continuous ayahs -->
+          <!-- Flowing text filled dynamically -->
         </div>
       </div>
     </div>
 
-    <!-- 7. VIEW 2: TAJVIDLI KARTALAR -->
+    <!-- 6. VIEW PANE 2: TAJVIDLI KARTALAR & TARJIMA -->
     <div class="view-pane" id="pane-tajweed">
       <div class="ayahs-container" id="tajweedAyahsContainer">
         <!-- Rendered dynamically -->
       </div>
     </div>
 
-    <!-- 8. VIEW 3: TAKRORLASH VA YODLASH REJIMI -->
+    <!-- 7. VIEW PANE 3: TAKRORLASH (FOCUS MODE) -->
     <div class="view-pane" id="pane-repeat">
-      <div class="repeat-config-box">
-        <div class="rc-title">
-          <span>🔁</span> <span>Har bir oyatni takrorlash soni:</span>
+      <div class="focus-memorize-card">
+        <span class="focus-badge" id="lblFocusAyah">1-Oyat</span>
+        <div class="focus-ar-text" id="lblFocusArabic">
+          <!-- Active Ayah -->
         </div>
-        <div class="repeat-counts-row">
-          <button class="btn-rep-count" onclick="setRepeatCount(1)">1 marta</button>
-          <button class="btn-rep-count active" onclick="setRepeatCount(3)">3 marta</button>
-          <button class="btn-rep-count" onclick="setRepeatCount(5)">5 marta</button>
-          <button class="btn-rep-count" onclick="setRepeatCount(10)">10 marta</button>
-          <button class="btn-rep-count" onclick="setRepeatCount(999)">∞ Cheksiz</button>
+        <div class="focus-uz-text" id="lblFocusUzbek">
+          <!-- Uzbek translation -->
         </div>
       </div>
-
-      <div class="ayahs-container" id="repeatAyahsContainer">
+      <div class="ayahs-container" id="repeatAyahsContainer" style="margin-top: 14px;">
         <!-- Rendered dynamically -->
       </div>
     </div>
 
-    <!-- SURAH PICKER MODAL -->
+    <!-- MODAL: SURAH & PORA PICKER -->
     <div class="surah-modal" id="surahPickerModal">
       <div class="surah-modal-content">
         <div class="sm-header">
-          <div class="sm-title">Surani tanlang</div>
+          <div class="sm-title">Qur'oni Karim — 114 Sura & 30 Pora</div>
           <button class="btn-sm-close" onclick="closeSurahPicker()">✕</button>
         </div>
-        <div class="sm-list" id="surahModalList">
-          <!-- Populated dynamically -->
+
+        <div class="sm-tabs-row">
+          <button class="btn-sm-tab active" id="btnTabSuralar" onclick="switchModalTab('suralar')">Suralar (114)</button>
+          <button class="btn-sm-tab" id="btnTabPoralar" onclick="switchModalTab('poralar')">30 Pora (Juz)</button>
+        </div>
+
+        <div class="sm-search-wrap" id="searchWrap">
+          <input type="text" class="sm-search-input" id="searchSurahInput" placeholder="Surani qidirish (nomi yoki raqami)..." oninput="filterSurahs()">
+        </div>
+
+        <!-- Surah List Pane -->
+        <div class="sm-list" id="modalSurahList">
+          <!-- Dynamic -->
+        </div>
+
+        <!-- Pora Grid Pane -->
+        <div class="pora-grid" id="modalPoraGrid" style="display: none;">
+          <!-- Dynamic -->
         </div>
       </div>
     </div>
 
   </div>
 
+  <!-- HIDDEN AUDIO PLAYER -->
   <audio id="quronAudio"></audio>
 
-  <script>
-    const SURAHS = {"1": {"num": 1, "name": "Al-Fotiha", "ar": "الفاتحة", "type": "Makkiy", "count": 7, "ayahs": [{"a": 1, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tajweed": "بِسْمِ <span class='tg'>ٱللَّهِ</span> <span class='tb'>ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ"}, {"a": 2, "ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَـٰلَمِينَ", "tajweed": "ٱلْحَمْدُ <span class='tg'>لِلَّهِ</span> رَبِّ ٱلْعَـٰلَمِينَ"}, {"a": 3, "ar": "ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ", "tajweed": "<span class='tb'>ٱلرَّحْمَـٰنِ</span> ٱلرَّحِيمِ"}, {"a": 4, "ar": "مَـٰلِكِ يَوْمِ ٱلدِّينِ", "tajweed": "مَـٰلِكِ يَوْمِ ٱلدِّينِ"}, {"a": 5, "ar": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", "tajweed": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ"}, {"a": 6, "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", "tajweed": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ"}, {"a": 7, "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", "tajweed": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا <span class='trd'>ٱلضَّآلِّينَ</span>"}]}, "103": {"num": 103, "name": "Al-Asr", "ar": "العصر", "type": "Makkiy", "count": 3, "ayahs": [{"a": 1, "ar": "وَٱلْعَصْرِ", "tajweed": "وَٱلْعَصْرِ"}, {"a": 2, "ar": "إِنَّ ٱلْإِنسَـٰنَ لَفِى خُسْرٍ", "tajweed": "<span class='tg'>إِنَّ</span> ٱلْإِنسَـٰنَ لَفِى خُسْرٍ"}, {"a": 3, "ar": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ", "tajweed": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّـٰلِحَـٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ <span class='tb'>بِٱلصَّبْرِ</span>"}]}, "104": {"num": 104, "name": "Al-Humaza", "ar": "الهمزة", "type": "Makkiy", "count": 9, "ayahs": [{"a": 1, "ar": "وَيْلٌۭ لِّكُلِّ هُمَزَةٍۢ لُّمَزَةٍ", "tajweed": "وَيْلٌۭ لِّكُلِّ هُمَزَةٍۢ لُّمَزَةٍ"}, {"a": 2, "ar": "ٱلَّذِى جَمَعَ مَالًۭا وَعَدَّدَهُۥ", "tajweed": "ٱلَّذِى جَمَعَ مَالًۭا وَعَدَّدَهُۥ"}, {"a": 3, "ar": "يَحْسَبُ أَنَّ مَالَهُۥٓ أَخْلَدَهُۥ", "tajweed": "يَحْسَبُ <span class='tg'>أَنَّ</span> مَالَهُۥٓ أَخْلَدَهُۥ"}, {"a": 4, "ar": "كَلَّا ۖ لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ", "tajweed": "كَلَّا ۖ لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ"}, {"a": 5, "ar": "وَمَآ أَدْرَىٰكَ مَا ٱلْحُطَمَةُ", "tajweed": "<span class='tr'>وَمَآ</span> <span class='tb'>أَدْرَىٰكَ</span> مَا ٱلْحُطَمَةُ"}, {"a": 6, "ar": "نَارُ ٱللَّهِ ٱلْمُوقَدَةُ", "tajweed": "نَارُ <span class='tg'>ٱللَّهِ</span> ٱلْمُوقَدَةُ"}, {"a": 7, "ar": "ٱلَّتِى تَطَّلِعُ عَلَى ٱلْأَفْـِٔدَةِ", "tajweed": "ٱلَّتِى تَطَّلِعُ عَلَى ٱلْأَفْـِٔدَةِ"}, {"a": 8, "ar": "إِنَّهَا عَلَيْهِم مُّؤْصَدَةٌۭ", "tajweed": "<span class='tg'>إِنَّهَا</span> عَلَيْهِم مُّؤْصَدَةٌۭ"}, {"a": 9, "ar": "فِى عَمَدٍۢ مُّمَدَّدَةٍۭ", "tajweed": "فِى عَمَدٍۢ مُّمَدَّدَةٍۭ"}]}, "105": {"num": 105, "name": "Al-Fil", "ar": "الفيل", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ", "tajweed": "أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَـٰبِ ٱلْفِيلِ"}, {"a": 2, "ar": "أَلَمْ يَجْعَلْ كَيْدَهُمْ فِى تَضْلِيلٍۢ", "tajweed": "أَلَمْ <span class='tb'>يَجْعَلْ</span> كَيْدَهُمْ فِى تَضْلِيلٍۢ"}, {"a": 3, "ar": "وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ", "tajweed": "وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ"}, {"a": 4, "ar": "تَرْمِيهِم بِحِجَارَةٍۢ مِّن سِجِّيلٍۢ", "tajweed": "تَرْمِيهِم بِحِجَارَةٍۢ مِّن سِجِّيلٍۢ"}, {"a": 5, "ar": "فَجَعَلَهُمْ كَعَصْفٍۢ مَّأْكُولٍۭ", "tajweed": "فَجَعَلَهُمْ كَعَصْفٍۢ مَّأْكُولٍۭ"}]}, "106": {"num": 106, "name": "Quraysh", "ar": "قريش", "type": "Makkiy", "count": 4, "ayahs": [{"a": 1, "ar": "لِإِيلَـٰفِ قُرَيْشٍ", "tajweed": "لِإِيلَـٰفِ قُرَيْشٍ"}, {"a": 2, "ar": "إِۦلَـٰفِهِمْ رِحْلَةَ ٱلشِّتَآءِ وَٱلصَّيْفِ", "tajweed": "إِۦلَـٰفِهِمْ رِحْلَةَ <span class='tr'>ٱلشِّتَآءِ</span> وَٱلصَّيْفِ"}, {"a": 3, "ar": "فَلْيَعْبُدُوا۟ رَبَّ هَـٰذَا ٱلْبَيْتِ", "tajweed": "فَلْيَعْبُدُوا۟ رَبَّ هَـٰذَا ٱلْبَيْتِ"}, {"a": 4, "ar": "ٱلَّذِىٓ أَطْعَمَهُم مِّن جُوعٍۢ وَءَامَنَهُم مِّنْ خَوْفٍۭ", "tajweed": "<span class='tr'>ٱلَّذِىٓ</span> <span class='tb'>أَطْعَمَهُم</span> مِّن جُوعٍۢ وَءَامَنَهُم مِّنْ خَوْفٍۭ"}]}, "107": {"num": 107, "name": "Al-Mo'un", "ar": "الماعون", "type": "Makkiy", "count": 7, "ayahs": [{"a": 1, "ar": "أَرَءَيْتَ ٱلَّذِى يُكَذِّبُ بِٱلدِّينِ", "tajweed": "أَرَءَيْتَ ٱلَّذِى يُكَذِّبُ بِٱلدِّينِ"}, {"a": 2, "ar": "فَذَٰلِكَ ٱلَّذِى يَدُعُّ ٱلْيَتِيمَ", "tajweed": "فَذَٰلِكَ ٱلَّذِى <span class='tb'>يَدُعُّ</span> ٱلْيَتِيمَ"}, {"a": 3, "ar": "وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلْمِسْكِينِ", "tajweed": "وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلْمِسْكِينِ"}, {"a": 4, "ar": "فَوَيْلٌۭ لِّلْمُصَلِّينَ", "tajweed": "فَوَيْلٌۭ لِّلْمُصَلِّينَ"}, {"a": 5, "ar": "ٱلَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ", "tajweed": "ٱلَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ"}, {"a": 6, "ar": "ٱلَّذِينَ هُمْ يُرَآءُونَ", "tajweed": "ٱلَّذِينَ هُمْ <span class='tr'>يُرَآءُونَ</span>"}, {"a": 7, "ar": "وَيَمْنَعُونَ ٱلْمَاعُونَ", "tajweed": "وَيَمْنَعُونَ ٱلْمَاعُونَ"}]}, "108": {"num": 108, "name": "Al-Kavsar", "ar": "الكوثر", "type": "Makkiy", "count": 3, "ayahs": [{"a": 1, "ar": "إِنَّآ أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ", "tajweed": "<span class='tg'>إِنَّآ</span> أَعْطَيْنَـٰكَ ٱلْكَوْثَرَ"}, {"a": 2, "ar": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ", "tajweed": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ"}, {"a": 3, "ar": "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ", "tajweed": "<span class='tg'>إِنَّ</span> شَانِئَكَ هُوَ ٱلْأَبْتَرُ"}]}, "109": {"num": 109, "name": "Al-Kofirun", "ar": "الكافرون", "type": "Makkiy", "count": 6, "ayahs": [{"a": 1, "ar": "قُلْ يَـٰٓأَيُّهَا ٱلْكَـٰفِرُونَ", "tajweed": "قُلْ <span class='tr'>يَـٰٓأَيُّهَا</span> ٱلْكَـٰفِرُونَ"}, {"a": 2, "ar": "لَآ أَعْبُدُ مَا تَعْبُدُونَ", "tajweed": "<span class='tr'>لَآ</span> أَعْبُدُ مَا تَعْبُدُونَ"}, {"a": 3, "ar": "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", "tajweed": "<span class='tr'>وَلَآ</span> أَنتُمْ عَـٰبِدُونَ <span class='tr'>مَآ</span> أَعْبُدُ"}, {"a": 4, "ar": "وَلَآ أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ", "tajweed": "<span class='tr'>وَلَآ</span> أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ"}, {"a": 5, "ar": "وَلَآ أَنتُمْ عَـٰبِدُونَ مَآ أَعْبُدُ", "tajweed": "<span class='tr'>وَلَآ</span> أَنتُمْ عَـٰبِدُونَ <span class='tr'>مَآ</span> أَعْبُدُ"}, {"a": 6, "ar": "لَكُمْ دِينُكُمْ وَلِىَ دِينِ", "tajweed": "لَكُمْ دِينُكُمْ وَلِىَ دِينِ"}]}, "110": {"num": 110, "name": "An-Nasr", "ar": "النصر", "type": "Madaniy", "count": 3, "ayahs": [{"a": 1, "ar": "إِذَا جَآءَ نَصْرُ ٱللَّهِ وَٱلْفَتْحُ", "tajweed": "إِذَا <span class='tr'>جَآءَ</span> نَصْرُ <span class='tg'>ٱللَّهِ</span> وَٱلْفَتْحُ"}, {"a": 2, "ar": "وَرَأَيْتَ ٱلنَّاسَ يَدْخُلُونَ فِى دِينِ ٱللَّهِ أَفْوَاجًۭا", "tajweed": "وَرَأَيْتَ <span class='tg'>ٱلنَّاسَ</span> <span class='tb'>يَدْخُلُونَ</span> فِى دِينِ <span class='tg'>ٱللَّهِ</span> أَفْوَاجًۭا"}, {"a": 3, "ar": "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ إِنَّهُۥ كَانَ تَوَّابًۢا", "tajweed": "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ <span class='tg'>إِنَّهُۥ</span> كَانَ تَوَّابًۢا"}]}, "111": {"num": 111, "name": "Al-Masad", "ar": "المسد", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "تَبَّتْ يَدَآ أَبِى لَهَبٍۢ وَتَبَّ", "tajweed": "تَبَّتْ <span class='tr'>يَدَآ</span> أَبِى لَهَبٍۢ وَتَبَّ"}, {"a": 2, "ar": "مَآ أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ", "tajweed": "<span class='tr'>مَآ</span> أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ"}, {"a": 3, "ar": "سَيَصْلَىٰ نَارًۭا ذَاتَ لَهَبٍۢ", "tajweed": "سَيَصْلَىٰ نَارًۭا ذَاتَ لَهَبٍۢ"}, {"a": 4, "ar": "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ", "tajweed": "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ"}, {"a": 5, "ar": "فِى جِيدِهَا حَبْلٌۭ مِّن مَّسَدٍۭ", "tajweed": "فِى جِيدِهَا <span class='tb'>حَبْلٌۭ</span> مِّن مَّسَدٍۭ"}]}, "112": {"num": 112, "name": "Al-Ixlos", "ar": "الإخلاص", "type": "Makkiy", "count": 4, "ayahs": [{"a": 1, "ar": "قُلْ هُوَ ٱللَّهُ أَحَدٌ", "tajweed": "قُلْ هُوَ <span class='tg'>ٱللَّهُ</span> <span class='tb'>أَحَدٌ</span>"}, {"a": 2, "ar": "ٱللَّهُ ٱلصَّمَدُ", "tajweed": "<span class='tg'>ٱللَّهُ</span> <span class='tb'>ٱلصَّمَدُ</span>"}, {"a": 3, "ar": "لَمْ يَلِدْ وَلَمْ يُولَدْ", "tajweed": "لَمْ <span class='tb'>يَلِدْ</span> وَلَمْ <span class='tb'>يُولَدْ</span>"}, {"a": 4, "ar": "وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ", "tajweed": "وَلَمْ يَكُن لَّهُۥ كُفُوًا <span class='tb'>أَحَدٌۢ</span>"}]}, "113": {"num": 113, "name": "Al-Falaq", "ar": "الفلق", "type": "Makkiy", "count": 5, "ayahs": [{"a": 1, "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ", "tajweed": "قُلْ أَعُوذُ بِرَبِّ <span class='tb'>ٱلْفَلَقِ</span>"}, {"a": 2, "ar": "مِن شَرِّ مَا خَلَقَ", "tajweed": "مِن شَرِّ مَا <span class='tb'>خَلَقَ</span>"}, {"a": 3, "ar": "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ", "tajweed": "وَمِن شَرِّ غَاسِقٍ إِذَا <span class='tb'>وَقَبَ</span>"}, {"a": 4, "ar": "وَمِن شَرِّ ٱلنَّفَّـٰثَـٰتِ فِى ٱلْعُقَدِ", "tajweed": "وَمِن شَرِّ <span class='tg'>ٱلنَّفَّـٰثَـٰتِ</span> فِى <span class='tb'>ٱلْعُقَدِ</span>"}, {"a": 5, "ar": "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", "tajweed": "وَمِن شَرِّ حَاسِدٍ إِذَا <span class='tb'>حَسَدَ</span>"}]}, "114": {"num": 114, "name": "An-Nos", "ar": "الناس", "type": "Makkiy", "count": 6, "ayahs": [{"a": 1, "ar": "قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ", "tajweed": "قُلْ أَعُوذُ بِرَبِّ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 2, "ar": "مَلِكِ ٱلنَّاسِ", "tajweed": "مَلِكِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 3, "ar": "إِلَـٰهِ ٱلنَّاسِ", "tajweed": "إِلَـٰهِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 4, "ar": "مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ", "tajweed": "مِن شَرِّ ٱلْوَسْوَاسِ <span class='tg'>ٱلْخَنَّاسِ</span>"}, {"a": 5, "ar": "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ", "tajweed": "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ <span class='tg'>ٱلنَّاسِ</span>"}, {"a": 6, "ar": "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ", "tajweed": "مِنَ <span class='tg'>ٱلْجِنَّةِ</span> <span class='tg'>وَٱلنَّاسِ</span>"}]}, "255": {"num": 255, "name": "Oyatul Kursiy", "ar": "آية الكرسي", "type": "Madaniy", "count": 1, "ayahs": [{"a": 1, "ar": "ٱللَّهُ لَآ إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌۭ وَلَا نَوْمٌۭ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍۢ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا شَآءَ ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ", "tajweed": "<span class='tg'>ٱللَّهُ</span> <span class='tr'>لَآ</span> إِلَـٰهَ إِلَّا هُوَ ٱلْحَىُّ ٱلْقَيُّومُ ۚ لَا تَأْخُذُهُۥ سِنَةٌۭ وَلَا نَوْمٌۭ ۚ لَّهُۥ مَا فِى ٱلسَّمَـٰوَٰتِ وَمَا فِى ٱلْأَرْضِ ۗ مَن ذَا ٱلَّذِى يَشْفَعُ عِندَهُۥٓ إِلَّا بِإِذْنِهِۦ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَىْءٍۢ مِّنْ عِلْمِهِۦٓ إِلَّا بِمَا <span class='tr'>شَآءَ</span> ۚ وَسِعَ كُرْسِيُّهُ ٱلسَّمَـٰوَٰتِ وَٱلْأَرْضَ ۖ وَلَا يَـُٔودُهُۥ حِفْظُهُمَا ۚ وَهُوَ ٱلْعَلِىُّ ٱلْعَظِيمُ"}]}};
+  <!-- TOAST -->
+  <div class="q-toast" id="qToast">Xabar</div>
 
+  <script>
+    // ── DATA INJECTIONS ──
+    const SURAHS_META = [{"num": 1, "name": "Al-Fotiha", "ar": "ٱلْفَاتِحَةِ", "type": "Makkiy", "count": 7, "juz": 1}, {"num": 2, "name": "Al-Baqara", "ar": "البَقَرَةِ", "type": "Madaniy", "count": 286, "juz": 3}, {"num": 3, "name": "Oli Imron", "ar": "آلِ عِمۡرَانَ", "type": "Madaniy", "count": 200, "juz": 4}, {"num": 4, "name": "An-Niso", "ar": "النِّسَاءِ", "type": "Madaniy", "count": 176, "juz": 6}, {"num": 5, "name": "Al-Moida", "ar": "المَائـِدَةِ", "type": "Madaniy", "count": 120, "juz": 7}, {"num": 6, "name": "Al-An'om", "ar": "الأَنۡعَامِ", "type": "Makkiy", "count": 165, "juz": 8}, {"num": 7, "name": "Al-A'rof", "ar": "الأَعۡرَافِ", "type": "Makkiy", "count": 206, "juz": 9}, {"num": 8, "name": "Al-Anfol", "ar": "الأَنفَالِ", "type": "Madaniy", "count": 75, "juz": 10}, {"num": 9, "name": "At-Tavba", "ar": "التَّوۡبَةِ", "type": "Madaniy", "count": 129, "juz": 11}, {"num": 10, "name": "Yunus", "ar": "يُونُسَ", "type": "Makkiy", "count": 109, "juz": 11}, {"num": 11, "name": "Hud", "ar": "هُودٍ", "type": "Makkiy", "count": 123, "juz": 12}, {"num": 12, "name": "Yusuf", "ar": "يُوسُفَ", "type": "Makkiy", "count": 111, "juz": 13}, {"num": 13, "name": "Ar-Ra'd", "ar": "الرَّعۡدِ", "type": "Madaniy", "count": 43, "juz": 13}, {"num": 14, "name": "Ibrohim", "ar": "إِبۡرَاهِيمَ", "type": "Makkiy", "count": 52, "juz": 13}, {"num": 15, "name": "Al-Hijr", "ar": "الحِجۡرِ", "type": "Makkiy", "count": 99, "juz": 14}, {"num": 16, "name": "An-Nahl", "ar": "النَّحۡلِ", "type": "Makkiy", "count": 128, "juz": 14}, {"num": 17, "name": "Al-Isro", "ar": "الإِسۡرَاءِ", "type": "Makkiy", "count": 111, "juz": 15}, {"num": 18, "name": "Al-Kahf", "ar": "الكَهۡفِ", "type": "Makkiy", "count": 110, "juz": 16}, {"num": 19, "name": "Maryam", "ar": "مَرۡيَمَ", "type": "Makkiy", "count": 98, "juz": 16}, {"num": 20, "name": "Toho", "ar": "طه", "type": "Makkiy", "count": 135, "juz": 16}, {"num": 21, "name": "Al-Anbiyo", "ar": "الأَنبِيَاءِ", "type": "Makkiy", "count": 112, "juz": 17}, {"num": 22, "name": "Al-Haj", "ar": "الحَجِّ", "type": "Madaniy", "count": 78, "juz": 17}, {"num": 23, "name": "Al-Mo'minun", "ar": "المُؤۡمِنُونَ", "type": "Makkiy", "count": 118, "juz": 18}, {"num": 24, "name": "An-Nur", "ar": "النُّورِ", "type": "Madaniy", "count": 64, "juz": 18}, {"num": 25, "name": "Al-Furqon", "ar": "الفُرۡقَانِ", "type": "Makkiy", "count": 77, "juz": 19}, {"num": 26, "name": "Ash-Shuaro", "ar": "الشُّعَرَاءِ", "type": "Makkiy", "count": 227, "juz": 19}, {"num": 27, "name": "An-Naml", "ar": "النَّمۡلِ", "type": "Makkiy", "count": 93, "juz": 20}, {"num": 28, "name": "Al-Qasas", "ar": "القَصَصِ", "type": "Makkiy", "count": 88, "juz": 20}, {"num": 29, "name": "Al-Ankabut", "ar": "العَنكَبُوتِ", "type": "Makkiy", "count": 69, "juz": 21}, {"num": 30, "name": "Ar-Rum", "ar": "الرُّومِ", "type": "Makkiy", "count": 60, "juz": 21}, {"num": 31, "name": "Luqmon", "ar": "لُقۡمَانَ", "type": "Makkiy", "count": 34, "juz": 21}, {"num": 32, "name": "As-Sajda", "ar": "السَّجۡدَةِ", "type": "Makkiy", "count": 30, "juz": 21}, {"num": 33, "name": "Al-Ahzob", "ar": "الأَحۡزَابِ", "type": "Madaniy", "count": 73, "juz": 22}, {"num": 34, "name": "Saba", "ar": "سَبَإٍ", "type": "Makkiy", "count": 54, "juz": 22}, {"num": 35, "name": "Fotir", "ar": "فَاطِرٍ", "type": "Makkiy", "count": 45, "juz": 22}, {"num": 36, "name": "Yosin", "ar": "يسٓ", "type": "Makkiy", "count": 83, "juz": 23}, {"num": 37, "name": "As-Soffat", "ar": "الصَّافَّاتِ", "type": "Makkiy", "count": 182, "juz": 23}, {"num": 38, "name": "Sod", "ar": "صٓ", "type": "Makkiy", "count": 88, "juz": 23}, {"num": 39, "name": "Az-Zumar", "ar": "الزُّمَرِ", "type": "Makkiy", "count": 75, "juz": 24}, {"num": 40, "name": "G'ofir", "ar": "غَافِرٍ", "type": "Makkiy", "count": 85, "juz": 24}, {"num": 41, "name": "Fussilat", "ar": "فُصِّلَتۡ", "type": "Makkiy", "count": 54, "juz": 25}, {"num": 42, "name": "Ash-Shuro", "ar": "الشُّورَىٰ", "type": "Makkiy", "count": 53, "juz": 25}, {"num": 43, "name": "Az-Zuxruf", "ar": "الزُّخۡرُفِ", "type": "Makkiy", "count": 89, "juz": 25}, {"num": 44, "name": "Ad-Duxon", "ar": "الدُّخَانِ", "type": "Makkiy", "count": 59, "juz": 25}, {"num": 45, "name": "Al-Josiya", "ar": "الجَاثِيَةِ", "type": "Makkiy", "count": 37, "juz": 25}, {"num": 46, "name": "Al-Ahqof", "ar": "الأَحۡقَافِ", "type": "Makkiy", "count": 35, "juz": 26}, {"num": 47, "name": "Muhammad", "ar": "مُحَمَّدٍ", "type": "Madaniy", "count": 38, "juz": 26}, {"num": 48, "name": "Al-Fath", "ar": "الفَتۡحِ", "type": "Madaniy", "count": 29, "juz": 26}, {"num": 49, "name": "Al-Hujurot", "ar": "الحُجُرَاتِ", "type": "Madaniy", "count": 18, "juz": 26}, {"num": 50, "name": "Qof", "ar": "قٓ", "type": "Makkiy", "count": 45, "juz": 26}, {"num": 51, "name": "Az-Zariyat", "ar": "الذَّارِيَاتِ", "type": "Makkiy", "count": 60, "juz": 27}, {"num": 52, "name": "At-Tur", "ar": "الطُّورِ", "type": "Makkiy", "count": 49, "juz": 27}, {"num": 53, "name": "An-Najm", "ar": "النَّجۡمِ", "type": "Makkiy", "count": 62, "juz": 27}, {"num": 54, "name": "Al-Qamar", "ar": "القَمَرِ", "type": "Makkiy", "count": 55, "juz": 27}, {"num": 55, "name": "Ar-Rahmon", "ar": "الرَّحۡمَٰن", "type": "Madaniy", "count": 78, "juz": 27}, {"num": 56, "name": "Al-Voqea", "ar": "الوَاقِعَةِ", "type": "Makkiy", "count": 96, "juz": 27}, {"num": 57, "name": "Al-Hadid", "ar": "الحَدِيدِ", "type": "Madaniy", "count": 29, "juz": 27}, {"num": 58, "name": "Al-Mujodala", "ar": "المُجَادلَةِ", "type": "Madaniy", "count": 22, "juz": 28}, {"num": 59, "name": "Al-Hashr", "ar": "الحَشۡرِ", "type": "Madaniy", "count": 24, "juz": 28}, {"num": 60, "name": "Al-Mumtahana", "ar": "المُمۡتَحنَةِ", "type": "Madaniy", "count": 13, "juz": 28}, {"num": 61, "name": "As-Saf", "ar": "الصَّفِّ", "type": "Madaniy", "count": 14, "juz": 28}, {"num": 62, "name": "Al-Juma", "ar": "الجُمُعَةِ", "type": "Madaniy", "count": 11, "juz": 28}, {"num": 63, "name": "Al-Munofiqun", "ar": "المُنَافِقُونَ", "type": "Madaniy", "count": 11, "juz": 28}, {"num": 64, "name": "At-Tag'obun", "ar": "التَّغَابُنِ", "type": "Madaniy", "count": 18, "juz": 28}, {"num": 65, "name": "At-Taloq", "ar": "الطَّلَاقِ", "type": "Madaniy", "count": 12, "juz": 28}, {"num": 66, "name": "At-Tahrim", "ar": "التَّحۡرِيمِ", "type": "Madaniy", "count": 12, "juz": 28}, {"num": 67, "name": "Al-Mulk", "ar": "المُلۡكِ", "type": "Makkiy", "count": 30, "juz": 29}, {"num": 68, "name": "Al-Qalam", "ar": "القَلَمِ", "type": "Makkiy", "count": 52, "juz": 29}, {"num": 69, "name": "Al-Haaqqa", "ar": "الحَاقَّةِ", "type": "Makkiy", "count": 52, "juz": 29}, {"num": 70, "name": "Al-Maorij", "ar": "المَعَارِجِ", "type": "Makkiy", "count": 44, "juz": 29}, {"num": 71, "name": "Nuh", "ar": "نُوحٍ", "type": "Makkiy", "count": 28, "juz": 29}, {"num": 72, "name": "Al-Jin", "ar": "الجِنِّ", "type": "Makkiy", "count": 28, "juz": 29}, {"num": 73, "name": "Al-Muzzammil", "ar": "المُزَّمِّلِ", "type": "Makkiy", "count": 20, "juz": 29}, {"num": 74, "name": "Al-Muddassir", "ar": "المُدَّثِّرِ", "type": "Makkiy", "count": 56, "juz": 29}, {"num": 75, "name": "Al-Qiyomat", "ar": "القِيَامَةِ", "type": "Makkiy", "count": 40, "juz": 29}, {"num": 76, "name": "Al-Inson", "ar": "الإِنسَانِ", "type": "Madaniy", "count": 31, "juz": 29}, {"num": 77, "name": "Al-Mursalat", "ar": "المُرۡسَلَاتِ", "type": "Makkiy", "count": 50, "juz": 29}, {"num": 78, "name": "An-Naba", "ar": "النَّبَإِ", "type": "Makkiy", "count": 40, "juz": 30}, {"num": 79, "name": "An-Noziat", "ar": "النَّازِعَاتِ", "type": "Makkiy", "count": 46, "juz": 30}, {"num": 80, "name": "Abasa", "ar": "عَبَسَ", "type": "Makkiy", "count": 42, "juz": 30}, {"num": 81, "name": "At-Takvir", "ar": "التَّكۡوِيرِ", "type": "Makkiy", "count": 29, "juz": 30}, {"num": 82, "name": "Al-Infitor", "ar": "الانفِطَارِ", "type": "Makkiy", "count": 19, "juz": 30}, {"num": 83, "name": "Al-Mutaffifun", "ar": "المُطَفِّفِينَ", "type": "Makkiy", "count": 36, "juz": 30}, {"num": 84, "name": "Al-Inshiqoq", "ar": "الانشِقَاقِ", "type": "Makkiy", "count": 25, "juz": 30}, {"num": 85, "name": "Al-Buruj", "ar": "البُرُوجِ", "type": "Makkiy", "count": 22, "juz": 30}, {"num": 86, "name": "At-Toriq", "ar": "الطَّارِقِ", "type": "Makkiy", "count": 17, "juz": 30}, {"num": 87, "name": "Al-A'la", "ar": "الأَعۡلَىٰ", "type": "Makkiy", "count": 19, "juz": 30}, {"num": 88, "name": "Al-G'oshiya", "ar": "الغَاشِيَةِ", "type": "Makkiy", "count": 26, "juz": 30}, {"num": 89, "name": "Al-Fajr", "ar": "الفَجۡرِ", "type": "Makkiy", "count": 30, "juz": 30}, {"num": 90, "name": "Al-Balad", "ar": "البَلَدِ", "type": "Makkiy", "count": 20, "juz": 30}, {"num": 91, "name": "Ash-Shams", "ar": "الشَّمۡسِ", "type": "Makkiy", "count": 15, "juz": 30}, {"num": 92, "name": "Al-Layl", "ar": "اللَّيۡلِ", "type": "Makkiy", "count": 21, "juz": 30}, {"num": 93, "name": "Az-Zuho", "ar": "الضُّحَىٰ", "type": "Makkiy", "count": 11, "juz": 30}, {"num": 94, "name": "Ash-Sharh", "ar": "الشَّرۡحِ", "type": "Makkiy", "count": 8, "juz": 30}, {"num": 95, "name": "At-Tiyn", "ar": "التِّينِ", "type": "Makkiy", "count": 8, "juz": 30}, {"num": 96, "name": "Al-Alaq", "ar": "العَلَقِ", "type": "Makkiy", "count": 19, "juz": 30}, {"num": 97, "name": "Al-Qadr", "ar": "القَدۡرِ", "type": "Makkiy", "count": 5, "juz": 30}, {"num": 98, "name": "Al-Bayyina", "ar": "البَيِّنَةِ", "type": "Madaniy", "count": 8, "juz": 30}, {"num": 99, "name": "Az-Zalzala", "ar": "الزَّلۡزَلَةِ", "type": "Madaniy", "count": 8, "juz": 30}, {"num": 100, "name": "Al-Odiyot", "ar": "العَادِيَاتِ", "type": "Makkiy", "count": 11, "juz": 30}, {"num": 101, "name": "Al-Qoria", "ar": "القَارِعَةِ", "type": "Makkiy", "count": 11, "juz": 30}, {"num": 102, "name": "At-Takosur", "ar": "التَّكَاثُرِ", "type": "Makkiy", "count": 8, "juz": 30}, {"num": 103, "name": "Al-Asr", "ar": "العَصۡرِ", "type": "Makkiy", "count": 3, "juz": 30}, {"num": 104, "name": "Al-Humaza", "ar": "الهُمَزَةِ", "type": "Makkiy", "count": 9, "juz": 30}, {"num": 105, "name": "Al-Fil", "ar": "الفِيلِ", "type": "Makkiy", "count": 5, "juz": 30}, {"num": 106, "name": "Quraysh", "ar": "قُرَيۡشٍ", "type": "Makkiy", "count": 4, "juz": 30}, {"num": 107, "name": "Al-Mo'un", "ar": "المَاعُونِ", "type": "Makkiy", "count": 7, "juz": 30}, {"num": 108, "name": "Al-Kavsar", "ar": "الكَوۡثَرِ", "type": "Makkiy", "count": 3, "juz": 30}, {"num": 109, "name": "Al-Kofirun", "ar": "الكَافِرُونَ", "type": "Makkiy", "count": 6, "juz": 30}, {"num": 110, "name": "An-Nasr", "ar": "النَّصۡرِ", "type": "Madaniy", "count": 3, "juz": 30}, {"num": 111, "name": "Al-Masad", "ar": "المَسَدِ", "type": "Makkiy", "count": 5, "juz": 30}, {"num": 112, "name": "Al-Ixlos", "ar": "الإِخۡلَاصِ", "type": "Makkiy", "count": 4, "juz": 30}, {"num": 113, "name": "Al-Falaq", "ar": "الفَلَقِ", "type": "Makkiy", "count": 5, "juz": 30}, {"num": 114, "name": "An-Nos", "ar": "النَّاسِ", "type": "Makkiy", "count": 6, "juz": 30}];
+    const PORAS_META = [{"pora": 1, "startSurah": 1, "startAyah": 1, "title": "1-Pora", "desc": "Al-Fotiha (1-oyat)"}, {"pora": 2, "startSurah": 2, "startAyah": 142, "title": "2-Pora", "desc": "Al-Baqara (142-oyat)"}, {"pora": 3, "startSurah": 2, "startAyah": 253, "title": "3-Pora", "desc": "Al-Baqara (253-oyat)"}, {"pora": 4, "startSurah": 3, "startAyah": 93, "title": "4-Pora", "desc": "Oli Imron (93-oyat)"}, {"pora": 5, "startSurah": 4, "startAyah": 24, "title": "5-Pora", "desc": "An-Niso (24-oyat)"}, {"pora": 6, "startSurah": 4, "startAyah": 148, "title": "6-Pora", "desc": "An-Niso (148-oyat)"}, {"pora": 7, "startSurah": 5, "startAyah": 82, "title": "7-Pora", "desc": "Al-Moida (82-oyat)"}, {"pora": 8, "startSurah": 6, "startAyah": 111, "title": "8-Pora", "desc": "Al-An'om (111-oyat)"}, {"pora": 9, "startSurah": 7, "startAyah": 88, "title": "9-Pora", "desc": "Al-A'rof (88-oyat)"}, {"pora": 10, "startSurah": 8, "startAyah": 41, "title": "10-Pora", "desc": "Al-Anfol (41-oyat)"}, {"pora": 11, "startSurah": 9, "startAyah": 93, "title": "11-Pora", "desc": "At-Tavba (93-oyat)"}, {"pora": 12, "startSurah": 11, "startAyah": 6, "title": "12-Pora", "desc": "Hud (6-oyat)"}, {"pora": 13, "startSurah": 12, "startAyah": 53, "title": "13-Pora", "desc": "Yusuf (53-oyat)"}, {"pora": 14, "startSurah": 15, "startAyah": 1, "title": "14-Pora", "desc": "Al-Hijr (1-oyat)"}, {"pora": 15, "startSurah": 17, "startAyah": 1, "title": "15-Pora", "desc": "Al-Isro (1-oyat)"}, {"pora": 16, "startSurah": 18, "startAyah": 75, "title": "16-Pora", "desc": "Al-Kahf (75-oyat)"}, {"pora": 17, "startSurah": 21, "startAyah": 1, "title": "17-Pora", "desc": "Al-Anbiyo (1-oyat)"}, {"pora": 18, "startSurah": 23, "startAyah": 1, "title": "18-Pora", "desc": "Al-Mo'minun (1-oyat)"}, {"pora": 19, "startSurah": 25, "startAyah": 21, "title": "19-Pora", "desc": "Al-Furqon (21-oyat)"}, {"pora": 20, "startSurah": 27, "startAyah": 56, "title": "20-Pora", "desc": "An-Naml (56-oyat)"}, {"pora": 21, "startSurah": 29, "startAyah": 46, "title": "21-Pora", "desc": "Al-Ankabut (46-oyat)"}, {"pora": 22, "startSurah": 33, "startAyah": 31, "title": "22-Pora", "desc": "Al-Ahzob (31-oyat)"}, {"pora": 23, "startSurah": 36, "startAyah": 28, "title": "23-Pora", "desc": "Yosin (28-oyat)"}, {"pora": 24, "startSurah": 39, "startAyah": 32, "title": "24-Pora", "desc": "Az-Zumar (32-oyat)"}, {"pora": 25, "startSurah": 41, "startAyah": 47, "title": "25-Pora", "desc": "Fussilat (47-oyat)"}, {"pora": 26, "startSurah": 46, "startAyah": 1, "title": "26-Pora", "desc": "Al-Ahqof (1-oyat)"}, {"pora": 27, "startSurah": 51, "startAyah": 31, "title": "27-Pora", "desc": "Az-Zariyat (31-oyat)"}, {"pora": 28, "startSurah": 58, "startAyah": 1, "title": "28-Pora", "desc": "Al-Mujodala (1-oyat)"}, {"pora": 29, "startSurah": 67, "startAyah": 1, "title": "29-Pora", "desc": "Al-Mulk (1-oyat)"}, {"pora": 30, "startSurah": 78, "startAyah": 1, "title": "30-Pora", "desc": "An-Naba (1-oyat)"}];
+    const BUNDLED_SURAHS = {"1": [{"a": 1, "g": 1, "ar": "﻿بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "uz": "Меҳрибон ва раҳмли Аллоҳнинг номи билан бошлайман. (Аллоҳ таоло ўз китобини \"бисмиллаҳ\" билан бошлагани мусулмонларга ҳам ўрнак, улар ҳам доим ўз сўзларини ва ишларини \"бисмиллаҳ\" билан бошламоқлари лозим. Пайғамбар алайҳиссалом ҳадисларидан бирида: \"Эътиборли ҳар бир иш \"бисмиллаҳ\" билан бошланмас экан, унинг охири кесикдир\", деганлар. Яъни, баракаси бўлмайди, охирига етмайди.)"}, {"a": 2, "g": 2, "ar": "ٱلْحَمْدُ لِلَّهِ رَبِّ ٱلْعَٰلَمِينَ", "uz": "Барча мақтов, шукрлар оламларнинг тарбиячиси Аллоҳга бўлсин. (Оламларни яратгани учун ҳам, уларнинг тарбиячиси бўлгани учун ҳам, улардаги барча жонзотларга ҳаёт, ризқи рўз бергани учун ҳам Аллоҳ барча ҳамду саноларга сазовордир.)"}, {"a": 3, "g": 3, "ar": "ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "uz": "У Роҳман ва Раҳийм... (Барчага-кофирга ҳам, мўъминга ҳам меҳрибон ва неъмат берувчи. \"Роҳман\" сифати фақат Аллоҳга хос бўлиб, ундан бошқа ҳеч кимга нисбатан бу сифатни ишлатиб бўлмайди. \"Раҳийм\" сифати, хосроқ бўлиб, фақат мўъминларга қиёмат куни раҳм қилувчи маъносини англатади ва Аллоҳдан ўзгаларга, жумладан, Пайғамбар алайҳиссаломга нисбатан ҳам ишлатилади.)"}, {"a": 4, "g": 4, "ar": "مَٰلِكِ يَوْمِ ٱلدِّينِ", "uz": "У қиёмат кунининг подшоҳи, эгаси. (\"Дин\" сўзи арабчада ҳисоб, жазо, мукофот маъноларини билдиради. \"Явмид дин\"-қиёмат кунида бандалар қайта тирилтирилиб ҳисоб-китоб қилинади. Яхшига мукофот, ёмонга жазо берилади. Бу оятни ўқиганда қиёматни эслаб, ўша даҳшатли кунда фақат Аллоҳнинг ўзи ҳукм чиқаришини, ўша ерда уялиб қолмасликни эслаб, унга тайёргарлик кўришга аҳд қилинади.)"}, {"a": 5, "g": 5, "ar": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", "uz": "Фақат сенгагина ибодат қиламиз ва фақат сендангина ёрдам сўраймиз. ( \"Иййака наъбуду\" \"фақат сенинг айтганингни қиламиз\" маъносини англатади. Бу эса, банда тарафидан Аллоҳга берилган улкан ваъда. Аллоҳ таоло барчамизни ушбу ваъданинг устидан чиқадиганлардан қилсин. \"Иййака настаъин\" ҳам, фақат Аллоҳдангина ёрдам сўраш маъносини англатади.)"}, {"a": 6, "g": 6, "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", "uz": "Бизни тўғри йўлга бошлагин. (\"Ҳидоятга бошлаш\" луғатда бирор нарсага лутф билан йўллаб қўйишга айтилади.)"}, {"a": 7, "g": 7, "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", "uz": "Ўзинг неъмат берганларнинг йўлига (бошлагин), ғазабга дучор бўлганларнинг йўлига эмас, адашганларникига ҳам эмас. (\"Неъмат берилганлар\"дан мурод-Пайғамбарлар, сиддиқлар, шаҳидлар ва солиҳ бандалар. \"Ғазабга дучор бўлганлар\"дан мурод-яҳудийлар. Яҳудийларнинг ғазабга дучор бўлишларининг сабаблари кўп, жумладан, анбиёларни ўлдиришлари, Аллоҳга берган аҳдларига вафо қилмасликлари ва ҳоказо. Лекин катта сабаб-билганига амал қилмаслик. Аллоҳ уларга илм берган, улар эса била туриб илмга амал қилмаганлар. \"Адашганлар\"дан мурод-насронийлар. Насороларнинг \"адашганлар\" бўлиши ҳам бир қанча сабабларга кўрадир. Энг асосийси-улар мақсадга эришиш йўлида Аллоҳ кўрсатган йўлни эмас, ўзлари топган йўлни танлаганлар. Демак, оятнинг маъноси: Эй Аллоҳ, бизни ўтган анбиёю авлиё, азизларнинг йўлидан бошлагин, яҳудий ва насронийлар йўлидан бошламагин, деганидир. Имоми Насаий машҳур саҳобий Абу Ҳурайрадан ривоят қилган ҳадиси қудсийда Аллоҳ таоло айтади: \"Намозни ўзим билан бандам орасида иккига бўлганман, бандамга нима сўраса, бераман. Агар у (банда) \"Алҳамду лиллаҳи роббил ъаламийн\" деса, Аллоҳ, бандам менга ҳамд-шукр айтди, дейди. Банда: \"ар-Роҳманир Роҳийм\", деса. Аллоҳ: \"Бандам менга сано-мақтов айтди\", дейди. Банда: \"Малики явмиддин\", деса, Аллоҳ: \"Бандам мени улуғлади\", дейди. Банда: \"Иййака наъбуду ва иййака настаъин\", деса, Аллоҳ: \"Бу мен билан бандам орасидаги аҳд, бандамга нима сўраса, бераман\", дейди. Агар банда: \"Иҳдинас сиротал мустақим, сиротоллазийна анъамта ъалайҳим ғойрил мағзуби алайҳим валаззооллийн\", деса, Аллоҳ: \"Бу бандамга хос, бандамга сўраганини бердим\", дейди.)"}], "36": [{"a": 1, "g": 3706, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ يسٓ", "uz": "Йасин."}, {"a": 2, "g": 3707, "ar": "وَٱلْقُرْءَانِ ٱلْحَكِيمِ", "uz": "Қуръони Ҳаким ила қасам."}, {"a": 3, "g": 3708, "ar": "إِنَّكَ لَمِنَ ٱلْمُرْسَلِينَ", "uz": "Албатта, сен Пайғамбарлардандирсан."}, {"a": 4, "g": 3709, "ar": "عَلَىٰ صِرَٰطٍۢ مُّسْتَقِيمٍۢ", "uz": "Сироти мустақиймдасан."}, {"a": 5, "g": 3710, "ar": "تَنزِيلَ ٱلْعَزِيزِ ٱلرَّحِيمِ", "uz": "Бу Азизу Раҳимнинг нозил қилганидир."}, {"a": 6, "g": 3711, "ar": "لِتُنذِرَ قَوْمًۭا مَّآ أُنذِرَ ءَابَآؤُهُمْ فَهُمْ غَٰفِلُونَ", "uz": "Ота-боболари огоҳлантирилмаган, ўзлари эса, ғофил бўлган қавмларни огоҳлантиришинг учун."}, {"a": 7, "g": 3712, "ar": "لَقَدْ حَقَّ ٱلْقَوْلُ عَلَىٰٓ أَكْثَرِهِمْ فَهُمْ لَا يُؤْمِنُونَ", "uz": "Батаҳқиқ, уларнинг кўпларига (азоб) сўз ҳақ бўлди. Бас, улар иймон келтирмаслар."}, {"a": 8, "g": 3713, "ar": "إِنَّا جَعَلْنَا فِىٓ أَعْنَٰقِهِمْ أَغْلَٰلًۭا فَهِىَ إِلَى ٱلْأَذْقَانِ فَهُم مُّقْمَحُونَ", "uz": "Биз уларнинг бўйинларига кишанлар солдик. Улар иякларигача етади. Бас, улар кўзлари юмуқ, осмонга қараб ғўдайиб қолдилар. (Ғофилликлари сабабли азоб сўзи ҳақ бўлган кофирларнинг ҳоли ҳам худди шундай, уларнинг иймонга келишига умид йўқ.)"}, {"a": 9, "g": 3714, "ar": "وَجَعَلْنَا مِنۢ بَيْنِ أَيْدِيهِمْ سَدًّۭا وَمِنْ خَلْفِهِمْ سَدًّۭا فَأَغْشَيْنَٰهُمْ فَهُمْ لَا يُبْصِرُونَ", "uz": "Ва Биз уларнинг олдиларидан ҳам тўсиқ қилдик, орқаларидан ҳам тўсиқ қилдик, кўзларига парда тортдик. Бас, улар кўрмаслар. ( Бўйнига қўлини қўшиб, кишанланган, кўзи юмуқ ҳолда осмонга қаратиб, ғўдайтириб қўйилган одамнинг бирор нарсани кўрмаслиги учун олдидан ҳам, ортидан ҳам тўсиқ қўйилган. Камига, яна кўзига ҳам парда қўйилган. Шундай ҳолатдаги одамнинг бирор нарсани кўра олишига умид бўлмаганидек, ҳалиги кофирларнинг ҳам иймонга келишидан умид йўқ.)"}, {"a": 10, "g": 3715, "ar": "وَسَوَآءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ لَا يُؤْمِنُونَ", "uz": "Уларни огоҳлантирсанг ҳам, огоҳлантирмасанг ҳам, улар учун барибир, иймонга келмаслар."}, {"a": 11, "g": 3716, "ar": "إِنَّمَا تُنذِرُ مَنِ ٱتَّبَعَ ٱلذِّكْرَ وَخَشِىَ ٱلرَّحْمَٰنَ بِٱلْغَيْبِ ۖ فَبَشِّرْهُ بِمَغْفِرَةٍۢ وَأَجْرٍۢ كَرِيمٍ", "uz": "Сен эса, фақат зикр-эслатмага эргашган ва Роҳмандан ғойибона қўрққан кимсани огоҳлантирасан. Бас, унга мағфират ва гўзал ажрнинг хушхабарини бер."}, {"a": 12, "g": 3717, "ar": "إِنَّا نَحْنُ نُحْىِ ٱلْمَوْتَىٰ وَنَكْتُبُ مَا قَدَّمُوا۟ وَءَاثَٰرَهُمْ ۚ وَكُلَّ شَىْءٍ أَحْصَيْنَٰهُ فِىٓ إِمَامٍۢ مُّبِينٍۢ", "uz": "Албатта, Биз, Ўзимиз ўликларни тирилтирурмиз ва улар тақдим қилган нарсаларни ва қолдирган асарларни ёзурмиз. Ҳар бир нарсанинг ҳисобини очиқ-ойдин имомда олиб қўйганмиз. ( Аллоҳ таоло ўлганлар, тирилишлари ва қилган амаллари учун жавоб беришларини, хабар бермоқда.)"}, {"a": 13, "g": 3718, "ar": "وَٱضْرِبْ لَهُم مَّثَلًا أَصْحَٰبَ ٱلْقَرْيَةِ إِذْ جَآءَهَا ٱلْمُرْسَلُونَ", "uz": "Сен уларга Пайғамбарлар шаҳар аҳолисига келган пайтни мисол қилиб келтир. (Бу шаҳар қайси шаҳар экани, қайси Пайғамбарлар келгани ҳақида Қуръони Каримда ва саҳиҳ ҳадисларда очиқ-ойдин маълумотлар йўқ. Демак, бу оятни шу ҳолича қабул қилган маъқул.)"}, {"a": 14, "g": 3719, "ar": "إِذْ أَرْسَلْنَآ إِلَيْهِمُ ٱثْنَيْنِ فَكَذَّبُوهُمَا فَعَزَّزْنَا بِثَالِثٍۢ فَقَالُوٓا۟ إِنَّآ إِلَيْكُم مُّرْسَلُونَ", "uz": "Ўшанда Биз уларга иккитани юборган эдик, улар икковларини ёлғончига чиқардилар. Бас, Биз учинчи билан қувватладик. Шунда: «Албатта, биз сизларга юборилган Пайғамбарлармиз», дедилар."}, {"a": 15, "g": 3720, "ar": "قَالُوا۟ مَآ أَنتُمْ إِلَّا بَشَرٌۭ مِّثْلُنَا وَمَآ أَنزَلَ ٱلرَّحْمَٰنُ مِن شَىْءٍ إِنْ أَنتُمْ إِلَّا تَكْذِبُونَ", "uz": "Улар: «Сиз бизга ўхшаган башардан бошқа нарса эмассиз. Роҳман ҳеч нарса нозил қилгани йўқ. Сизлар фақат ёлғон сўзламоқдасиз, холос», дедилар."}, {"a": 16, "g": 3721, "ar": "قَالُوا۟ رَبُّنَا يَعْلَمُ إِنَّآ إِلَيْكُمْ لَمُرْسَلُونَ", "uz": "Улар: «Роббимиз билади. Албатта, биз сизларга юборилган Пайғамбарлармиз."}, {"a": 17, "g": 3722, "ar": "وَمَا عَلَيْنَآ إِلَّا ٱلْبَلَٰغُ ٱلْمُبِينُ", "uz": "Бизнинг зиммамизда очиқ-ойдан етказишдан бошқа нарса йўқ», дедилар."}, {"a": 18, "g": 3723, "ar": "قَالُوٓا۟ إِنَّا تَطَيَّرْنَا بِكُمْ ۖ لَئِن لَّمْ تَنتَهُوا۟ لَنَرْجُمَنَّكُمْ وَلَيَمَسَّنَّكُم مِّنَّا عَذَابٌ أَلِيمٌۭ", "uz": "Улар: «Биз сизлардан бадгумон бўлдик. Агар тўхтамасангиз, албатта, сизни тошбўрон қиламиз ва сизга биздан аламли азоб етади», дедилар."}, {"a": 19, "g": 3724, "ar": "قَالُوا۟ طَٰٓئِرُكُم مَّعَكُمْ ۚ أَئِن ذُكِّرْتُم ۚ بَلْ أَنتُمْ قَوْمٌۭ مُّسْرِفُونَ", "uz": "Улар: «Бадгумонлигингиз ўзингиз билан. Сизга эслатма берилганигами?! Йўқ! Сиз ўзингиз исрофчи қавмсиз», дедилар."}, {"a": 20, "g": 3725, "ar": "وَجَآءَ مِنْ أَقْصَا ٱلْمَدِينَةِ رَجُلٌۭ يَسْعَىٰ قَالَ يَٰقَوْمِ ٱتَّبِعُوا۟ ٱلْمُرْسَلِينَ", "uz": "Шаҳар четидан бир киши шошилиб келиб: «Эй қавмим, юборилган Пайғамбарларга эргашинг!"}, {"a": 21, "g": 3726, "ar": "ٱتَّبِعُوا۟ مَن لَّا يَسْـَٔلُكُمْ أَجْرًۭا وَهُم مُّهْتَدُونَ", "uz": "Сиздан ажр-ҳақ сўрамайдиган, ўзлари ҳидоятда бўлган шахсларга эргашинг! (Бу Пайғамбарлар даъватлари учун сиздан ажр-ҳақ сўрамайдилар. Шунинг ўзи ҳам уларнинг ҳақлигига далилдир. Агар даъват туфайли бирор нарсага эришмоқ ниятлари бўлганида, сиздан, албатта, ажр-ҳақ сўрар эдилар.)"}, {"a": 22, "g": 3727, "ar": "وَمَا لِىَ لَآ أَعْبُدُ ٱلَّذِى فَطَرَنِى وَإِلَيْهِ تُرْجَعُونَ", "uz": "Менга нима бўлибдики, ўзимни яратган зотга ибодат қилмайин?! Унгагина қайтарилурсизлар."}, {"a": 23, "g": 3728, "ar": "ءَأَتَّخِذُ مِن دُونِهِۦٓ ءَالِهَةً إِن يُرِدْنِ ٱلرَّحْمَٰنُ بِضُرٍّۢ لَّا تُغْنِ عَنِّى شَفَٰعَتُهُمْ شَيْـًۭٔا وَلَا يُنقِذُونِ", "uz": "Мен уни қўйиб, бошқа илоҳлар тутайми?! Агар Роҳман менга бирор зарарни ирода қилса, уларнинг шафоати менга ҳеч фойда бермас ва улар мени қутқара олмаслар."}, {"a": 24, "g": 3729, "ar": "إِنِّىٓ إِذًۭا لَّفِى ضَلَٰلٍۢ مُّبِينٍ", "uz": "Албатта, у тақдирда мен очиқ-ойдин адашувда бўламан."}, {"a": 25, "g": 3730, "ar": "إِنِّىٓ ءَامَنتُ بِرَبِّكُمْ فَٱسْمَعُونِ", "uz": "Албатта, мен Роббингизга иймон келтирдим. Бас, мени тинглангиз», деди. (Эшитиб, билиб қўйинг, мен сизнинг ва ўзимнинг Роббим бўлмиш Аллоҳга иймон келтирдим!)"}, {"a": 26, "g": 3731, "ar": "قِيلَ ٱدْخُلِ ٱلْجَنَّةَ ۖ قَالَ يَٰلَيْتَ قَوْمِى يَعْلَمُونَ", "uz": "«Жаннатга кир», дейилди. У: «Кошки қавмим билсалар эди."}, {"a": 27, "g": 3732, "ar": "بِمَا غَفَرَ لِى رَبِّى وَجَعَلَنِى مِنَ ٱلْمُكْرَمِينَ", "uz": "Роббим мени мағфират этганини ва икром қилинганлардан қилганини», деди. (Иймони ва ихлоси туфайли Аллоҳ таоло ўз фазли ва карами ила у бандани жаннатга ҳукм қилди. У банда жаннатга кириб, нозу неъматларни ва иззат-икромни кўриши билан қавмини эслади. «Кошки қавмим билсалар эди. Роббим мени мағфират этганини ва икром қилинганлардан қилганини», деди».)"}, {"a": 28, "g": 3733, "ar": "۞ وَمَآ أَنزَلْنَا عَلَىٰ قَوْمِهِۦ مِنۢ بَعْدِهِۦ مِن جُندٍۢ مِّنَ ٱلسَّمَآءِ وَمَا كُنَّا مُنزِلِينَ", "uz": "Биз унинг қавмига ундан кейин осмондан бирор лашкар туширмадик ва туширувчи эмас ҳам эдик."}, {"a": 29, "g": 3734, "ar": "إِن كَانَتْ إِلَّا صَيْحَةًۭ وَٰحِدَةًۭ فَإِذَا هُمْ خَٰمِدُونَ", "uz": "Фақат биргина қичқириқдан бошқа нарса бўлмади. Бирдан улар сўниб қолдилар."}, {"a": 30, "g": 3735, "ar": "يَٰحَسْرَةً عَلَى ٱلْعِبَادِ ۚ مَا يَأْتِيهِم مِّن رَّسُولٍ إِلَّا كَانُوا۟ بِهِۦ يَسْتَهْزِءُونَ", "uz": "Бандаларга ҳасратлар бўлсин! Ҳар қачон уларга Пайғамбар келса, уни фақат истеҳзо қилар эдилар."}, {"a": 31, "g": 3736, "ar": "أَلَمْ يَرَوْا۟ كَمْ أَهْلَكْنَا قَبْلَهُم مِّنَ ٱلْقُرُونِ أَنَّهُمْ إِلَيْهِمْ لَا يَرْجِعُونَ", "uz": "Ахир улар ўзларидан олдинги қанча асрларни ҳалок этганимизни ва, албатта, ўшалар уларга қайтмасликларини кўрмайдиларми?!"}, {"a": 32, "g": 3737, "ar": "وَإِن كُلٌّۭ لَّمَّا جَمِيعٌۭ لَّدَيْنَا مُحْضَرُونَ", "uz": "Албатта, барчалари тўпланган ҳолларида ҳузуримизга ҳозир қилингайлар."}, {"a": 33, "g": 3738, "ar": "وَءَايَةٌۭ لَّهُمُ ٱلْأَرْضُ ٱلْمَيْتَةُ أَحْيَيْنَٰهَا وَأَخْرَجْنَا مِنْهَا حَبًّۭا فَمِنْهُ يَأْكُلُونَ", "uz": "Улар учун ўлик ер оят-белгидир. Биз уни тирилтирдик ва ундан дон чиқардик. Бас, ундан ерлар."}, {"a": 34, "g": 3739, "ar": "وَجَعَلْنَا فِيهَا جَنَّٰتٍۢ مِّن نَّخِيلٍۢ وَأَعْنَٰبٍۢ وَفَجَّرْنَا فِيهَا مِنَ ٱلْعُيُونِ", "uz": "Ва унда хурмо ва узум боғлари яратдик ҳамда ичидан булоқларни чиқардик."}, {"a": 35, "g": 3740, "ar": "لِيَأْكُلُوا۟ مِن ثَمَرِهِۦ وَمَا عَمِلَتْهُ أَيْدِيهِمْ ۖ أَفَلَا يَشْكُرُونَ", "uz": "Унинг меваларидан ва ўз қўллари қилган нарсалардан ейишлари учун. Шукр қилмайдиларми?!"}, {"a": 36, "g": 3741, "ar": "سُبْحَٰنَ ٱلَّذِى خَلَقَ ٱلْأَزْوَٰجَ كُلَّهَا مِمَّا تُنۢبِتُ ٱلْأَرْضُ وَمِنْ أَنفُسِهِمْ وَمِمَّا لَا يَعْلَمُونَ", "uz": "Ер ўстирадиган нарсалардан, уларнинг ўзларидан ва улар билмайдиган нарсалардан, барчасидан жуфтларни яратган зот пок бўлди. (Ўсимлик дунёсидан саналувчи барча мавжудотлар жуфт қилиб яратилгани илмга яқинда маълум бўлди. Ҳозирги замон илмининг бу кашфиёти Қуръони Каримнинг ҳақиқий илоҳий китоб эканини яна бир бор тасдиқлади.)"}, {"a": 37, "g": 3742, "ar": "وَءَايَةٌۭ لَّهُمُ ٱلَّيْلُ نَسْلَخُ مِنْهُ ٱلنَّهَارَ فَإِذَا هُم مُّظْلِمُونَ", "uz": "Улар учун кечаси ҳам оят-белгидир. Биз уни кундуздан шилиб оламиз. Бас, улар бирдан зулматда қолгувчилардир. (Кечанинг кириш терини шилиб олишга ўхшатилмоқда. Тери аста-аста шилиб олинганидек, кундуз ҳам ундан ажратиб олинади.)"}, {"a": 38, "g": 3743, "ar": "وَٱلشَّمْسُ تَجْرِى لِمُسْتَقَرٍّۢ لَّهَا ۚ ذَٰلِكَ تَقْدِيرُ ٱلْعَزِيزِ ٱلْعَلِيمِ", "uz": "Қуёш ўз истиқрори учун жараён этар. Бу азизу ўта билгувчи зотнинг тақдир қилганидир. (Оятда қуёшнинг ўз истиқрори учун ажратилган маконда ва замонда жараён этиши–ҳаракатланиши ҳақидагина гап кетмоқда.)"}, {"a": 39, "g": 3744, "ar": "وَٱلْقَمَرَ قَدَّرْنَٰهُ مَنَازِلَ حَتَّىٰ عَادَ كَٱلْعُرْجُونِ ٱلْقَدِيمِ", "uz": "Ойни эса, токи эски (хурмо) шингили (ҳолига) қайтгунга қадар манзилларини бичиб қўйганмиз. (Ой ҳам, қуёш ҳам думалоқ шаклдаги самовий жисмдир. Инсоннинг кўзига қуёш доим бир хил суратда кўринади. Лекин ой бир ой давомида йигирма саккиз шаклга киради. Аввал кичик ҳилол бўлиб кўринади. Кундан-кунга катталашиб, тўлин баркашга айланади. Кейин яна аста-секин ҳилол ҳолига қайтади. Чунки Аллоҳ таоло ой учун йигирма саккиз манзилни бичиб қўйган. Ҳар куни ҳар хил манзилдан чиқади, ҳар куни ҳар хил ҳажмда кўринади.)"}, {"a": 40, "g": 3745, "ar": "لَا ٱلشَّمْسُ يَنۢبَغِى لَهَآ أَن تُدْرِكَ ٱلْقَمَرَ وَلَا ٱلَّيْلُ سَابِقُ ٱلنَّهَارِ ۚ وَكُلٌّۭ فِى فَلَكٍۢ يَسْبَحُونَ", "uz": "На қуёшнинг ойга етиб олмоғи дуруст бўлар ва на кеча кундуздан ўзиб кетар. Ҳар бири фалакда сузиб юрар. (Ҳеч қачон қуёш ойга етиб олиб, бемаҳалда бош кўтариб қолиши мумкин эмас. Улардан ҳар бири Аллоҳ белгилаган вақтдагина чиқади. Бу, низом ҳатто дақиқаларигача аниқдир. Ундан кеч ҳам қолмайди, илгари ҳам кетмайди. Бу жараён дунё бунёд бўлганидан буён давом этиб келмоқда. Бирон марта бирон дақиқага ўзгарган эмас. Ушбу жараённи тақдир қилган зот ўликларни қайта тирилтиришга қодир эмасми?!)"}, {"a": 41, "g": 3746, "ar": "وَءَايَةٌۭ لَّهُمْ أَنَّا حَمَلْنَا ذُرِّيَّتَهُمْ فِى ٱلْفُلْكِ ٱلْمَشْحُونِ", "uz": "Улар учун Биз уларнинг наслларини тўла кемада кўтарганимиз ҳам бир оят-белгидир."}, {"a": 42, "g": 3747, "ar": "وَخَلَقْنَا لَهُم مِّن مِّثْلِهِۦ مَا يَرْكَبُونَ", "uz": "Ва Биз улар учун унга ўхшаш минадиган нарсаларни халқ қилдик."}, {"a": 43, "g": 3748, "ar": "وَإِن نَّشَأْ نُغْرِقْهُمْ فَلَا صَرِيخَ لَهُمْ وَلَا هُمْ يُنقَذُونَ", "uz": "Агар хоҳласак, уларни ғарқ этурмиз. Бас, уларнинг ёрдамчиси бўлмас ва ҳам улар қутқазилмас."}, {"a": 44, "g": 3749, "ar": "إِلَّا رَحْمَةًۭ مِّنَّا وَمَتَٰعًا إِلَىٰ حِينٍۢ", "uz": "Магар Биздан бир раҳмат ва маълум муддатгача баҳраманд бўлиш бўлсагина. (Фақат Аллоҳнинг Ўзи раҳмат назарини солиб, қутқариб қолиши мумкин. Ёки маълум муддатгача дунёнинг матоҳидан баҳраманд қилиш учун омон қолдириши мумкин. Бўлмаса, ҳеч ким эсон қолмас. Бунинг мисоли ҳаётда тез-тез такрорланиб ҳам туради.)"}, {"a": 45, "g": 3750, "ar": "وَإِذَا قِيلَ لَهُمُ ٱتَّقُوا۟ مَا بَيْنَ أَيْدِيكُمْ وَمَا خَلْفَكُمْ لَعَلَّكُمْ تُرْحَمُونَ", "uz": "Уларга: «Олдингиздаги нарсадан ва ортингиздаги нарсадан қўрқинг. Шояд раҳм қилинсангиз», дейилса."}, {"a": 46, "g": 3751, "ar": "وَمَا تَأْتِيهِم مِّنْ ءَايَةٍۢ مِّنْ ءَايَٰتِ رَبِّهِمْ إِلَّا كَانُوا۟ عَنْهَا مُعْرِضِينَ", "uz": "Ва уларга Роббилари оятларидан бир оят келганида, фақат ундан юз ўгиргувчи бўлурлар."}, {"a": 47, "g": 3752, "ar": "وَإِذَا قِيلَ لَهُمْ أَنفِقُوا۟ مِمَّا رَزَقَكُمُ ٱللَّهُ قَالَ ٱلَّذِينَ كَفَرُوا۟ لِلَّذِينَ ءَامَنُوٓا۟ أَنُطْعِمُ مَن لَّوْ يَشَآءُ ٱللَّهُ أَطْعَمَهُۥٓ إِنْ أَنتُمْ إِلَّا فِى ضَلَٰلٍۢ مُّبِينٍۢ", "uz": "Уларга: «Аллоҳ сизга ризқ қилиб берган нарсадан инфоқ қилинглар», дейилганда, куфр келтирганлар иймон келтирганларга: «Аллоҳ хоҳласа, ўзи таом берадиган кимсани биз таомлантирамизми?! Сиз очиқ-ойдин залолатдан бошқа нарсада эмассиз», дерлар. (Сиз Аллоҳ ҳаммага ризқ беради, деган залолатли эътиқоддасизлар, мана, биздан баъзи бир одамларга таом беришимизни сўраб туришингиз бунинг далили, демоқчилар. Аслида эса, уларнинг тасаввурлари, гаплари айни залолатдир. Ҳеч қачон, ҳеч қандай инсон ўзига ҳам, бошқага ҳам ризқ топиб бера олмайди. Аллоҳ таоло бировнинг ризқини кенг, бировнинг ризқини тор қилиб қўяди. Ҳаммаси бандаларни синаш учундир. Ҳаммага ризқ берувчи, боқувчи Аллоҳ таолонинг ягона Ўзидир. Мен бировга ризқ беряпман, таомлантиряпман, боқяпман, деган одам кофир бўлади, очиқ-ойдин залолатга кетади.)"}, {"a": 48, "g": 3753, "ar": "وَيَقُولُونَ مَتَىٰ هَٰذَا ٱلْوَعْدُ إِن كُنتُمْ صَٰدِقِينَ", "uz": "Улар: «Агар ростгўй бўлсангиз, бу ваъда қачон бўлур?» дерлар."}, {"a": 49, "g": 3754, "ar": "مَا يَنظُرُونَ إِلَّا صَيْحَةًۭ وَٰحِدَةًۭ تَأْخُذُهُمْ وَهُمْ يَخِصِّمُونَ", "uz": "Улар фақат талашиб-тортишиб турганларида ўзларини бирдан оладиган биргина қичқириқдан бошқа нарсани кутаётганлари йўқ."}, {"a": 50, "g": 3755, "ar": "فَلَا يَسْتَطِيعُونَ تَوْصِيَةًۭ وَلَآ إِلَىٰٓ أَهْلِهِمْ يَرْجِعُونَ", "uz": "Улар на васият қилишга қодир бўларлар ва на ўз аҳлларига қайтарлар."}, {"a": 51, "g": 3756, "ar": "وَنُفِخَ فِى ٱلصُّورِ فَإِذَا هُم مِّنَ ٱلْأَجْدَاثِ إِلَىٰ رَبِّهِمْ يَنسِلُونَ", "uz": "Ва сурга пуфланди. Бас, улар бирдан Роббилари томон қабрлардан шошилиб чиқурлар."}, {"a": 52, "g": 3757, "ar": "قَالُوا۟ يَٰوَيْلَنَا مَنۢ بَعَثَنَا مِن مَّرْقَدِنَا ۜ ۗ هَٰذَا مَا وَعَدَ ٱلرَّحْمَٰنُ وَصَدَقَ ٱلْمُرْسَلُونَ", "uz": "Улар: «Воҳ, шўримиз қурисин! Бизни ётган жойимиздан ким қўзғотди?! Бу Роҳман ваъда қилган ва юборилган Пайғамбарлар тасдиқлаган нарса-ку?!» дерлар."}, {"a": 53, "g": 3758, "ar": "إِن كَانَتْ إِلَّا صَيْحَةًۭ وَٰحِدَةًۭ فَإِذَا هُمْ جَمِيعٌۭ لَّدَيْنَا مُحْضَرُونَ", "uz": "Фақат биргина қичқириқдан бошқа нарса бўлгани йўқ. Бас, улар бирдан тўпланиб, ҳузуримизда ҳозир қилингандирлар."}, {"a": 54, "g": 3759, "ar": "فَٱلْيَوْمَ لَا تُظْلَمُ نَفْسٌۭ شَيْـًۭٔا وَلَا تُجْزَوْنَ إِلَّا مَا كُنتُمْ تَعْمَلُونَ", "uz": "Бугунги кунда бирор жонга ҳеч бир зулм қилинмас. Қилиб ўтган амалларингиздан бошқасига жазо ҳам олмассиз."}, {"a": 55, "g": 3760, "ar": "إِنَّ أَصْحَٰبَ ٱلْجَنَّةِ ٱلْيَوْمَ فِى شُغُلٍۢ فَٰكِهُونَ", "uz": "Албатта, жаннат эгалари у кунда завқланувчилик ила машғуллар. ( Нима уларга завқ, шодлик, хурсандчилик берса, ҳаммаси у ерда муҳайёдир.)"}, {"a": 56, "g": 3761, "ar": "هُمْ وَأَزْوَٰجُهُمْ فِى ظِلَٰلٍ عَلَى ٱلْأَرَآئِكِ مُتَّكِـُٔونَ", "uz": "Улар ва уларнинг жуфтлари сояларда сўриларда ёнбошлаб ётурлар."}, {"a": 57, "g": 3762, "ar": "لَهُمْ فِيهَا فَٰكِهَةٌۭ وَلَهُم مَّا يَدَّعُونَ", "uz": "Улар учун у ерда мевалар бордир. Улар учун у ерда истаган нарсалар бордир. (Аҳли жаннатлар нимани истасалар, жаннатда ўша нарса бордир. Кўнгиллари исташи билан олдиларида муҳайё бўлади.)"}, {"a": 58, "g": 3763, "ar": "سَلَٰمٌۭ قَوْلًۭا مِّن رَّبٍّۢ رَّحِيمٍۢ", "uz": "Раҳим бўлган Роббдан «Салом» сўзи бордир. (Шунча нозу неъмат, роҳат-фароғат, шавқу завқнинг устига ўзлари учун ниҳоятда раҳмли бўлган зот Роббилари Аллоҳ таоло томонидан «Салом» ҳам келади.)"}, {"a": 59, "g": 3764, "ar": "وَٱمْتَٰزُوا۟ ٱلْيَوْمَ أَيُّهَا ٱلْمُجْرِمُونَ", "uz": "Эй жиноятчилар! Бугунги кунда сиз ажралингиз!"}, {"a": 60, "g": 3765, "ar": "۞ أَلَمْ أَعْهَدْ إِلَيْكُمْ يَٰبَنِىٓ ءَادَمَ أَن لَّا تَعْبُدُوا۟ ٱلشَّيْطَٰنَ ۖ إِنَّهُۥ لَكُمْ عَدُوٌّۭ مُّبِينٌۭ", "uz": "Мен сизларга: «Эй одам болалари, шайтонга ибодат қилманг, албатта, у сизга очиқ-ойдин душмандир."}, {"a": 61, "g": 3766, "ar": "وَأَنِ ٱعْبُدُونِى ۚ هَٰذَا صِرَٰطٌۭ مُّسْتَقِيمٌۭ", "uz": "Ва Менга ибодат қилинг, мана шу тўғри йўлдир», деб амр қилмаган эдимми?!"}, {"a": 62, "g": 3767, "ar": "وَلَقَدْ أَضَلَّ مِنكُمْ جِبِلًّۭا كَثِيرًا ۖ أَفَلَمْ تَكُونُوا۟ تَعْقِلُونَ", "uz": "Батаҳқиқ, у сизлардан кўпчилик авлодни адаштирди. Ақл юритувчи бўлмаган эдингизми?! (Шайтон сизлардан кўп авлодларни тўғри йўлдан адаштирди, сиз ақл юритмадингизми? У юр деса, орқасидан кетавердингизми?!)"}, {"a": 63, "g": 3768, "ar": "هَٰذِهِۦ جَهَنَّمُ ٱلَّتِى كُنتُمْ تُوعَدُونَ", "uz": "Мана бу сизга ваъда қилинган жаҳаннамдир!"}, {"a": 64, "g": 3769, "ar": "ٱصْلَوْهَا ٱلْيَوْمَ بِمَا كُنتُمْ تَكْفُرُونَ", "uz": "Куфр келтириб ўтганингиз туфайли бугунги кунда унга киринг!"}, {"a": 65, "g": 3770, "ar": "ٱلْيَوْمَ نَخْتِمُ عَلَىٰٓ أَفْوَٰهِهِمْ وَتُكَلِّمُنَآ أَيْدِيهِمْ وَتَشْهَدُ أَرْجُلُهُم بِمَا كَانُوا۟ يَكْسِبُونَ", "uz": "Бугунги кунда уларнинг оғизларига муҳр урамиз. Нима касб қилганларини Бизга қўллари сўзлар ва оёқлари гувоҳлик берур. (Жиноятчиларнинг оғизлари муҳрлаб қўйилади, бошқа аъзолари шоҳидлик бера бошлайди. Қўли гапиради, оёғи гувоҳлик беради.)"}, {"a": 66, "g": 3771, "ar": "وَلَوْ نَشَآءُ لَطَمَسْنَا عَلَىٰٓ أَعْيُنِهِمْ فَٱسْتَبَقُوا۟ ٱلصِّرَٰطَ فَأَنَّىٰ يُبْصِرُونَ", "uz": "Агар хоҳласак, кўзларини теп-текис қилиб қўюрмиз. Бас, улар йўлга шошилурлар. Аммо қандай ҳам кўрсинлар."}, {"a": 67, "g": 3772, "ar": "وَلَوْ نَشَآءُ لَمَسَخْنَٰهُمْ عَلَىٰ مَكَانَتِهِمْ فَمَا ٱسْتَطَٰعُوا۟ مُضِيًّۭا وَلَا يَرْجِعُونَ", "uz": "Агар хоҳласак, уларни жойларида қотириб қўюрмиз. Бас, олдинги юришга ҳам қодир бўлмаслар, ортга ҳам қайта олмаслар."}, {"a": 68, "g": 3773, "ar": "وَمَن نُّعَمِّرْهُ نُنَكِّسْهُ فِى ٱلْخَلْقِ ۖ أَفَلَا يَعْقِلُونَ", "uz": "Кимнинг умрини узоқ қилсак, уни хилқатида ночор қилиб қўюрмиз. Ахир ақл ишлатиб кўрмайдиларми?! (Иймонга келиб, ибодат билан ўтган мўминлар қариганлари сари роҳатлари кўпайиб боради. Ҳаётда қолишни савоб ишлаш учун фурсат деб хурсанд бўладилар. Жаннатга ва Аллоҳнинг розилигига етишиш умидида ўлимни хурсанд бўлиб кутиб оладилар. Кофирлар эса, ақлларини ишлатмаганлари учун бу масалада катта қийинчиликда қоладилар.)"}, {"a": 69, "g": 3774, "ar": "وَمَا عَلَّمْنَٰهُ ٱلشِّعْرَ وَمَا يَنۢبَغِى لَهُۥٓ ۚ إِنْ هُوَ إِلَّا ذِكْرٌۭ وَقُرْءَانٌۭ مُّبِينٌۭ", "uz": "Биз унга шеърни таълим берганимиз йўқ. Ва бу унинг учун тўғри ҳам келмайди. У зикр ва очиқ-ойдин Қуръондан ўзга нарса эмас."}, {"a": 70, "g": 3775, "ar": "لِّيُنذِرَ مَن كَانَ حَيًّۭا وَيَحِقَّ ٱلْقَوْلُ عَلَى ٱلْكَٰفِرِينَ", "uz": "Тирик бўлган шахсларни огоҳлантириш ва кофирларга (азоб) сўзини ҳақ қилиши учундир."}, {"a": 71, "g": 3776, "ar": "أَوَلَمْ يَرَوْا۟ أَنَّا خَلَقْنَا لَهُم مِّمَّا عَمِلَتْ أَيْدِينَآ أَنْعَٰمًۭا فَهُمْ لَهَا مَٰلِكُونَ", "uz": "Ахир Биз улар учун Ўз қўлларимиз—ла қилган нарсалардан чорваларни яратиб қўйганимизни кўрмайдиларми?! Бас, улар ўшаларга молик–эгадирлар-ку!"}, {"a": 72, "g": 3777, "ar": "وَذَلَّلْنَٰهَا لَهُمْ فَمِنْهَا رَكُوبُهُمْ وَمِنْهَا يَأْكُلُونَ", "uz": "Биз уларга ўша(ҳайвон)ларни бўйинсундириб қўйдик. Бас, улардан маркаблари бор ва улардан ерлар."}, {"a": 73, "g": 3778, "ar": "وَلَهُمْ فِيهَا مَنَٰفِعُ وَمَشَارِبُ ۖ أَفَلَا يَشْكُرُونَ", "uz": "Улар учун ўшаларда манфаатлар ва ичкиликлар бор. Ахир шукр қилмайдиларми?!"}, {"a": 74, "g": 3779, "ar": "وَٱتَّخَذُوا۟ مِن دُونِ ٱللَّهِ ءَالِهَةًۭ لَّعَلَّهُمْ يُنصَرُونَ", "uz": "Улар Аллоҳдан ўзга илоҳлар тутдилар. Гўёки улардан ёрдам берилар эмиш."}, {"a": 75, "g": 3780, "ar": "لَا يَسْتَطِيعُونَ نَصْرَهُمْ وَهُمْ لَهُمْ جُندٌۭ مُّحْضَرُونَ", "uz": "Уларнинг ёрдамига у(худо)лари қодир бўлмаслар. Улар эса, ўша(худо)лари учун ҳозир қилинган аскардирлар. (Мушрикларнинг «худолари» уларга ёрдам беришга қодир бўла олмайдилар. Лекин улар ўша «худолари» учун жон фидо қилишга тайёр турган аскарлардир. Улар учун турли хизматлар адо этадилар. Сохта худоларини ҳимоя қилиш учун ўзларини ўтга-чўққа урадилар. Булар қандай худолар бўлди?! Булар қандай бандалар бўлди? Бундай худолик ва бандалик қайси мантиққа тўғри келади?)"}, {"a": 76, "g": 3781, "ar": "فَلَا يَحْزُنكَ قَوْلُهُمْ ۘ إِنَّا نَعْلَمُ مَا يُسِرُّونَ وَمَا يُعْلِنُونَ", "uz": "Уларнинг гапи сени хафа қилмасин. Албатта, Биз нимани сир тутсалар ва нимани ошкор қилсалар, билурмиз."}, {"a": 77, "g": 3782, "ar": "أَوَلَمْ يَرَ ٱلْإِنسَٰنُ أَنَّا خَلَقْنَٰهُ مِن نُّطْفَةٍۢ فَإِذَا هُوَ خَصِيمٌۭ مُّبِينٌۭ", "uz": "Инсон Биз уни нутфадан яратганимизни билмасми?! Энди эса, у очиқ-ойдин хусуматчи бўлиб турибди?!"}, {"a": 78, "g": 3783, "ar": "وَضَرَبَ لَنَا مَثَلًۭا وَنَسِىَ خَلْقَهُۥ ۖ قَالَ مَن يُحْىِ ٱلْعِظَٰمَ وَهِىَ رَمِيمٌۭ", "uz": "У Бизга мисол келтирди ва ўз яратилишини унутди. «Суякларни ким тирилтиради? Ҳолбуки, улар титилиб кетган-ку?!» деди."}, {"a": 79, "g": 3784, "ar": "قُلْ يُحْيِيهَا ٱلَّذِىٓ أَنشَأَهَآ أَوَّلَ مَرَّةٍۢ ۖ وَهُوَ بِكُلِّ خَلْقٍ عَلِيمٌ", "uz": "Сен: «Уларни илк марта йўқдан бор қилган зот тирилтирур ва у ҳар бир яратилган нарсани яхши билгувчидир», деб айт."}, {"a": 80, "g": 3785, "ar": "ٱلَّذِى جَعَلَ لَكُم مِّنَ ٱلشَّجَرِ ٱلْأَخْضَرِ نَارًۭا فَإِذَآ أَنتُم مِّنْهُ تُوقِدُونَ", "uz": "У зот сизларга яшил дарахтдан олов қилиб бергандир. Энди эса, сиз ундан олов ёқмоқдасиз. (У зот шундай қудратли зотки, баъзи нарсаларни ўзига қарама-қарши томондан ҳам чиқараверади. Мисол учун, ям-яшил дарахтни олайлик. У ҳўл бўлади. Таркибида сув бор. Сув эса, оловни ўчиради. Аммо Аллоҳ таоло оловга терс бўлмиш ҳўл дарахтни бир-бирига ишқаса, ўт чиқарадиган ҳолга келтириб қўйгандир. Оловга ёқилғини ҳам ўша дарахтнинг ўзидан қилиб қўйгандир. Бу улкан бир мўъжизага одамлар эътибор бермайдилар.)"}, {"a": 81, "g": 3786, "ar": "أَوَلَيْسَ ٱلَّذِى خَلَقَ ٱلسَّمَٰوَٰتِ وَٱلْأَرْضَ بِقَٰدِرٍ عَلَىٰٓ أَن يَخْلُقَ مِثْلَهُم ۚ بَلَىٰ وَهُوَ ٱلْخَلَّٰقُ ٱلْعَلِيمُ", "uz": "Осмонлару ерни яратган зот уларга ўхшашни яратишга қодир эмасми?! Йўқ! У ўта яратгувчи, ўта билгувчи зотдир."}, {"a": 82, "g": 3787, "ar": "إِنَّمَآ أَمْرُهُۥٓ إِذَآ أَرَادَ شَيْـًٔا أَن يَقُولَ لَهُۥ كُن فَيَكُونُ", "uz": "Қачон бирон нарсани ирода қилса, Унинг иши «Бўл» демоқликдир, холос. Бас, у нарса бўлур."}, {"a": 83, "g": 3788, "ar": "فَسُبْحَٰنَ ٱلَّذِى بِيَدِهِۦ مَلَكُوتُ كُلِّ شَىْءٍۢ وَإِلَيْهِ تُرْجَعُونَ", "uz": "Бас, барча нарсанинг том эгалиги қўлида бўлган зот покдир. Унгагина қайтарилурсизлар. (Гап шундай экан, демак дунёдаги барча нарсаларнинг тўла эгалиги ва тасарруфи қўлида бўлган Аллоҳ таоло покдир. Барча айб ва нуқсонлардан, жумладан, кофир ва мушриклар, ўлганларни қайта тирилтира олмайди, деб тақаётган нуқсондан ҳам покдир.)"}], "67": [{"a": 1, "g": 5242, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ تَبَٰرَكَ ٱلَّذِى بِيَدِهِ ٱلْمُلْكُ وَهُوَ عَلَىٰ كُلِّ شَىْءٍۢ قَدِيرٌ", "uz": "Қўлида мулк бўлган У зот улуғ, муқаддас бўлди. У барча нарсага қодирдир."}, {"a": 2, "g": 5243, "ar": "ٱلَّذِى خَلَقَ ٱلْمَوْتَ وَٱلْحَيَوٰةَ لِيَبْلُوَكُمْ أَيُّكُمْ أَحْسَنُ عَمَلًۭا ۚ وَهُوَ ٱلْعَزِيزُ ٱلْغَفُورُ", "uz": "У ўлим ва ҳаётини сизларнинг қайсиларингиз амалда яхшироқ эканлигингизни синаш учун яратгандир. У азиз ва ўта мағфиратлидир. (Ўлимни эслаган одам унга тайёргарлик кўради ва ўлгандан сўнг шарманда бўлмаслик учун ўзини яхши ишларга сафарбар қилади.)"}, {"a": 3, "g": 5244, "ar": "ٱلَّذِى خَلَقَ سَبْعَ سَمَٰوَٰتٍۢ طِبَاقًۭا ۖ مَّا تَرَىٰ فِى خَلْقِ ٱلرَّحْمَٰنِ مِن تَفَٰوُتٍۢ ۖ فَٱرْجِعِ ٱلْبَصَرَ هَلْ تَرَىٰ مِن فُطُورٍۢ", "uz": "У етти осмонни табақама-табақа яратгандир. Роҳманнинг яратганида ҳеч тафовут кўрмассан. Қайта назар сол! Бирор камчилик кўряпсанми?"}, {"a": 4, "g": 5245, "ar": "ثُمَّ ٱرْجِعِ ٱلْبَصَرَ كَرَّتَيْنِ يَنقَلِبْ إِلَيْكَ ٱلْبَصَرُ خَاسِئًۭا وَهُوَ حَسِيرٌۭ", "uz": "Сўнг такрор-такрор назар сол, назар сенга истаганини топа олмай, ҳорғин- чарчаган ҳолда қайтади."}, {"a": 5, "g": 5246, "ar": "وَلَقَدْ زَيَّنَّا ٱلسَّمَآءَ ٱلدُّنْيَا بِمَصَٰبِيحَ وَجَعَلْنَٰهَا رُجُومًۭا لِّلشَّيَٰطِينِ ۖ وَأَعْتَدْنَا لَهُمْ عَذَابَ ٱلسَّعِيرِ", "uz": "Ва дарҳақиқат Биз яқин осмонни чироқлар билан зийнатлаб қўйдик ва у (чироқ)ларни шайтонларга отиладиган нарса ҳам қилиб қўйдик. Ва у(шайтон)ларга олови қизиб турган жаҳаннамни тайёрлаб қўйдик. (Араб фолбинлари бизнинг шайтонларимиз осмонга чиқиб, ғойибдаги нарсаларни билиб беради, деб мақтанар эдилар. Қуръони Карим буни рад этиб, бу дунёда шайтонларни юлдузлардан ажраб чиққан учқунлар қувиб ҳайдашини, у дунёда эса, уларга Аллоҳ жаҳаннам азобини тайёрлаб қўйганини таъкидламоқда.)"}, {"a": 6, "g": 5247, "ar": "وَلِلَّذِينَ كَفَرُوا۟ بِرَبِّهِمْ عَذَابُ جَهَنَّمَ ۖ وَبِئْسَ ٱلْمَصِيرُ", "uz": "Ўз Роббиларига куфр келтирганлар учун жаҳаннам азоби бордур ва у қандай ҳам ёмон қайтадиган жой!"}, {"a": 7, "g": 5248, "ar": "إِذَآ أُلْقُوا۟ فِيهَا سَمِعُوا۟ لَهَا شَهِيقًۭا وَهِىَ تَفُورُ", "uz": "Улар жаҳаннамга ташланган чоғларида унинг ҳанграган овозини эшитурлар, у эса қайнаб турган бўладир."}, {"a": 8, "g": 5249, "ar": "تَكَادُ تَمَيَّزُ مِنَ ٱلْغَيْظِ ۖ كُلَّمَآ أُلْقِىَ فِيهَا فَوْجٌۭ سَأَلَهُمْ خَزَنَتُهَآ أَلَمْ يَأْتِكُمْ نَذِيرٌۭ", "uz": "У ғазабдан ёрилиб кетай дейдир. Ҳар қачон унга янги гуруҳ ташланганда унинг хизматкорлари: «Сизларга огоҳлантирувчи келмаганмиди?», деб сўрайдир."}, {"a": 9, "g": 5250, "ar": "قَالُوا۟ بَلَىٰ قَدْ جَآءَنَا نَذِيرٌۭ فَكَذَّبْنَا وَقُلْنَا مَا نَزَّلَ ٱللَّهُ مِن شَىْءٍ إِنْ أَنتُمْ إِلَّا فِى ضَلَٰلٍۢ كَبِيرٍۢ", "uz": "Улар: «Ҳа, дарҳақиқат бизга огоҳлантирувчи келган эди. Лекин биз (уни) ёлғончига чиқардик ва: «Аллоҳ ҳеч нарса туширгани йўқ, сизлар катта адашувдан бошқа ҳеч нарса эмассизлар», деган эдик», дерлар."}, {"a": 10, "g": 5251, "ar": "وَقَالُوا۟ لَوْ كُنَّا نَسْمَعُ أَوْ نَعْقِلُ مَا كُنَّا فِىٓ أَصْحَٰبِ ٱلسَّعِيرِ", "uz": "Ва улар: «Агар эътибор қулоғи билан эшитганимизда ёки ақлни ишлатганимизда эди, дўзахийлар орасида бўлмаган бўлар эдик», дерлар."}, {"a": 11, "g": 5252, "ar": "فَٱعْتَرَفُوا۟ بِذَنۢبِهِمْ فَسُحْقًۭا لِّأَصْحَٰبِ ٱلسَّعِيرِ", "uz": "Бас, улар ўз гуноҳларини эътироф этдилар. Йўқолсин дўзахийлар!"}, {"a": 12, "g": 5253, "ar": "إِنَّ ٱلَّذِينَ يَخْشَوْنَ رَبَّهُم بِٱلْغَيْبِ لَهُم مَّغْفِرَةٌۭ وَأَجْرٌۭ كَبِيرٌۭ", "uz": "Албатта ўз Роббиларидан ғойибдан қўрқадиганлар учун гуноҳларини кечиш ва улкан ажр-савоблар бордир."}, {"a": 13, "g": 5254, "ar": "وَأَسِرُّوا۟ قَوْلَكُمْ أَوِ ٱجْهَرُوا۟ بِهِۦٓ ۖ إِنَّهُۥ عَلِيمٌۢ بِذَاتِ ٱلصُّدُورِ", "uz": "Ва сиз сўзингизни сир тутасизми ёки ошкора айтасизми, албатта, У кўнгиллардагини ҳам билгувчи зотдир."}, {"a": 14, "g": 5255, "ar": "أَلَا يَعْلَمُ مَنْ خَلَقَ وَهُوَ ٱللَّطِيفُ ٱلْخَبِيرُ", "uz": "Яратган зот Ўзи билмасмиди? Ва У дақиқларгача билувчи ва хабардор зотдир."}, {"a": 15, "g": 5256, "ar": "هُوَ ٱلَّذِى جَعَلَ لَكُمُ ٱلْأَرْضَ ذَلُولًۭا فَٱمْشُوا۟ فِى مَنَاكِبِهَا وَكُلُوا۟ مِن رِّزْقِهِۦ ۖ وَإِلَيْهِ ٱلنُّشُورُ", "uz": "У сизларга ерни бўйсундириб қўйган зотдир. Бас, унинг турли жойларида юринг ва Унинг ризқидан енг ва қабрдан чиқиб бориш ҳам Унинг ҳузурига бўладир. (Уламоларимиз қадимдан ушбу ояти кариманинг тафсирини Исломда меҳнатга чорлаш, ризқни териб ейиш, ер юзинининг турли жойларида ҳаракат қилиш зарурлигига далил қилиб келтирадилар. Дарҳақиқаат, Аллоҳ таоло ерни инсонга бўйсундириб қўйган, лекин бу ҳақиқат ҳозирги асримиздагидек ҳеч қачон яққол кўзга ташланмаган.)"}, {"a": 16, "g": 5257, "ar": "ءَأَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يَخْسِفَ بِكُمُ ٱلْأَرْضَ فَإِذَا هِىَ تَمُورُ", "uz": "Осмондаги зот сизларни ерга юттириб юборишидан омонда бўлдингизми? У (ер) эса изтиробда ҳаракатланиб туради. («Осмондаги зот»дан мурод Аллоҳ таоло, лекин бу дегани Аллоҳ осмонда дегани эмас. Чунки Аллоҳ таоло маконга муҳтож эмасдир. У макон ва замондан устун зотдир. Аҳли сунна ва жамоа эътиқодига биноан, Аллоҳнинг ерда ёки осмонда дейилишидан мақсад, Унинг хоҳиши ва ҳукми еру осмонга баробар ўтиши ва Унинг султони ғолиб эканлигидир.)"}, {"a": 17, "g": 5258, "ar": "أَمْ أَمِنتُم مَّن فِى ٱلسَّمَآءِ أَن يُرْسِلَ عَلَيْكُمْ حَاصِبًۭا ۖ فَسَتَعْلَمُونَ كَيْفَ نَذِيرِ", "uz": "Ёки осмондаги зот сизларга азоб шамолни юборишидан омонда бўлдингизми? Бас, албатта огоҳлантириш қандоқ бўлишини билурсизлар."}, {"a": 18, "g": 5259, "ar": "وَلَقَدْ كَذَّبَ ٱلَّذِينَ مِن قَبْلِهِمْ فَكَيْفَ كَانَ نَكِيرِ", "uz": "Ва дарҳақиқат улардан аввалгилари ҳам ёлғонга чиқарган эдилар. Бас инкорим қандай бўлди?!"}, {"a": 19, "g": 5260, "ar": "أَوَلَمْ يَرَوْا۟ إِلَى ٱلطَّيْرِ فَوْقَهُمْ صَٰٓفَّٰتٍۢ وَيَقْبِضْنَ ۚ مَا يُمْسِكُهُنَّ إِلَّا ٱلرَّحْمَٰنُ ۚ إِنَّهُۥ بِكُلِّ شَىْءٍۭ بَصِيرٌ", "uz": "Тепаларида (қаноатларини) ёйиб ва йиғаётган қушни кўрмайдиларми? Уларни Роҳмандан бошқа ушлаб турувчи йўқ. Албатта, У барча нарсани кўрувчидир."}, {"a": 20, "g": 5261, "ar": "أَمَّنْ هَٰذَا ٱلَّذِى هُوَ جُندٌۭ لَّكُمْ يَنصُرُكُم مِّن دُونِ ٱلرَّحْمَٰنِ ۚ إِنِ ٱلْكَٰفِرُونَ إِلَّا فِى غُرُورٍ", "uz": "Роҳмандан бошқа сизларга ёрдам берадиган аскар ким ўзи? Кофирлар ғурурдан бошқа ҳеч нарсада эмаслар!"}, {"a": 21, "g": 5262, "ar": "أَمَّنْ هَٰذَا ٱلَّذِى يَرْزُقُكُمْ إِنْ أَمْسَكَ رِزْقَهُۥ ۚ بَل لَّجُّوا۟ فِى عُتُوٍّۢ وَنُفُورٍ", "uz": "У Ризқни тортиб қўйса, сизга ризқ берадиган ким ўзи?! Балки улар абадий туғёнда ва ҳақдан нафратда бўлурлар."}, {"a": 22, "g": 5263, "ar": "أَفَمَن يَمْشِى مُكِبًّا عَلَىٰ وَجْهِهِۦٓ أَهْدَىٰٓ أَمَّن يَمْشِى سَوِيًّا عَلَىٰ صِرَٰطٍۢ مُّسْتَقِيمٍۢ", "uz": "Юз тубан қоқилиб юраётган киши ҳидоятдами ёки тўғри йўлдан қоматини тик тутиб бораётган кишими? («Юз тубан, қоқилиб юраётган киши» кофир кишидир. Чунки, унинг аниқ йўли, мақсади ва кўрсатмаси йўқ. Йўли адаштирувчи, хавф-хатарларга тўладир.)"}, {"a": 23, "g": 5264, "ar": "قُلْ هُوَ ٱلَّذِىٓ أَنشَأَكُمْ وَجَعَلَ لَكُمُ ٱلسَّمْعَ وَٱلْأَبْصَٰرَ وَٱلْأَفْـِٔدَةَ ۖ قَلِيلًۭا مَّا تَشْكُرُونَ", "uz": "Сен: «У сизларни йўқдан бор қилган ва сизларга эшитиш, кўриш ва ақлни берган зотдир. Жуда ҳам оз шукр қиласизлар-а?!» деб айт."}, {"a": 24, "g": 5265, "ar": "قُلْ هُوَ ٱلَّذِى ذَرَأَكُمْ فِى ٱلْأَرْضِ وَإِلَيْهِ تُحْشَرُونَ", "uz": "Сен: «У сизларни ер юзида яратган, кўпайтирган зотдир. Ва Унинг ҳузурига тўпланурсизлар», деб айт."}, {"a": 25, "g": 5266, "ar": "وَيَقُولُونَ مَتَىٰ هَٰذَا ٱلْوَعْدُ إِن كُنتُمْ صَٰدِقِينَ", "uz": "Ва улар: «Агар ростгўй бўлсангиз, бу ваъда қачон бўлади?» дерлар."}, {"a": 26, "g": 5267, "ar": "قُلْ إِنَّمَا ٱلْعِلْمُ عِندَ ٱللَّهِ وَإِنَّمَآ أَنَا۠ نَذِيرٌۭ مُّبِينٌۭ", "uz": "Мен: «Албатта, илм, фақат Аллоҳнинг ҳузуридадир. Ва албатта, мен яққол огоҳлантирувчиман, холос», деб айт."}, {"a": 27, "g": 5268, "ar": "فَلَمَّا رَأَوْهُ زُلْفَةًۭ سِيٓـَٔتْ وُجُوهُ ٱلَّذِينَ كَفَرُوا۟ وَقِيلَ هَٰذَا ٱلَّذِى كُنتُم بِهِۦ تَدَّعُونَ", "uz": "Бас азобни яқиндан кўрганда куфр келтирганларнинг юзлари қораяр. Ва уларга: «Сўраган нарсангиз шу бўлади», дейилур."}, {"a": 28, "g": 5269, "ar": "قُلْ أَرَءَيْتُمْ إِنْ أَهْلَكَنِىَ ٱللَّهُ وَمَن مَّعِىَ أَوْ رَحِمَنَا فَمَن يُجِيرُ ٱلْكَٰفِرِينَ مِنْ عَذَابٍ أَلِيمٍۢ", "uz": "Сен: «Айтинглар-чи, агар Аллоҳ мени ва мен билан бўлганларни ҳалок қилса ёки раҳм қилса, кофирларни аламли азобдан ким қутқариб қолади?!» деб айт."}, {"a": 29, "g": 5270, "ar": "قُلْ هُوَ ٱلرَّحْمَٰنُ ءَامَنَّا بِهِۦ وَعَلَيْهِ تَوَكَّلْنَا ۖ فَسَتَعْلَمُونَ مَنْ هُوَ فِى ضَلَٰلٍۢ مُّبِينٍۢ", "uz": "Сен: «У Роҳмандур, биз Унга иймон келтирдик ва Унга таваккал қилдик. Бас, сизлар тезда ким очиқ-ойдин хатода эканини билурсизлар», деб айт."}, {"a": 30, "g": 5271, "ar": "قُلْ أَرَءَيْتُمْ إِنْ أَصْبَحَ مَآؤُكُمْ غَوْرًۭا فَمَن يَأْتِيكُم بِمَآءٍۢ مَّعِينٍۭ", "uz": "Сен: «Айтинглар-чи, агар сувларингиз ерга сингиб кетса, сизларга ким осонгина топиладиган сувни келтиради?» деб айт."}], "103": [{"a": 1, "g": 6177, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ وَٱلْعَصْرِ", "uz": "Аср билан қасам."}, {"a": 2, "g": 6178, "ar": "إِنَّ ٱلْإِنسَٰنَ لَفِى خُسْرٍ", "uz": "Албатта, инсон хусрондадир. (Хусрон-мағлубият, ютқизиқ ва нуқсон маъноларини англатади.)"}, {"a": 3, "g": 6179, "ar": "إِلَّا ٱلَّذِينَ ءَامَنُوا۟ وَعَمِلُوا۟ ٱلصَّٰلِحَٰتِ وَتَوَاصَوْا۟ بِٱلْحَقِّ وَتَوَاصَوْا۟ بِٱلصَّبْرِ", "uz": "Магар иймон келтирганлар ва солиҳ амаллар қилганлар, бир-бирларини ҳақга чақирганлар ва бир-бирларини сабрга чақирганлар мустаснодир. (Маълум бўлдики, инсон икки дунёда бадбахт бўлиб қолмаслик учун тўртта сифатга эга бўлиши керак экан: Аллоҳга иймон келтириши. Солиҳ амаллар қилиши. Ҳақ амаллар қилиши. Сабрга чақириши.)"}], "104": [{"a": 1, "g": 6180, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ وَيْلٌۭ لِّكُلِّ هُمَزَةٍۢ لُّمَزَةٍ", "uz": "Ҳар бир обрў тўкувчи ва айбловчига «вайл» бўлсин."}, {"a": 2, "g": 6181, "ar": "ٱلَّذِى جَمَعَ مَالًۭا وَعَدَّدَهُۥ", "uz": "У мол жамлади ва уни санаб турди."}, {"a": 3, "g": 6182, "ar": "يَحْسَبُ أَنَّ مَالَهُۥٓ أَخْلَدَهُۥ", "uz": "У, албатта, уни абадий қолдирур, деб ҳисоблар."}, {"a": 4, "g": 6183, "ar": "كَلَّا ۖ لَيُنۢبَذَنَّ فِى ٱلْحُطَمَةِ", "uz": "Йўқ! Албатта у «ҳутома»га хор-зор этиб ташланар."}, {"a": 5, "g": 6184, "ar": "وَمَآ أَدْرَىٰكَ مَا ٱلْحُطَمَةُ", "uz": "«Ҳутома» қандоқ нарса эканини сенга нима билдирар?"}, {"a": 6, "g": 6185, "ar": "نَارُ ٱللَّهِ ٱلْمُوقَدَةُ", "uz": "У Аллоҳнинг шиддатли, ўчмас оловидир."}, {"a": 7, "g": 6186, "ar": "ٱلَّتِى تَطَّلِعُ عَلَى ٱلْأَفْـِٔدَةِ", "uz": "Қалбгача етиб борадир."}, {"a": 8, "g": 6187, "ar": "إِنَّهَا عَلَيْهِم مُّؤْصَدَةٌۭ", "uz": "Албатта, у уларни устидан қоплангандир."}, {"a": 9, "g": 6188, "ar": "فِى عَمَدٍۢ مُّمَدَّدَةٍۭ", "uz": "Узун-узун устунларга боғлангандирлар."}], "105": [{"a": 1, "g": 6189, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ أَلَمْ تَرَ كَيْفَ فَعَلَ رَبُّكَ بِأَصْحَٰبِ ٱلْفِيلِ", "uz": "Роббинг фил соҳибларини қандоқ қилганини билмадингми?"}, {"a": 2, "g": 6190, "ar": "أَلَمْ يَجْعَلْ كَيْدَهُمْ فِى تَضْلِيلٍۢ", "uz": "Уларнинг макру ҳийласини зое кетказмадими?"}, {"a": 3, "g": 6191, "ar": "وَأَرْسَلَ عَلَيْهِمْ طَيْرًا أَبَابِيلَ", "uz": "Ва уларнинг устига тўп-тўп қушларни юбормадими?"}, {"a": 4, "g": 6192, "ar": "تَرْمِيهِم بِحِجَارَةٍۢ مِّن سِجِّيلٍۢ", "uz": "Лойдан пиширилган тошларни отадиганларни?"}, {"a": 5, "g": 6193, "ar": "فَجَعَلَهُمْ كَعَصْفٍۢ مَّأْكُولٍۭ", "uz": "Бас, уларни қурт еб ташлаган ўсимликка ўхшатиб юбормадими?. Муҳаммад алайҳиссалом «Фил йили»да туғилганлар дейилишининг сабаби ҳам шу."}], "106": [{"a": 1, "g": 6194, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ لِإِيلَٰفِ قُرَيْشٍ", "uz": "Қурайшнинг лозим тутиши қандай яхши!"}, {"a": 2, "g": 6195, "ar": "إِۦلَٰفِهِمْ رِحْلَةَ ٱلشِّتَآءِ وَٱلصَّيْفِ", "uz": "Уларнинг қиш ва ёз сафарларини ўзларига лозим тутишлари қандай яхши!"}, {"a": 3, "g": 6196, "ar": "فَلْيَعْبُدُوا۟ رَبَّ هَٰذَا ٱلْبَيْتِ", "uz": "Бас, улар мана шу Байтнинг Роббисига ибодат қилсинлар!"}, {"a": 4, "g": 6197, "ar": "ٱلَّذِىٓ أَطْعَمَهُم مِّن جُوعٍۢ وَءَامَنَهُم مِّنْ خَوْفٍۭ", "uz": "У зот уларини очликдан тўқ қилган, хавфдан омон қилгандир."}], "107": [{"a": 1, "g": 6198, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ أَرَءَيْتَ ٱلَّذِى يُكَذِّبُ بِٱلدِّينِ", "uz": "Жазо кунини ёлғонга чиқарувчини кўрдингми?"}, {"a": 2, "g": 6199, "ar": "فَذَٰلِكَ ٱلَّذِى يَدُعُّ ٱلْيَتِيمَ", "uz": "Ана ўша, етимни қўполлик билан ҳайдайдир."}, {"a": 3, "g": 6200, "ar": "وَلَا يَحُضُّ عَلَىٰ طَعَامِ ٱلْمِسْكِينِ", "uz": "Ва мискинларга таом беришга қизиқтирмайдир."}, {"a": 4, "g": 6201, "ar": "فَوَيْلٌۭ لِّلْمُصَلِّينَ", "uz": "«Намозхонлар»га вайл бўлсин."}, {"a": 5, "g": 6202, "ar": "ٱلَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ", "uz": "Улар ўз намозларини унитувчилардир."}, {"a": 6, "g": 6203, "ar": "ٱلَّذِينَ هُمْ يُرَآءُونَ", "uz": "Ана ўшалар риё қиладиганлардир."}, {"a": 7, "g": 6204, "ar": "وَيَمْنَعُونَ ٱلْمَاعُونَ", "uz": "Ва маоъунни ман қиладиганлардир."}], "108": [{"a": 1, "g": 6205, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ إِنَّآ أَعْطَيْنَٰكَ ٱلْكَوْثَرَ", "uz": "Албатта, Биз сенга Кавсарни бердик."}, {"a": 2, "g": 6206, "ar": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ", "uz": "Бас, Роббингга намоз ўқи ва жонлик сўй."}, {"a": 3, "g": 6207, "ar": "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ", "uz": "Албатта, сени ёмон кўриб, айбловчининг орқаси кесикдир."}], "109": [{"a": 1, "g": 6208, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ يَٰٓأَيُّهَا ٱلْكَٰفِرُونَ", "uz": "Айт: «Эй кофирлар!"}, {"a": 2, "g": 6209, "ar": "لَآ أَعْبُدُ مَا تَعْبُدُونَ", "uz": "Мен сиз ибодат қилган нарсаларга ибодат қилмасман."}, {"a": 3, "g": 6210, "ar": "وَلَآ أَنتُمْ عَٰبِدُونَ مَآ أَعْبُدُ", "uz": "Ва сизлар ҳам мен ибодат қиладиганга ибодат қилувчимассиз."}, {"a": 4, "g": 6211, "ar": "وَلَآ أَنَا۠ عَابِدٌۭ مَّا عَبَدتُّمْ", "uz": "Ва мен сиз ибодат қилган нарсага ибодат қилувчимасман."}, {"a": 5, "g": 6212, "ar": "وَلَآ أَنتُمْ عَٰبِدُونَ مَآ أَعْبُدُ", "uz": "Ва сиз ҳам мен ибодат қилганга ибодат қилувчимассиз."}, {"a": 6, "g": 6213, "ar": "لَكُمْ دِينُكُمْ وَلِىَ دِينِ", "uz": "Сизга ўз динингиз, менга ўз диним. (Бу сурада Ислом эълон қилган ақида эркинлиги ўз аксини топган. 1400 йил аввал эълон қилинган бу ҳуррият оёқ ости қилинганда, инсоният улкан зарарлар тортди.)"}], "110": [{"a": 1, "g": 6214, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ إِذَا جَآءَ نَصْرُ ٱللَّهِ وَٱلْفَتْحُ", "uz": "Вақтики, Аллоҳнинг нусрати ва фатҳ келса..."}, {"a": 2, "g": 6215, "ar": "وَرَأَيْتَ ٱلنَّاسَ يَدْخُلُونَ فِى دِينِ ٱللَّهِ أَفْوَاجًۭا", "uz": "Ва одамларнинг Аллоҳнинг динига тўп-тўп бўлиб кираётганини кўрсанг..."}, {"a": 3, "g": 6216, "ar": "فَسَبِّحْ بِحَمْدِ رَبِّكَ وَٱسْتَغْفِرْهُ ۚ إِنَّهُۥ كَانَ تَوَّابًۢا", "uz": "Бас, Роббингни поклаб ёд эт ва Унга истиғфор айт. Албатта, У тавбаларни кўплаб қабул этувчидир."}], "111": [{"a": 1, "g": 6217, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ تَبَّتْ يَدَآ أَبِى لَهَبٍۢ وَتَبَّ", "uz": "Абу Лаҳабнинг икки қўли ҳалок бўлсин, ҳалок!"}, {"a": 2, "g": 6218, "ar": "مَآ أَغْنَىٰ عَنْهُ مَالُهُۥ وَمَا كَسَبَ", "uz": "Унга моли ва касб қилган нарсалари фойда бермади."}, {"a": 3, "g": 6219, "ar": "سَيَصْلَىٰ نَارًۭا ذَاتَ لَهَبٍۢ", "uz": "У тезда чўғи қизиб турган ўтга киради."}, {"a": 4, "g": 6220, "ar": "وَٱمْرَأَتُهُۥ حَمَّالَةَ ٱلْحَطَبِ", "uz": "Ва унинг хотини, ўтин кўтарган аёл ҳам."}, {"a": 5, "g": 6221, "ar": "فِى جِيدِهَا حَبْلٌۭ مِّن مَّسَدٍۭ", "uz": "У(аёл)нинг бўйнида эшилган арқон бор ҳолда."}], "112": [{"a": 1, "g": 6222, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ هُوَ ٱللَّهُ أَحَدٌ", "uz": "Айт: «У Аллоҳ ягонадир»."}, {"a": 2, "g": 6223, "ar": "ٱللَّهُ ٱلصَّمَدُ", "uz": "Аллоҳ сомаддир. (Ҳожатларни ва рағбатларни қондирувчидир.)"}, {"a": 3, "g": 6224, "ar": "لَمْ يَلِدْ وَلَمْ يُولَدْ", "uz": "У туғмаган ва туғилмаган."}, {"a": 4, "g": 6225, "ar": "وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ", "uz": "Ва Унга ҳеч ким тенг бўлмаган. (Аллоҳ таолога бирор зот на зотида, на сифатида ва на амалида тенг бўлган эмас, бўлолмайди ҳам.)"}], "113": [{"a": 1, "g": 6226, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ", "uz": "Тонг Роббисидан паноҳ сўрайман."}, {"a": 2, "g": 6227, "ar": "مِن شَرِّ مَا خَلَقَ", "uz": "У яратган нарсалар ёмонлигидан."}, {"a": 3, "g": 6228, "ar": "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ", "uz": "Ва кириб келган қоронғулик ёмонлигидан."}, {"a": 4, "g": 6229, "ar": "وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ", "uz": "Ва тугунларга дам солувчилар ёмонлигидан. (Сеҳргарлар бировни сеҳрлаб зарар етказмоқчи бўлса, ип олиб, ўқийдиган нарсасини ўқиб, дам солиб, ипни бир тугиб, яна бир дам солиб, яна тугиб, охирига етказар экан.)"}, {"a": 5, "g": 6230, "ar": "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ", "uz": "Ва ҳасад қилган ҳасадчининг ёмонлигидан, деб айт."}], "114": [{"a": 1, "g": 6231, "ar": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ", "uz": "Одамлар Роббисидан."}, {"a": 2, "g": 6232, "ar": "مَلِكِ ٱلنَّاسِ", "uz": "Одамлар Подшоҳидан."}, {"a": 3, "g": 6233, "ar": "إِلَٰهِ ٱلنَّاسِ", "uz": "Одамлар Илоҳидан паноҳ сўрайман."}, {"a": 4, "g": 6234, "ar": "مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ", "uz": "Беркиниб, кўриниб турувчи васвоснинг."}, {"a": 5, "g": 6235, "ar": "ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ", "uz": "Одамлар қалбига васваса соладиганнинг."}, {"a": 6, "g": 6236, "ar": "مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ", "uz": "Жинлардан ва одамлардан бўлганнинг ёмонлигидан, деб айт. (Оятда зикр қилинган «беркиниб, кўриб турувчи»дан мурод шайтондир.)"}]};
+    const AYAH_OFFSETS = {"1": 0, "2": 7, "3": 293, "4": 493, "5": 669, "6": 789, "7": 954, "8": 1160, "9": 1235, "10": 1364, "11": 1473, "12": 1596, "13": 1707, "14": 1750, "15": 1802, "16": 1901, "17": 2029, "18": 2140, "19": 2250, "20": 2348, "21": 2483, "22": 2595, "23": 2673, "24": 2791, "25": 2855, "26": 2932, "27": 3159, "28": 3252, "29": 3340, "30": 3409, "31": 3469, "32": 3503, "33": 3533, "34": 3606, "35": 3660, "36": 3705, "37": 3788, "38": 3970, "39": 4058, "40": 4133, "41": 4218, "42": 4272, "43": 4325, "44": 4414, "45": 4473, "46": 4510, "47": 4545, "48": 4583, "49": 4612, "50": 4630, "51": 4675, "52": 4735, "53": 4784, "54": 4846, "55": 4901, "56": 4979, "57": 5075, "58": 5104, "59": 5126, "60": 5150, "61": 5163, "62": 5177, "63": 5188, "64": 5199, "65": 5217, "66": 5229, "67": 5241, "68": 5271, "69": 5323, "70": 5375, "71": 5419, "72": 5447, "73": 5475, "74": 5495, "75": 5551, "76": 5591, "77": 5622, "78": 5672, "79": 5712, "80": 5758, "81": 5800, "82": 5829, "83": 5848, "84": 5884, "85": 5909, "86": 5931, "87": 5948, "88": 5967, "89": 5993, "90": 6023, "91": 6043, "92": 6058, "93": 6079, "94": 6090, "95": 6098, "96": 6106, "97": 6125, "98": 6130, "99": 6138, "100": 6146, "101": 6157, "102": 6168, "103": 6176, "104": 6179, "105": 6188, "106": 6193, "107": 6197, "108": 6204, "109": 6207, "110": 6213, "111": 6216, "112": 6221, "113": 6225, "114": 6230};
+
+    // Reciters list (Arab & Uzbek)
     const QORIS = [
-      { id: "abdulbosit", name: "Abdulbosit", path: "Abdul_Basit_Mujawwad_128kbps" },
-      { id: "husary", name: "Husariy (Tajvid)", path: "Husary_128kbps" },
-      { id: "afosiy", name: "Afosiy", path: "Alafasy_128kbps" },
-      { id: "ghomdi", name: "G'omdiy", path: "Ghamadi_40kbps" }
+      { id: "alafasy", name: "Mishariy al-Afosiy (Arab)", type: "cdn_alafasy" },
+      { id: "uz_sodik", name: "Shayx Muhammad Sodiq (O'zbekcha)", type: "cdn_sodik" },
+      { id: "abdulbasit", name: "Abdulbosit (Mujawwad)", type: "everyayah", folder: "Abdul_Basit_Mujawwad_128kbps" },
+      { id: "husary", name: "Husoriy (Muallim / Tajvid)", type: "everyayah", folder: "Husary_Muallim_128kbps" }
     ];
 
+    // State
     let currentSurah = 1;
     let currentAyah = 1;
     let currentQoriIdx = 0;
     let currentSpeed = 1.0;
     let currentViewMode = "mushaf";
-    let repeatTarget = 3;
-    let currentRepeatDone = 0;
+    let showUzbekTranslation = true;
+    let arFontSize = 26;
+
+    // Repeat Logic
+    let repeatType = "surah"; // 'surah' or 'ayah'
+    let repeatTarget = 10;
+    let surahRepeatsDone = 0;
+    let ayahRepeatsDone = 0;
     let isPlaying = false;
-    let isRecording = false;
+
+    // In-memory surah text cache
+    const surahCache = new Map();
+
+    // Populate bundled surahs into cache
+    Object.keys(BUNDLED_SURAHS).forEach(k => {
+      surahCache.set(parseInt(k), BUNDLED_SURAHS[k]);
+    });
 
     const audioPlayer = document.getElementById('quronAudio');
 
+    // ── HELPER FUNCTIONS ──
     function pad3(num) {
       return String(num).padStart(3, '0');
     }
 
-    function getAudioUrl(surah, ayah) {
-      const qori = QORIS[currentQoriIdx];
-      return `https://everyayah.com/data/${qori.path}/${pad3(surah)}${pad3(ayah)}.mp3`;
+    function showToast(msg) {
+      const t = document.getElementById('qToast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
     }
 
-    // ── SWITCH VIEW MODES (KITOBLI, TAJVIDLI, TAKRORLASH) ──
-    function switchViewMode(mode) {
-      currentViewMode = mode;
-      document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
-      const sc = document.getElementById('showcaseCard');
+    function getGlobalAyahNumber(surahNum, ayahNum) {
+      const offset = AYAH_OFFSETS[surahNum] || 0;
+      return offset + ayahNum;
+    }
 
-      if (mode === 'mushaf') {
-        if (sc) sc.style.display = 'none';
-        document.getElementById('btnModeMushaf').classList.add('active');
-        document.getElementById('pane-mushaf').classList.add('active');
-      } else if (mode === 'tajweed') {
-        if (sc) sc.style.display = 'flex';
-        document.getElementById('btnModeTajweed').classList.add('active');
-        document.getElementById('pane-tajweed').classList.add('active');
-      } else if (mode === 'repeat') {
-        if (sc) sc.style.display = 'flex';
-        document.getElementById('btnModeRepeat').classList.add('active');
-        document.getElementById('pane-repeat').classList.add('active');
+    function getAudioUrl(surahNum, ayahNum) {
+      const globalNum = getGlobalAyahNumber(surahNum, ayahNum);
+      const qori = QORIS[currentQoriIdx];
+      if (qori.type === "cdn_alafasy") {
+        return `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalNum}.mp3`;
+      } else if (qori.type === "cdn_sodik") {
+        return `https://cdn.islamic.network/quran/audio/128/uz.sodik-audio/${globalNum}.mp3`;
+      } else if (qori.type === "everyayah") {
+        return `https://everyayah.com/data/${qori.folder}/${pad3(surahNum)}${pad3(ayahNum)}.mp3`;
       }
     }
 
-    // ── RENDER ALL VIEWS ──
-    function renderViews() {
-      renderMushafView();
-      renderTajweedView();
-      renderRepeatView();
-      updateShowcase();
+    // Tajweed regex formatter
+    function applyTajweed(arText) {
+      if (!arText) return "";
+      // Ghunna: Noon or Meem followed by Shaddah (\u0651)
+      let t = arText.replace(/([نم][\u0651])/g, '<span class="tg">$1</span>');
+      // Qalqala: Qaf, Ta, Ba, Jeem, Dal with Sukoon (\u0652)
+      t = t.replace(/([قطبجد][\u0652])/g, '<span class="tb">$1</span>');
+      // Madd signs: \u0653 or \u06E1 or ٓ
+      t = t.replace(/([^\s]*[ٓ\u0653][^\s]*)/g, '<span class="tr">$1</span>');
+      return t;
+    }
+
+    // ── SURAH LOADING (LOCAL CACHE + ALQURAN CLOUD API) ──
+    async function loadSurahData(surahNum) {
+      if (surahCache.has(surahNum)) {
+        return surahCache.get(surahNum);
+      }
+
+      // Check localStorage
+      try {
+        const localKey = `q_surah_${surahNum}`;
+        const localVal = localStorage.getItem(localKey);
+        if (localVal) {
+          const parsed = JSON.parse(localVal);
+          surahCache.set(surahNum, parsed);
+          return parsed;
+        }
+      } catch (e) {}
+
+      // Fetch from API
+      document.getElementById('loadingWrap').style.display = 'flex';
+      try {
+        const resp = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/editions/quran-uthmani,uz.sodik`);
+        const json = await resp.json();
+        const uthmani = json.data[0].ayahs;
+        const sodik = json.data[1].ayahs;
+
+        const ayahs = [];
+        for (let i = 0; i < uthmani.length; i++) {
+          ayahs.push({
+            a: uthmani[i].numberInSurah,
+            g: uthmani[i].number,
+            ar: uthmani[i].text,
+            uz: sodik[i].text
+          });
+        }
+        surahCache.set(surahNum, ayahs);
+        try {
+          localStorage.setItem(`q_surah_${surahNum}`, JSON.stringify(ayahs));
+        } catch (e) {}
+
+        document.getElementById('loadingWrap').style.display = 'none';
+        return ayahs;
+      } catch (err) {
+        console.error("Failed to fetch surah:", err);
+        document.getElementById('loadingWrap').style.display = 'none';
+        showToast("Tarmoq xatosi: Oyatlar yuklanmadi");
+        return [];
+      }
+    }
+
+    // ── RENDER VIEWS ──
+    async function renderSurah() {
+      const meta = SURAHS_META.find(s => s.num === currentSurah) || SURAHS_META[0];
+      document.getElementById('lblSurahName').innerHTML = `<span>📖 ${meta.num}. ${meta.name}</span> <span>▼</span>`;
+      document.getElementById('lblSurahMeta').textContent = `${meta.type} · ${meta.count} oyat · ${meta.juz}-Pora`;
+
+      const ayahs = await loadSurahData(currentSurah);
+      if (!ayahs || ayahs.length === 0) return;
+
+      renderMushafView(meta, ayahs);
+      renderTajweedView(ayahs);
+      renderRepeatView(ayahs);
+      updateActiveAyahDisplay();
     }
 
     // 1. Mushaf View
-    function renderMushafView() {
-      const s = SURAHS[currentSurah] || SURAHS[1];
-      document.getElementById('mushafHeaderTitle').textContent = `سُورَةُ ${s.ar}`;
+    function renderMushafView(meta, ayahs) {
+      document.getElementById('mushafHeaderTitle').textContent = `سُورَةُ ${meta.ar}`;
+      const bism = document.getElementById('mushafBismillah');
+      // Surah 9 (At-Tawbah) does not begin with Bismillah; Surah 1 has it as ayah 1
+      if (currentSurah === 9) {
+        bism.style.display = 'none';
+      } else if (currentSurah === 1) {
+        bism.style.display = 'none';
+      } else {
+        bism.style.display = 'block';
+      }
+
       const container = document.getElementById('mushafFlowContent');
       container.innerHTML = '';
 
-      s.ayahs.forEach(item => {
+      ayahs.forEach(item => {
+        let ar = item.ar;
+        // If surah is not Fatiha and ayah 1 starts with Bismillah, trim it for clean presentation
+        if (currentSurah !== 1 && item.a === 1 && ar.startsWith("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ")) {
+          ar = ar.replace("بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ", "");
+        }
+
         const span = document.createElement('span');
         span.className = `m-ayah-span ${item.a === currentAyah ? 'active' : ''}`;
         span.id = `mushafAyah_${item.a}`;
@@ -849,120 +1104,134 @@
           selectAyah(item.a);
           playCurrentAudio();
         };
-        span.innerHTML = `${item.ar} <span class="m-ayah-end">۝${item.a}</span> `;
+        span.innerHTML = `${applyTajweed(ar)} <span class="m-ayah-end">۝${item.a}</span> `;
         container.appendChild(span);
       });
     }
 
     // 2. Tajweed Cards View
-    function renderTajweedView() {
-      const s = SURAHS[currentSurah] || SURAHS[1];
+    function renderTajweedView(ayahs) {
       const container = document.getElementById('tajweedAyahsContainer');
       container.innerHTML = '';
 
-      s.ayahs.forEach(item => {
+      ayahs.forEach(item => {
         const card = document.createElement('div');
         card.className = `ayah-card ${item.a === currentAyah ? 'active-reading' : ''}`;
         card.id = `tajweedAyahCard_${item.a}`;
-        card.onclick = () => selectAyah(item.a);
+        card.onclick = () => {
+          selectAyah(item.a);
+          playCurrentAudio();
+        };
 
         card.innerHTML = `
-          <div class="ayah-num-circle">${item.a}</div>
-          <div class="ayah-text-wrap">
-            <div class="ayah-ar-content">${item.tajweed || item.ar}</div>
+          <div class="ayah-card-top">
+            <span class="ayah-num-badge">${item.a}-Oyat</span>
+            <button class="btn-ayah-play-mini" onclick="event.stopPropagation(); selectAyah(${item.a}); playCurrentAudio();">▶</button>
           </div>
-          <div class="ayah-right-actions">
-            <button class="btn-ayah-audio" onclick="event.stopPropagation(); playSpecificAyah(${item.a})" title="Tinglash">🔊</button>
-            <span class="ayah-verified-badge" id="badge_${item.a}">✓</span>
-          </div>
+          <div class="ayah-ar-text">${applyTajweed(item.ar)}</div>
+          <div class="ayah-uz-translation" style="display: ${showUzbekTranslation ? 'block' : 'none'};">${item.uz || ''}</div>
         `;
         container.appendChild(card);
       });
     }
 
     // 3. Repeat Memorization View
-    function renderRepeatView() {
-      const s = SURAHS[currentSurah] || SURAHS[1];
+    function renderRepeatView(ayahs) {
       const container = document.getElementById('repeatAyahsContainer');
       container.innerHTML = '';
 
-      s.ayahs.forEach(item => {
+      ayahs.forEach(item => {
         const card = document.createElement('div');
         card.className = `ayah-card ${item.a === currentAyah ? 'active-reading' : ''}`;
         card.id = `repeatAyahCard_${item.a}`;
-        card.onclick = () => selectAyah(item.a);
+        card.onclick = () => {
+          selectAyah(item.a);
+          playCurrentAudio();
+        };
 
         card.innerHTML = `
-          <div class="ayah-num-circle">${item.a}</div>
-          <div class="ayah-text-wrap">
-            <div class="ayah-ar-content">${item.ar}</div>
+          <div class="ayah-card-top">
+            <span class="ayah-num-badge">${item.a}-Oyat</span>
+            <span style="font-size: 11px; color: var(--primary-green); font-weight: 700;">🔁 Yodlash</span>
           </div>
-          <div class="ayah-right-actions">
-            <button class="btn-ayah-audio" onclick="event.stopPropagation(); playSpecificAyah(${item.a})" title="Tinglash">🔁</button>
-          </div>
+          <div class="ayah-ar-text">${applyTajweed(item.ar)}</div>
+          <div class="ayah-uz-translation" style="display: ${showUzbekTranslation ? 'block' : 'none'};">${item.uz || ''}</div>
         `;
         container.appendChild(card);
       });
     }
 
-    function setRepeatCount(count) {
-      repeatTarget = count;
-      currentRepeatDone = 0;
-      document.querySelectorAll('.btn-rep-count').forEach(b => {
-        b.classList.toggle('active', b.textContent.includes(count == 999 ? '∞' : count));
-      });
-    }
+    // ── ACTIVE AYAH HIGHLIGHT & AUTO-SCROLL ──
+    function updateActiveAyahDisplay() {
+      const ayahs = surahCache.get(currentSurah);
+      const activeAyahObj = (ayahs && ayahs.find(x => x.a === currentAyah)) || (ayahs && ayahs[0]) || { a: currentAyah, ar: "", uz: "" };
 
-    function updateShowcase() {
-      const s = SURAHS[currentSurah] || SURAHS[1];
-      const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
-      document.getElementById('lblShowcaseAyahNum').textContent = `${currentAyah}-Oyat`;
-      document.getElementById('lblShowcaseArabic').innerHTML = a.tajweed || a.ar;
+      // Update Repeat Status
+      document.getElementById('lblRepeatActiveAyah').textContent = `${currentAyah}-oyat`;
+      if (repeatType === 'surah') {
+        const targetStr = repeatTarget === 999 ? '∞' : repeatTarget;
+        document.getElementById('lblRepeatProgress').textContent = `Surani takrorlash: ${surahRepeatsDone} / ${targetStr} marta`;
+      } else {
+        const targetStr = repeatTarget === 999 ? '∞' : repeatTarget;
+        document.getElementById('lblRepeatProgress').textContent = `Oyatni takrorlash: ${ayahRepeatsDone} / ${targetStr} marta`;
+      }
 
-      // Update active in all panes
-      document.querySelectorAll('.m-ayah-span').forEach(sp => sp.classList.remove('active'));
+      // Update Focus Card in Repeat View
+      document.getElementById('lblFocusAyah').textContent = `${currentAyah}-Oyat`;
+      document.getElementById('lblFocusArabic').innerHTML = applyTajweed(activeAyahObj.ar);
+      document.getElementById('lblFocusUzbek').textContent = activeAyahObj.uz || "";
+      document.getElementById('lblFocusUzbek').style.display = showUzbekTranslation ? 'block' : 'none';
+
+      // Update Mushaf Spans
+      document.querySelectorAll('.m-ayah-span').forEach(s => s.classList.remove('active'));
       const activeSpan = document.getElementById(`mushafAyah_${currentAyah}`);
-      if (activeSpan) activeSpan.classList.add('active');
+      if (activeSpan) {
+        activeSpan.classList.add('active');
+        if (currentViewMode === 'mushaf') {
+          activeSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
 
-      document.querySelectorAll('.ayah-card').forEach(c => c.classList.remove('active-reading'));
+      // Update Tajweed Cards
+      document.querySelectorAll('#tajweedAyahsContainer .ayah-card').forEach(c => c.classList.remove('active-reading'));
       const activeCard = document.getElementById(`tajweedAyahCard_${currentAyah}`);
-      if (activeCard) activeCard.classList.add('active-reading');
+      if (activeCard) {
+        activeCard.classList.add('active-reading');
+        if (currentViewMode === 'tajweed') {
+          activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
 
+      // Update Repeat Cards
+      document.querySelectorAll('#repeatAyahsContainer .ayah-card').forEach(c => c.classList.remove('active-reading'));
       const repCard = document.getElementById(`repeatAyahCard_${currentAyah}`);
       if (repCard) repCard.classList.add('active-reading');
     }
 
     function selectAyah(ayahNum) {
       currentAyah = ayahNum;
-      currentRepeatDone = 0;
-      updateShowcase();
-      document.getElementById('recitationResultBox').style.display = 'none';
+      ayahRepeatsDone = 0;
+      updateActiveAyahDisplay();
     }
 
-    function playSpecificAyah(ayahNum) {
-      currentAyah = ayahNum;
-      currentRepeatDone = 0;
-      updateShowcase();
-      playCurrentAudio();
-    }
-
+    // ── AUDIO PLAYBACK & TAKRORLASH (REPEAT) SYSTEM ──
     function playCurrentAudio() {
-      const primaryUrl = getAudioUrl(currentSurah, currentAyah);
-      audioPlayer.src = primaryUrl;
+      const url = getAudioUrl(currentSurah, currentAyah);
+      audioPlayer.src = url;
       audioPlayer.playbackRate = currentSpeed;
-      audioPlayer.onerror = () => {
-        console.warn("Primary audio failed, loading CDN fallback...");
-        // Fallback to alafasy global CDN
-        const fallbackUrl = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${currentAyah}.mp3`;
-        audioPlayer.src = fallbackUrl;
-        audioPlayer.play().catch(e => console.warn("Fallback audio failed:", e));
+
+      audioPlayer.onerror = (e) => {
+        console.warn("Primary audio failed, falling back to Alafasy CDN:", e);
+        const globalNum = getGlobalAyahNumber(currentSurah, currentAyah);
+        audioPlayer.src = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalNum}.mp3`;
+        audioPlayer.play().catch(err => console.warn("Fallback play error:", err));
       };
+
       audioPlayer.play().then(() => {
         isPlaying = true;
-        const btn = document.getElementById('btnAudioPlay');
-        if (btn) btn.textContent = '⏸';
+        document.getElementById('btnAudioPlay').textContent = '⏸';
       }).catch(err => {
-        console.warn("Audio play err:", err);
+        console.warn("Audio play prevented:", err);
       });
     }
 
@@ -977,215 +1246,232 @@
     }
 
     function nextAyah() {
-      const s = SURAHS[currentSurah] || SURAHS[1];
-      if (currentAyah < s.count) {
+      const meta = SURAHS_META.find(s => s.num === currentSurah);
+      if (currentAyah < meta.count) {
         currentAyah++;
-        currentRepeatDone = 0;
-        updateShowcase();
+        ayahRepeatsDone = 0;
+        updateActiveAyahDisplay();
         if (isPlaying) playCurrentAudio();
+      } else {
+        showToast("Suraning oxirgi oyati");
       }
     }
 
     function prevAyah() {
       if (currentAyah > 1) {
         currentAyah--;
-        currentRepeatDone = 0;
-        updateShowcase();
+        ayahRepeatsDone = 0;
+        updateActiveAyahDisplay();
         if (isPlaying) playCurrentAudio();
       }
     }
 
+    // ── THE REPEAT LOOP CORE ──
     audioPlayer.onended = () => {
-      const s = SURAHS[currentSurah] || SURAHS[1];
+      const meta = SURAHS_META.find(s => s.num === currentSurah);
 
-      if (currentViewMode === 'repeat' && currentRepeatDone + 1 < repeatTarget) {
-        currentRepeatDone++;
-        setTimeout(() => {
-          playCurrentAudio();
-        }, 1200); // 1.2s gap for user repetition
-        return;
+      // CASE A: Ayah-by-Ayah Repeat
+      if (repeatType === 'ayah') {
+        if (ayahRepeatsDone + 1 < repeatTarget) {
+          ayahRepeatsDone++;
+          updateActiveAyahDisplay();
+          setTimeout(() => playCurrentAudio(), 800);
+          return;
+        } else {
+          ayahRepeatsDone = 0;
+          if (currentAyah < meta.count) {
+            currentAyah++;
+            updateActiveAyahDisplay();
+            setTimeout(() => playCurrentAudio(), 600);
+          } else {
+            isPlaying = false;
+            document.getElementById('btnAudioPlay').textContent = '▶';
+            showToast("✅ Oyatlar takrori yakunlandi");
+          }
+          return;
+        }
       }
 
-      currentRepeatDone = 0;
-      if (currentAyah < s.count) {
-        currentAyah++;
-        updateShowcase();
-        playCurrentAudio();
-      } else {
-        isPlaying = false;
-        document.getElementById('btnAudioPlay').textContent = '▶';
+      // CASE B: Entire Surah Repeat ("miso 1 ta surani 10 marta deb belgilasa qayta-qayta 10 marta o'qiydi")
+      if (repeatType === 'surah') {
+        if (currentAyah < meta.count) {
+          // Continue to next ayah in surah
+          currentAyah++;
+          updateActiveAyahDisplay();
+          playCurrentAudio();
+        } else {
+          // Reached the end of the surah!
+          surahRepeatsDone++;
+          updateActiveAyahDisplay();
+
+          if (surahRepeatsDone < repeatTarget) {
+            // Restart surah from ayah 1!
+            showToast(`🔁 ${repeatTarget} martadan ${surahRepeatsDone}-takror tugadi. Qayta boshlanmoqda...`);
+            currentAyah = 1;
+            updateActiveAyahDisplay();
+            setTimeout(() => playCurrentAudio(), 1200);
+          } else {
+            // Finished all repetitions!
+            isPlaying = false;
+            document.getElementById('btnAudioPlay').textContent = '▶';
+            showToast(`✅ Barakalloh! Surani ${repeatTarget} marta takrorlash to'liq yakunlandi!`);
+            surahRepeatsDone = 0;
+            currentAyah = 1;
+            updateActiveAyahDisplay();
+          }
+        }
       }
     };
 
+    // ── REPEAT CONTROLS CONFIG ──
+    function setRepeatType(type) {
+      repeatType = type;
+      surahRepeatsDone = 0;
+      ayahRepeatsDone = 0;
+      document.getElementById('btnTypeSurah').classList.toggle('active', type === 'surah');
+      document.getElementById('btnTypeAyah').classList.toggle('active', type === 'ayah');
+      document.getElementById('lblRepeatModeTitle').textContent = type === 'surah' ? 'Surani takrorlash' : 'Oyatma-oyat takrorlash';
+      updateActiveAyahDisplay();
+    }
+
+    function setRepeatCount(count) {
+      repeatTarget = count;
+      surahRepeatsDone = 0;
+      ayahRepeatsDone = 0;
+      document.querySelectorAll('.btn-rep-val').forEach(b => {
+        b.classList.toggle('active', b.textContent.includes(count === 999 ? '∞' : count));
+      });
+      showToast(`Takrorlash soni: ${count === 999 ? 'Cheksiz' : count + ' marta'}`);
+      updateActiveAyahDisplay();
+    }
+
+    // ── RECITERS & SPEED & THEME ──
     function cycleQori() {
       currentQoriIdx = (currentQoriIdx + 1) % QORIS.length;
-      document.getElementById('lblQoriTitle').textContent = QORIS[currentQoriIdx].name;
+      const q = QORIS[currentQoriIdx];
+      document.getElementById('lblQoriName').textContent = q.name;
+      showToast(`Qori: ${q.name}`);
       if (isPlaying) playCurrentAudio();
     }
 
     function cycleSpeed() {
-      const speeds = [0.8, 1.0, 1.2];
+      const speeds = [0.8, 1.0, 1.25];
       const idx = speeds.indexOf(currentSpeed);
       currentSpeed = speeds[(idx + 1) % speeds.length];
       document.getElementById('btnSpeed').textContent = `${currentSpeed}x`;
       audioPlayer.playbackRate = currentSpeed;
+      showToast(`Tezlik: ${currentSpeed}x`);
     }
 
-    // ── RECITATION VERIFICATION (REAL 2-WAY NATIVE SPEECH RECOGNITION & WEB AUDIO) ──
-    function toggleRecitationPractice() {
-      const btn = document.getElementById('btnMicPractice');
-      const box = document.getElementById('recitationResultBox');
-      const wave = document.getElementById('soundwaveWrap');
+    function toggleUzbekTranslation() {
+      showUzbekTranslation = !showUzbekTranslation;
+      document.getElementById('btnToggleUzbek').classList.toggle('active', showUzbekTranslation);
+      document.querySelectorAll('.ayah-uz-translation').forEach(el => {
+        el.style.display = showUzbekTranslation ? 'block' : 'none';
+      });
+      document.getElementById('lblFocusUzbek').style.display = showUzbekTranslation ? 'block' : 'none';
+      showToast(showUzbekTranslation ? "Tarjima yoqildi" : "Tarjima yashirildi");
+    }
 
-      if (!isRecording) {
-        if (isPlaying) {
-          audioPlayer.pause();
-          isPlaying = false;
-          document.getElementById('btnAudioPlay').textContent = '▶';
-        }
+    function adjustFontSize(delta) {
+      arFontSize = Math.max(18, Math.min(42, arFontSize + delta));
+      document.documentElement.style.setProperty('--ar-font-size', `${arFontSize}px`);
+      showToast(`Yozuv hajmi: ${arFontSize}px`);
+    }
 
-        isRecording = true;
-        btn.classList.add('recording');
-        document.getElementById('micIcon').textContent = '🔴';
-        document.getElementById('micBtnText').textContent = 'Tinglanmoqda... Oyatni o'qing (To'xtatish)';
-        wave.style.display = 'flex';
-        box.style.display = 'none';
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+    }
 
-        const s = SURAHS[currentSurah] || SURAHS[1];
-        const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
+    function switchViewMode(mode) {
+      currentViewMode = mode;
+      document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-pane').forEach(p => p.classList.remove('active'));
 
-        if (window.Android && window.Android.startQuronVoiceCheck) {
-          window.Android.startQuronVoiceCheck(currentSurah, currentAyah, a.ar);
-        } else {
-          fallbackBrowserListening(a.ar);
-        }
-
-      } else {
-        stopRecitationRecording();
+      if (mode === 'mushaf') {
+        document.getElementById('btnModeMushaf').classList.add('active');
+        document.getElementById('pane-mushaf').classList.add('active');
+      } else if (mode === 'tajweed') {
+        document.getElementById('btnModeTajweed').classList.add('active');
+        document.getElementById('pane-tajweed').classList.add('active');
+      } else if (mode === 'repeat') {
+        document.getElementById('btnModeRepeat').classList.add('active');
+        document.getElementById('pane-repeat').classList.add('active');
       }
+      updateActiveAyahDisplay();
     }
 
-    function stopRecitationRecording() {
-      isRecording = false;
-      const btn = document.getElementById('btnMicPractice');
-      const wave = document.getElementById('soundwaveWrap');
-      btn.classList.remove('recording');
-      document.getElementById('micIcon').textContent = '🎙️';
-      document.getElementById('micBtnText').textContent = 'O'qishni tekshirish (Mikrofon)';
-      wave.style.display = 'none';
+    // ── SURAH & PORA PICKER MODAL ──
+    let activeModalTab = 'suralar';
 
-      if (window.Android && window.Android.stopQuronVoiceCheck) {
-        window.Android.stopQuronVoiceCheck();
-      }
-    }
-
-    // Native Android Callbacks
-    window.onQuronRecitationState = function(state) {
-      if (state === 'listening') {
-        document.getElementById('micBtnText').textContent = 'Qiroatingiz eshitilmoqda...';
-      }
-    };
-
-    window.onQuronPartialResult = function(partialText) {
-      const box = document.getElementById('recitationResultBox');
-      box.className = 'recitation-result-box';
-      box.innerHTML = `
-        <div class="res-title-row">
-          <span>🎧</span> <span>Eshitilgan qiroat:</span>
-        </div>
-        <div class="res-spoken">${partialText}</div>
-      `;
-      box.style.display = 'flex';
-    };
-
-    window.onQuronFinalResult = function(spokenText, ayahNum) {
-      stopRecitationRecording();
-      evaluateSpokenArabic(spokenText);
-    };
-
-    window.onQuronRecitationError = function(errCode) {
-      stopRecitationRecording();
-      const s = SURAHS[currentSurah] || SURAHS[1];
-      const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
-      evaluateSpokenArabic(a.ar); // Fallback evaluation
-    };
-
-    function evaluateSpokenArabic(spoken) {
-      const s = SURAHS[currentSurah] || SURAHS[1];
-      const a = s.ayahs.find(x => x.a === currentAyah) || s.ayahs[0];
-      const box = document.getElementById('recitationResultBox');
-      const activeCard = document.getElementById(`tajweedAyahCard_${currentAyah}`);
-
-      // Compare words (stripping diacritics)
-      const cleanExpected = a.ar.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
-      const cleanSpoken = (spoken || '').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
-
-      const isPass = cleanSpoken.length >= 3;
-
-      if (isPass) {
-        box.className = 'recitation-result-box success';
-        box.innerHTML = `
-          <div class="res-title-row">
-            <span>✅</span> <span style="color:var(--primary-green);">Barakalloh! Qiroat to'g'ri o'qildi.</span>
-          </div>
-          <div class="res-desc">
-            ${currentAyah}-oyat tajvid qoidalari asosida to'g'ri va ravon talaffuz qilindi.
-          </div>
-          <div class="res-spoken">${spoken || a.ar}</div>
-        `;
-        if (activeCard) activeCard.classList.add('verified');
-      } else {
-        box.className = 'recitation-result-box error';
-        box.innerHTML = `
-          <div class="res-title-row">
-            <span>⚠️</span> <span style="color:#EF4444;">Talaffuzda noaniqlik bo'ldi</span>
-          </div>
-          <div class="res-desc">
-            Harflarni mahrajidan to'liq chiqarishga harakat qiling va Qori ovozini qayta tinglang.
-          </div>
-          <div class="res-spoken">${spoken || "..."}</div>
-        `;
-      }
-      box.style.display = 'flex';
-    }
-
-    function fallbackBrowserListening(expectedAr) {
-      setTimeout(() => {
-        if (isRecording) {
-          stopRecitationRecording();
-          evaluateSpokenArabic(expectedAr);
-        }
-      }, 3500);
-    }
-
-    // ── SURAH PICKER MODAL ──
     function openSurahPicker() {
       const modal = document.getElementById('surahPickerModal');
-      const list = document.getElementById('surahModalList');
-      list.innerHTML = '';
+      modal.style.display = 'flex';
+      renderModalSurahs();
+      renderModalPoras();
+    }
 
-      Object.values(SURAHS).forEach(s => {
+    function closeSurahPicker() {
+      document.getElementById('surahPickerModal').style.display = 'none';
+    }
+
+    function switchModalTab(tab) {
+      activeModalTab = tab;
+      document.getElementById('btnTabSuralar').classList.toggle('active', tab === 'suralar');
+      document.getElementById('btnTabPoralar').classList.toggle('active', tab === 'poralar');
+      document.getElementById('searchWrap').style.display = tab === 'suralar' ? 'block' : 'none';
+      document.getElementById('modalSurahList').style.display = tab === 'suralar' ? 'flex' : 'none';
+      document.getElementById('modalPoraGrid').style.display = tab === 'poralar' ? 'grid' : 'none';
+    }
+
+    function renderModalSurahs(filter = "") {
+      const list = document.getElementById('modalSurahList');
+      list.innerHTML = '';
+      const f = filter.toLowerCase().trim();
+
+      SURAHS_META.forEach(s => {
+        if (f && !s.name.toLowerCase().includes(f) && !String(s.num).includes(f) && !s.ar.includes(f)) {
+          return;
+        }
+
         const item = document.createElement('div');
         item.className = 'sm-item';
         item.onclick = () => selectSurahFromModal(s.num);
+
         item.innerHTML = `
           <div class="sm-item-left">
             <div class="sm-num">${s.num}</div>
             <div>
               <div class="sm-name">${s.name}</div>
-              <div style="font-size: 11px; color: var(--text-muted);">${s.type} · ${s.count} oyat</div>
+              <div class="sm-sub">${s.type} · ${s.count} oyat · ${s.juz}-Pora</div>
             </div>
           </div>
           <div class="sm-ar">${s.ar}</div>
         `;
         list.appendChild(item);
       });
-
-      modal.style.display = 'flex';
     }
 
-    function closeSurahPicker() {
-      document.getElementById('surahPickerModal').style.display = 'none';
+    function filterSurahs() {
+      const q = document.getElementById('searchSurahInput').value;
+      renderModalSurahs(q);
+    }
+
+    function renderModalPoras() {
+      const grid = document.getElementById('modalPoraGrid');
+      grid.innerHTML = '';
+
+      PORAS_META.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'pora-card';
+        card.onclick = () => selectPoraFromModal(p.pora, p.startSurah, p.startAyah);
+
+        card.innerHTML = `
+          <div class="pora-card-num">${p.title}</div>
+          <div class="pora-card-desc">${p.desc}</div>
+        `;
+        grid.appendChild(card);
+      });
     }
 
     function selectSurahFromModal(surahNum) {
@@ -1195,17 +1481,26 @@
         isPlaying = false;
         document.getElementById('btnAudioPlay').textContent = '▶';
       }
-
       currentSurah = surahNum;
       currentAyah = 1;
-      currentRepeatDone = 0;
+      surahRepeatsDone = 0;
+      ayahRepeatsDone = 0;
+      renderSurah();
+    }
 
-      const s = SURAHS[currentSurah];
-      document.getElementById('lblSurahName').innerHTML = `<span>📖 ${s.num}. ${s.name}</span> <span>▼</span>`;
-      document.getElementById('lblSurahMeta').textContent = `${s.type}, ${s.count} oyat`;
-      document.getElementById('recitationResultBox').style.display = 'none';
-
-      renderViews();
+    function selectPoraFromModal(poraNum, startSurah, startAyah) {
+      closeSurahPicker();
+      if (isPlaying) {
+        audioPlayer.pause();
+        isPlaying = false;
+        document.getElementById('btnAudioPlay').textContent = '▶';
+      }
+      currentSurah = startSurah;
+      currentAyah = startAyah;
+      surahRepeatsDone = 0;
+      ayahRepeatsDone = 0;
+      showToast(`${poraNum}-Pora ochildi`);
+      renderSurah();
     }
 
     function exitQuron() {
@@ -1216,28 +1511,21 @@
       }
     }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light-mode');
-    }
-
+    // ── INITIALIZATION ──
     window.addEventListener('DOMContentLoaded', () => {
       try {
         const params = new URLSearchParams(window.location.search);
         const urlSura = parseInt(params.get('sura') || params.get('surah'));
         const urlOyat = parseInt(params.get('oyat') || params.get('ayah'));
-        if (urlSura && SURAHS[urlSura]) {
+        if (urlSura && urlSura >= 1 && urlSura <= 114) {
           currentSurah = urlSura;
-          const s = SURAHS[currentSurah];
-          document.getElementById('lblSurahName').innerHTML = `<span>📖 ${s.num}. ${s.name}</span> <span>▼</span>`;
-          document.getElementById('lblSurahMeta').textContent = `${s.type}, ${s.count} oyat`;
         }
-        if (urlOyat) {
+        if (urlOyat && urlOyat >= 1) {
           currentAyah = urlOyat;
         }
-      } catch (e) {
-        console.error("Param parse error", e);
-      }
-      renderViews();
+      } catch (e) {}
+
+      renderSurah();
     });
   </script>
 </body>
