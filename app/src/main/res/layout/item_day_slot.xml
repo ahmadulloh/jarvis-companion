@@ -38,4 +38,16 @@
             android:fontFamily="sans-serif-bold"
             android:textColor="#0B2A18" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/btnSlotDelete"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:text="✕"
+        android:gravity="center"
+        android:textColor="#EF4444"
+        android:textSize="14sp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true" />
 </LinearLayout>

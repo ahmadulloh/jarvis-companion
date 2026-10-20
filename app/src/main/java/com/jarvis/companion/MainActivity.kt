@@ -181,6 +181,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val cameraAiPictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) {
+            try {
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos)
+                val b64 = android.util.Base64.encodeToString(baos.toByteArray(), android.util.Base64.NO_WRAP)
+                runOnUiThread {
+                    webViewDashboard.evaluateJavascript("if (window.onNativePhotoCaptured) { window.onNativePhotoCaptured('$b64'); }", null)
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "cameraAiPictureLauncher error: ${e.message}")
+            }
+        }
+    }
+
+    private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            cameraAiPictureLauncher.launch(null)
+        } else {
+            Toast.makeText(this, "Kamera ruxsati berilmadi", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // In-App WebView
     private lateinit var containerWebView: View
     private lateinit var webViewDashboard: WebView
@@ -413,6 +436,8 @@ class MainActivity : AppCompatActivity() {
         initViews()
         initSpeechRecognizer()
         initTextToSpeech()
+        loadDailySchedule()
+        loadReminders()
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -638,6 +663,7 @@ class MainActivity : AppCompatActivity() {
 
         // 3 Dots Menu Button under Jarvis Brand Title (Opens Qur'on AI, Barcha TV, Eslatmalar)
         val btnJarvisMenuDots = findViewById<View>(R.id.btnJarvisMenuDots)
+        val btnTopMenuDots = findViewById<View>(R.id.btnTopMenuDots)
         val cardJarvisQuickMenu = findViewById<View>(R.id.cardJarvisQuickMenu)
         val btnCloseQuickMenu = findViewById<View>(R.id.btnCloseQuickMenu)
         val itemMenuQuronAi = findViewById<View>(R.id.itemMenuQuronAi)
@@ -646,7 +672,7 @@ class MainActivity : AppCompatActivity() {
         val itemMenuKunlikReja = findViewById<View>(R.id.itemMenuKunlikReja)
         val itemMenuKameraAI = findViewById<View>(R.id.itemMenuKameraAI)
 
-        btnJarvisMenuDots?.setOnClickListener {
+        fun toggleQuickMenu() {
             vibrateBrief(20)
             if (cardJarvisQuickMenu?.visibility == View.VISIBLE) {
                 cardJarvisQuickMenu.visibility = View.GONE
@@ -654,6 +680,8 @@ class MainActivity : AppCompatActivity() {
                 cardJarvisQuickMenu?.visibility = View.VISIBLE
             }
         }
+        btnJarvisMenuDots?.setOnClickListener { toggleQuickMenu() }
+        btnTopMenuDots?.setOnClickListener { toggleQuickMenu() }
         btnCloseQuickMenu?.setOnClickListener {
             vibrateBrief(15)
             cardJarvisQuickMenu?.visibility = View.GONE
@@ -1290,6 +1318,35 @@ class MainActivity : AppCompatActivity() {
     // ── Eslatmalar Sheet ──────────────────────────────────────────────────
     private val reminderList = mutableListOf<Pair<String, String>>()
 
+    private fun loadReminders() {
+        try {
+            val prefs = getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+            val jsonStr = prefs.getString("reminders_json", null) ?: return
+            val arr = org.json.JSONArray(jsonStr)
+            reminderList.clear()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                reminderList.add(Pair(obj.optString("title"), obj.optString("time")))
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun saveReminders() {
+        try {
+            val arr = org.json.JSONArray()
+            for (item in reminderList) {
+                val obj = org.json.JSONObject()
+                obj.put("title", item.first)
+                obj.put("time", item.second)
+                arr.put(obj)
+            }
+            getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putString("reminders_json", arr.toString())
+                .apply()
+        } catch (_: Exception) {}
+    }
+
     private fun showEslatmalarSheet() {
         val sheet = BottomSheetDialog(this)
         val sv = layoutInflater.inflate(R.layout.sheet_eslatmalar, null)
@@ -1307,6 +1364,7 @@ class MainActivity : AppCompatActivity() {
         adapter = ReminderListAdapter(reminderList) { pos ->
             if (pos >= 0 && pos < reminderList.size) {
                 reminderList.removeAt(pos)
+                saveReminders()
                 refreshList()
             }
         }
@@ -1320,6 +1378,7 @@ class MainActivity : AppCompatActivity() {
             sheet.dismiss()
             showAddReminderDialog { title, time ->
                 reminderList.add(0, Pair(title, time))
+                saveReminders()
                 deliverJarvisResponseToUi("Eslatma qo'shildi: \"$title\" — $time", "⏰")
             }
         }
@@ -1340,8 +1399,9 @@ class MainActivity : AppCompatActivity() {
             val title = etTitle?.text?.toString()?.trim() ?: ""
             val time = etTime?.text?.toString()?.trim() ?: ""
             if (title.isNotEmpty()) {
-                onSaved(title, time.ifEmpty { "Vaqt belgilanmagan" })
-                try { phoneActionManager.setReminder(title, time) } catch (_: Exception) {}
+                val t = time.ifEmpty { "Vaqt belgilanmagan" }
+                onSaved(title, t)
+                try { phoneActionManager.setReminder(title, t) } catch (_: Exception) {}
             }
             dialog.dismiss()
         }
@@ -1375,6 +1435,94 @@ class MainActivity : AppCompatActivity() {
     private val dailyScheduleMap = mutableMapOf<String, MutableList<Triple<String, String, String>>>()
     private val daysUz = listOf("Dushanba", "Seshanba", "Chorshanba", "Payshanba", "Juma", "Shanba", "Yakshanba")
 
+    private fun getInitialSchedule(): MutableMap<String, MutableList<Triple<String, String, String>>> {
+        return mutableMapOf(
+            "Dushanba" to mutableListOf(
+                Triple("09:00", "12:30", "Ish va xizmat vazifalari"),
+                Triple("13:30", "16:20", "O'qish va dars mashg'ulotlari"),
+                Triple("17:00", "18:30", "Sport va jismoniy mashqlar")
+            ),
+            "Seshanba" to mutableListOf(
+                Triple("09:00", "12:30", "Ish va loyihalar tahlili"),
+                Triple("14:00", "17:00", "O'qish va amaliyot"),
+                Triple("18:00", "19:30", "Kitob mutolaasi")
+            ),
+            "Chorshanba" to mutableListOf(
+                Triple("09:00", "12:30", "Ish va uchrashuvlar"),
+                Triple("13:30", "16:30", "Dasturlash va mustaqil ish"),
+                Triple("17:30", "19:00", "Sport mashg'uloti")
+            ),
+            "Payshanba" to mutableListOf(
+                Triple("09:00", "13:00", "Ish va haftalik hisobotlar"),
+                Triple("14:00", "17:00", "O'qish va seminar"),
+                Triple("18:00", "20:00", "Shaxsiy rivojlanish")
+            ),
+            "Juma" to mutableListOf(
+                Triple("09:00", "12:00", "Ish va rejalashtirish"),
+                Triple("12:30", "13:45", "Juma namozi va hordiq"),
+                Triple("14:30", "17:30", "O'qish va mustaqil topshiriqlar")
+            ),
+            "Shanba" to mutableListOf(
+                Triple("10:00", "13:00", "Shaxsiy loyihalar va ilm"),
+                Triple("15:00", "18:00", "Sport va oila bilan dam olish")
+            ),
+            "Yakshanba" to mutableListOf(
+                Triple("10:00", "13:00", "Haftalik yakunlar va yangi reja"),
+                Triple("14:00", "19:00", "Madaniy hordiq va oilaviy vaqt")
+            )
+        )
+    }
+
+    private fun loadDailySchedule() {
+        val prefs = getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+        val jsonStr = prefs.getString("daily_schedule_json", null)
+        if (jsonStr.isNullOrEmpty()) {
+            dailyScheduleMap.clear()
+            dailyScheduleMap.putAll(getInitialSchedule())
+            saveDailySchedule()
+            return
+        }
+        try {
+            val root = org.json.JSONObject(jsonStr)
+            dailyScheduleMap.clear()
+            for (day in daysUz) {
+                val list = mutableListOf<Triple<String, String, String>>()
+                if (root.has(day)) {
+                    val arr = root.getJSONArray(day)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.getJSONObject(i)
+                        list.add(Triple(obj.optString("start"), obj.optString("end"), obj.optString("title")))
+                    }
+                }
+                dailyScheduleMap[day] = list
+            }
+        } catch (_: Exception) {
+            dailyScheduleMap.clear()
+            dailyScheduleMap.putAll(getInitialSchedule())
+        }
+    }
+
+    private fun saveDailySchedule() {
+        try {
+            val root = org.json.JSONObject()
+            for ((day, list) in dailyScheduleMap) {
+                val arr = org.json.JSONArray()
+                for (item in list) {
+                    val obj = org.json.JSONObject()
+                    obj.put("start", item.first)
+                    obj.put("end", item.second)
+                    obj.put("title", item.third)
+                    arr.put(obj)
+                }
+                root.put(day, arr)
+            }
+            getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putString("daily_schedule_json", root.toString())
+                .apply()
+        } catch (_: Exception) {}
+    }
+
     private fun showKunlikRejaSheet() {
         val sheet = BottomSheetDialog(this)
         val sv = layoutInflater.inflate(R.layout.sheet_kunlik_reja, null)
@@ -1385,11 +1533,20 @@ class MainActivity : AppCompatActivity() {
         val tvSelDay = sv.findViewById<TextView>(R.id.tvSelectedDay)
         var selectedDay = daysUz[0]
 
+        var adapter: DaySlotAdapter? = null
         fun renderDay(day: String) {
             selectedDay = day
             tvSelDay?.text = day
             val slots = dailyScheduleMap.getOrPut(day) { mutableListOf() }
-            rvSlots?.adapter = DaySlotAdapter(slots)
+            adapter = DaySlotAdapter(slots) { pos ->
+                if (pos >= 0 && pos < slots.size) {
+                    slots.removeAt(pos)
+                    saveDailySchedule()
+                    adapter?.notifyItemRemoved(pos)
+                }
+            }
+            rvSlots?.layoutManager = LinearLayoutManager(this@MainActivity)
+            rvSlots?.adapter = adapter
         }
 
         llTabs?.removeAllViews()
@@ -1436,8 +1593,10 @@ class MainActivity : AppCompatActivity() {
             val end = etEnd?.text?.toString()?.trim() ?: ""
             val title = etTitle?.text?.toString()?.trim() ?: ""
             if (title.isNotEmpty()) {
-                dailyScheduleMap.getOrPut(day) { mutableListOf() }.add(Triple(start, end, title))
-                dailyScheduleMap[day]?.sortBy { it.first }
+                val list = dailyScheduleMap.getOrPut(day) { mutableListOf() }
+                list.add(Triple(start, end, title))
+                list.sortBy { it.first }
+                saveDailySchedule()
                 onAdded()
             }
             dialog.dismiss()
@@ -1446,11 +1605,14 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    inner class DaySlotAdapter(private val slots: List<Triple<String, String, String>>) :
-        RecyclerView.Adapter<DaySlotAdapter.VH>() {
+    inner class DaySlotAdapter(
+        private val slots: MutableList<Triple<String, String, String>>,
+        private val onDelete: (Int) -> Unit
+    ) : RecyclerView.Adapter<DaySlotAdapter.VH>() {
         inner class VH(v: View) : RecyclerView.ViewHolder(v) {
             val tvTime: TextView = v.findViewById(R.id.tvSlotTime)
             val tvTitle: TextView = v.findViewById(R.id.tvSlotTitle)
+            val btnDelete: View? = v.findViewById(R.id.btnSlotDelete)
         }
         override fun onCreateViewHolder(p: ViewGroup, t: Int) =
             VH(LayoutInflater.from(p.context).inflate(R.layout.item_day_slot, p, false))
@@ -1458,14 +1620,38 @@ class MainActivity : AppCompatActivity() {
             val (start, end, title) = slots[pos]
             h.tvTime.text = if (end.isNotEmpty()) "$start – $end" else start
             h.tvTitle.text = title
+            h.btnDelete?.setOnClickListener {
+                onDelete(h.adapterPosition)
+            }
         }
         override fun getItemCount() = slots.size
     }
 
     // ── Camera AI Vision Mode ─────────────────────────────────────────────
     private fun openKameraAI() {
-        openQuronLesson("http://77.83.206.138:8000/camera")
-        deliverJarvisResponseToUi("Kamera AI yoqildi! Kameraga ko'rsating — nimani ko'rayotganimni tahlil qilaman va savollaringizga javob beraman.", "📷")
+        isQuronActive = false
+        stopMobileVoiceRecognition()
+        try { tts?.stop() } catch (_: Exception) {}
+
+        containerWebView.visibility = View.VISIBLE
+        tvWebTitle.text = "JARVIS Kamera AI"
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+
+        webViewDashboard.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_DEFAULT
+            allowFileAccess = true
+            allowContentAccess = true
+        }
+        webViewDashboard.loadUrl("http://77.83.206.138:8000/camera")
+        deliverJarvisResponseToUi("Kamera AI yoqildi! Rasmga oling yoki kamerani qarating — ko'rganimni tahlil qilib, test savollariga javob beraman.", "📷")
     }
 
     private fun showSetReminderDialog(defaultReminderText: String) {
@@ -3253,6 +3439,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: android.webkit.ValueCallback<Array<Uri>>?,
+                fileChooserParams: FileChooserParams?
+            ): Boolean {
+                filePathCallback?.onReceiveValue(null)
+                cameraAiPictureLauncher.launch(null)
+                return true
+            }
+
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                 if (customView != null) {
                     callback?.onCustomViewHidden()
@@ -3388,6 +3584,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     inner class TvBridge {
+        @android.webkit.JavascriptInterface
+        fun takeNativePhoto() {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        cameraAiPictureLauncher.launch(null)
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                } else {
+                    cameraAiPictureLauncher.launch(null)
+                }
+            }
+        }
+
         @android.webkit.JavascriptInterface
         fun startListening() {
             runOnUiThread {
