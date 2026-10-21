@@ -8,7 +8,15 @@ class PreferencesHelper(context: Context) {
         context.getSharedPreferences("jarvis_companion_prefs", Context.MODE_PRIVATE)
 
     var serverAddress: String
-        get() = prefs.getString("server_address", "77.83.206.138:8000") ?: "77.83.206.138:8000"
+        get() {
+            val raw = prefs.getString("server_address", "https://jarvis.77.83.206.138.sslip.io") ?: "https://jarvis.77.83.206.138.sslip.io"
+            if (raw.contains("77.83.206.138:8000") || (raw.contains("77.83.206.138") && !raw.contains("sslip.io"))) {
+                val upgraded = "https://jarvis.77.83.206.138.sslip.io"
+                prefs.edit().putString("server_address", upgraded).apply()
+                return upgraded
+            }
+            return raw
+        }
         set(value) = prefs.edit().putString("server_address", value.trim()).apply()
 
     var authToken: String

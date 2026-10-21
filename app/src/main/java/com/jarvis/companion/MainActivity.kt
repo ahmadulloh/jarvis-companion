@@ -304,6 +304,9 @@ class MainActivity : AppCompatActivity() {
     private var mediaPlayer: MediaPlayer? = null
     private var activeSpeechJob: Job? = null
 
+    // Umid (Erkak) & Umida (Ayol) Dynamic Voice Persona
+    private var activeAssistantPersona = "umid" // "umid" (Erkak) | "umida" (Ayol)
+
     // AI Kotib ovozli tasdiq saqlovi
     private var pendingSecretaryTarget: String? = null
     private var pendingSecretaryMessage: String? = null
@@ -2385,9 +2388,9 @@ class MainActivity : AppCompatActivity() {
                     tts?.setAudioAttributes(attrs)
                 } catch (_: Exception) {}
 
-                // Deeper, masculine, resonant JARVIS pitch and steady articulation pace
+                // Erkak kishi (Umid) salobatli va bosiq ovoz tembri
                 tts?.setSpeechRate(1.0f)
-                tts?.setPitch(0.95f)
+                tts?.setPitch(0.88f)
 
                 tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                     override fun onStart(utteranceId: String?) {
@@ -2448,9 +2451,83 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Umid & Umida Dynamic Voice Switcher ────────────────────────────────
+    private fun applyAssistantPersona(persona: String, announce: Boolean = false) {
+        activeAssistantPersona = if (persona.lowercase().contains("umida")) "umida" else "umid"
+        runOnUiThread {
+            if (activeAssistantPersona == "umida") {
+                // Ayol kishi ovozi (Umida) - Yuqori, jarangdor va muloyim pitch
+                tts?.setPitch(1.35f)
+                tts?.setSpeechRate(1.02f)
+                try {
+                    val femaleVoice = tts?.voices?.find {
+                        it.name.contains("female", ignoreCase = true) ||
+                        it.name.contains("woman", ignoreCase = true) ||
+                        it.name.contains("zira", ignoreCase = true)
+                    }
+                    if (femaleVoice != null) tts?.voice = femaleVoice
+                } catch (_: Exception) {}
+                showCaption("👩 Umida ovozi faollashdi (Ayol kishi)")
+                if (announce) {
+                    speakJarvis("Labbay, Axmadulloh sir! Men Umidaman, sizni eshitmoqdaman.")
+                }
+            } else {
+                // Erkak kishi ovozi (Umid) - Chuqur, bosiq va salobatli pitch
+                tts?.setPitch(0.88f)
+                tts?.setSpeechRate(1.0f)
+                try {
+                    val maleVoice = tts?.voices?.find {
+                        it.name.contains("male", ignoreCase = true) ||
+                        it.name.contains("david", ignoreCase = true)
+                    }
+                    if (maleVoice != null) tts?.voice = maleVoice
+                } catch (_: Exception) {}
+                showCaption("👤 Umid ovozi faollashdi (Erkak kishi)")
+                if (announce) {
+                    speakJarvis("Labbay, Axmadulloh sir! Men Umidman, xizmatingizdaman.")
+                }
+            }
+        }
+    }
+
+    private fun speakWithServerTts(text: String, onFinished: (Boolean) -> Unit) {
+        val spokenText = prepareTextForSpeech(text)
+        val voiceKey = if (activeAssistantPersona == "umida") "umida" else "sardor"
+        val serverBase = getHttpBaseUrl()
+        val encoded = try { java.net.URLEncoder.encode(spokenText.take(450), "UTF-8") } catch (_: Exception) { "" }
+        if (encoded.isBlank() || serverBase.isBlank()) {
+            onFinished(false)
+            return
+        }
+
+        val ttsUrl = "$serverBase/api/tts?text=$encoded&voice=$voiceKey"
+        activeSpeechJob = lifecycleScope.launch {
+            jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+            try {
+                playAudioFromUrl(ttsUrl) {
+                    showCaption("")
+                    onFinished(true)
+                }
+            } catch (e: Exception) {
+                Log.w("MainActivity", "Server TTS failed: ${e.message}")
+                onFinished(false)
+            }
+        }
+    }
+
     private fun speakJarvis(text: String) {
         showCaption(text)
         stopCurrentAudio()
+
+        // 1. By default or if SERVER_TTS, stream high-fidelity neural Jarvis voice from official HTTPS domain
+        if (prefs.ttsEngine == "SERVER_TTS" || prefs.ttsEngine == "DEVICE_TTS") {
+            speakWithServerTts(text) { success ->
+                if (!success) {
+                    runOnUiThread { speakWithDeviceTts(text) }
+                }
+            }
+            return
+        }
 
         when (prefs.ttsEngine) {
             "UZBEKVOICE_AI" -> speakWithUzbekVoice(text)
@@ -2732,6 +2809,20 @@ class MainActivity : AppCompatActivity() {
 
         try {
             ensureAudioVolume()
+            val lowerText = text.lowercase()
+            if (lowerText.contains("umidaman") || lowerText.contains("men umidaman")) {
+                applyAssistantPersona("umida")
+            } else if (lowerText.contains("umidman") || lowerText.contains("men umidman")) {
+                applyAssistantPersona("umid")
+            } else {
+                if (activeAssistantPersona == "umida") {
+                    tts?.setPitch(1.35f)
+                    tts?.setSpeechRate(1.02f)
+                } else {
+                    tts?.setPitch(0.88f)
+                    tts?.setSpeechRate(1.0f)
+                }
+            }
             val spokenText = prepareTextForSpeech(text)
             val utteranceId = "JARVIS_${System.currentTimeMillis()}"
             val params = Bundle().apply {
@@ -2746,10 +2837,45 @@ class MainActivity : AppCompatActivity() {
     }
 
     // ── Buyruqni Bajarish (Gemini AI yoki PC Bridge) ────────────────────────
+    
+    private fun handleImageGenerationRequest(cmd: String) {
+        showCaption("🎨 Rasm chizilmoqda...")
+        jarvisParticleView.setState(JarvisParticleState.SEARCHING)
+
+        val cleanPrompt = cmd.lowercase()
+            .replace("rasm qilib ber", "")
+            .replace("rasm chizib ber", "")
+            .replace("rasm chiz", "")
+            .replace("rasm yarat", "")
+            .replace("surat qilib ber", "")
+            .replace("surat chiz", "")
+            .replace("rasmini chiqar", "")
+            .replace("rasm generatsiya", "")
+            .replace("chizib ber", "")
+            .replace("rasm tayyorla", "")
+            .trim()
+
+        val promptFinal = if (cleanPrompt.isNotEmpty()) cleanPrompt else "ultra hd futuristic cyber ai artwork cinematic 8k"
+        val encodedPrompt = android.net.Uri.encode(promptFinal)
+        val imageUrl = "https://image.pollinations.ai/prompt/$encodedPrompt?width=1024&height=768&model=flux&nologo=true&seed=${System.currentTimeMillis()}"
+
+        runOnUiThread {
+            deliverJarvisResponseToUi("Axmadulloh sir, siz so'ragan rasm muvaffaqiyatli chizildi!\n\n🎨 Mavzu: $cmd", "🎨")
+            openWorldTv(imageUrl)
+        }
+    }
+
     private fun sendJarvisCommand(cmd: String, shapeEmoji: String = currentDomain.icon) {
         if (isQuronActive || (containerWebView.visibility == View.VISIBLE && quronWebUrl.contains("quron"))) {
             Log.d("MainActivity", "Qur'on o'rganish faol - fon ovozli buyruqlari qabul qilinmaydi: $cmd")
             return
+        }
+
+        val lowerCmd = cmd.lowercase()
+        if (lowerCmd.contains("umida") || lowerCmd.contains("umidaxon") || lowerCmd.contains("umidaxonim")) {
+            applyAssistantPersona("umida")
+        } else if (lowerCmd.contains("umid") || lowerCmd.contains("umidbek") || lowerCmd.contains("umidjon")) {
+            applyAssistantPersona("umid")
         }
 
         val detected = JarvisDomainRegistry.findDomainByVoice(cmd)
@@ -2765,6 +2891,17 @@ class MainActivity : AppCompatActivity() {
         jarvisParticleView.setState(JarvisParticleState.SEARCHING)
 
         val lower = cmd.lowercase().trim()
+        // 0. Rasm chizish / generatsiya qilish buyrug'i
+        val isImageGen = listOf(
+            "rasm qilib ber", "rasm chiz", "rasm yarat", "surat qilib ber",
+            "surat chiz", "rasmini chiqar", "rasmini chiz", "rasm generatsiya",
+            "chizib ber", "rasm tayyorla"
+        ).any { lower.contains(it) }
+        if (isImageGen) {
+            handleImageGenerationRequest(cmd)
+            return
+        }
+
 
         // 0. Mahalliy tezkor musiqa/video/TV boshqaruvi (Pauza, davom ettirish, yopish, to'xtatish)
         if (containerWebView.visibility == View.VISIBLE) {
@@ -4033,13 +4170,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getHttpBaseUrl(): String {
-        var raw = prefs.serverAddress.trim()
-        if (raw.startsWith("ws://")) raw = raw.removePrefix("ws://")
-        if (raw.startsWith("wss://")) raw = raw.removePrefix("wss://")
-        if (raw.startsWith("http://")) raw = raw.removePrefix("http://")
-        if (raw.startsWith("https://")) raw = raw.removePrefix("https://")
-        val hostPort = raw.split("/")[0]
-        return "http://$hostPort"
+        val raw = prefs.serverAddress.trim()
+        val host = raw
+            .removePrefix("ws://")
+            .removePrefix("wss://")
+            .removePrefix("http://")
+            .removePrefix("https://")
+            .trimEnd('/')
+        val scheme = if (raw.startsWith("http://") || raw.startsWith("ws://")) "http" else "https"
+        return "$scheme://$host"
     }
 
     // ── Ruxsatlar va Xizmatni Ishga Tushirish ──────────────────────────────

@@ -57,10 +57,10 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.8.0
-        name: Jarvis Companion v1.8.0
+        tag_name: v1.8.1
+        name: Jarvis Companion v1.8.1
         body: |
-          JARVIS Companion v1.8.0 — Yangi Imkoniyatlar:
+          JARVIS Companion v1.8.1 — Yangi Imkoniyatlar (HTTPS Domen, Server TTS Ovozlar & Rasm Chizish):
           - 3 Chiziqcha (— — —) Tezkor Menyu:
             • Logo ostidagi nuqtalar chiziqchalarga (— — —) almashtirildi.
             • Menyuga 5 ta asosiy bo'lim kiritildi: Qur'on AI, Barcha TV, Eslatmalar, Kunlik Rejam va Kamera AI.
