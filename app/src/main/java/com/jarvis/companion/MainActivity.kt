@@ -2160,9 +2160,9 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val q = s?.toString()?.trim() ?: ""
                 val filtered = if (q.isEmpty()) {
-                    allDomains
+                    domainsToShow
                 } else {
-                    allDomains.filter {
+                    domainsToShow.filter {
                         it.titleUz.contains(q, ignoreCase = true) ||
                                 it.description.contains(q, ignoreCase = true) ||
                                 it.keywords.any { kw -> kw.contains(q, ignoreCase = true) }
