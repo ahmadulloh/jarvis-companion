@@ -212,6 +212,13 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 Log.e("MainActivity", "cameraAiFullPictureLauncher error: ${e.message}")
+                runOnUiThread {
+                    webViewDashboard.evaluateJavascript("if (window.onNativePhotoCancelled) { window.onNativePhotoCancelled(); }", null)
+                }
+            }
+        } else {
+            runOnUiThread {
+                webViewDashboard.evaluateJavascript("if (window.onNativePhotoCancelled) { window.onNativePhotoCancelled(); }", null)
             }
         }
     }
@@ -487,6 +494,7 @@ class MainActivity : AppCompatActivity() {
         initTextToSpeech()
         loadDailySchedule()
         loadReminders()
+        loadChatHistory()
         cleanOldTemporaryFiles()
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
@@ -1541,7 +1549,62 @@ class MainActivity : AppCompatActivity() {
                     file.delete()
                 }
             }
+            fullChatHistory.removeAll { it.timestamp < threeDaysAgo }
+            saveChatHistory()
         } catch (_: Exception) {}
+    }
+
+    private fun loadChatHistory() {
+        val prefs = getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+        val jsonStr = prefs.getString("chat_history_3days_json", null) ?: return
+        try {
+            val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+            val arr = org.json.JSONArray(jsonStr)
+            fullChatHistory.clear()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val ts = obj.optLong("timestamp", System.currentTimeMillis())
+                if (ts >= threeDaysAgo) {
+                    fullChatHistory.add(ChatHistoryMessage(
+                        speaker = obj.optString("speaker", "user"),
+                        text = obj.optString("text", ""),
+                        timestamp = ts
+                    ))
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun saveChatHistory() {
+        try {
+            val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+            val arr = org.json.JSONArray()
+            for (msg in fullChatHistory) {
+                if (msg.timestamp >= threeDaysAgo) {
+                    val obj = org.json.JSONObject()
+                    obj.put("speaker", msg.speaker)
+                    obj.put("text", msg.text)
+                    obj.put("timestamp", msg.timestamp)
+                    arr.put(obj)
+                }
+            }
+            getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putString("chat_history_3days_json", arr.toString())
+                .apply()
+        } catch (_: Exception) {}
+    }
+
+    private fun getScheduleSummary(): String {
+        if (dailyScheduleMap.isEmpty()) loadDailySchedule()
+        val sb = StringBuilder()
+        for ((day, slots) in dailyScheduleMap) {
+            if (slots.isNotEmpty()) {
+                val dayDesc = slots.joinToString("; ") { "${it.first}-${it.second} ${it.third}" }
+                sb.append("$day: $dayDesc\n")
+            }
+        }
+        return sb.toString().trim()
     }
 
     private fun loadDailySchedule() {
@@ -1594,7 +1657,7 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
     }
 
-    private fun showKunlikRejaSheet() {
+    private fun showKunlikRejaSheet(initialDay: String? = null) {
         val sheet = BottomSheetDialog(this)
         val sv = layoutInflater.inflate(R.layout.sheet_kunlik_reja, null)
         sheet.setContentView(sv)
@@ -1602,7 +1665,7 @@ class MainActivity : AppCompatActivity() {
         val rvSlots = sv.findViewById<RecyclerView>(R.id.rvDaySlots)
         val btnAddSlot = sv.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnAddSlot)
         val tvSelDay = sv.findViewById<TextView>(R.id.tvSelectedDay)
-        var selectedDay = daysUz[0]
+        var selectedDay = if (initialDay != null && daysUz.contains(initialDay)) initialDay else daysUz[0]
 
         var adapter: DaySlotAdapter? = null
         fun renderDay(day: String) {
@@ -1761,6 +1824,7 @@ class MainActivity : AppCompatActivity() {
             }
             showJarvisTurnCaption(replyText)
             fullChatHistory.add(ChatHistoryMessage("jarvis", replyText))
+            saveChatHistory()
             if (scrollOnScreenChat.visibility == View.VISIBLE) {
                 addJarvisChatBubble(replyText)
             }
@@ -2122,7 +2186,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Bottom Sheet (31 ta Soha Tanlash) ──────────────────────────────────
+    // ── Bottom Sheet (Yo'nalishlar: Asosiy, Yurist va Din) ────────────────
     private fun showDomainBottomSheet() {
         vibrateBrief(20)
         val sheetDialog = BottomSheetDialog(this)
@@ -2130,8 +2194,6 @@ class MainActivity : AppCompatActivity() {
         sheetDialog.setContentView(sheetView)
 
         val rv = sheetView.findViewById<RecyclerView>(R.id.rvDomainsGrid)
-        val btnExpand = sheetView.findViewById<TextView>(R.id.btnExpandAllDomains)
-        val etSearch = sheetView.findViewById<EditText>(R.id.etDomainSearch)
         val btnSettings = sheetView.findViewById<ImageButton>(R.id.btnSheetSettings)
 
         btnSettings?.setOnClickListener {
@@ -2140,6 +2202,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val domainsToShow = listOf(
+            JarvisDomainRegistry.ASOSIY,
             JarvisDomainRegistry.YURIST,
             JarvisDomainRegistry.DIN
         )
@@ -2149,29 +2212,8 @@ class MainActivity : AppCompatActivity() {
             sheetDialog.dismiss()
         }
 
-        rv?.layoutManager = GridLayoutManager(this, 2)
+        rv?.layoutManager = GridLayoutManager(this, 3)
         rv?.adapter = adapter
-
-        btnExpand?.visibility = View.GONE
-        etSearch?.visibility = View.GONE
-
-        etSearch?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                val q = s?.toString()?.trim() ?: ""
-                val filtered = if (q.isEmpty()) {
-                    domainsToShow
-                } else {
-                    domainsToShow.filter {
-                        it.titleUz.contains(q, ignoreCase = true) ||
-                                it.description.contains(q, ignoreCase = true) ||
-                                it.keywords.any { kw -> kw.contains(q, ignoreCase = true) }
-                    }
-                }
-                adapter.updateData(filtered, currentDomain.id)
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
 
         sheetDialog.show()
     }
@@ -2861,20 +2903,45 @@ class MainActivity : AppCompatActivity() {
                 java.util.Calendar.SUNDAY -> "Yakshanba"
                 else -> "Dushanba"
             }
+            val targetDay = when {
+                lower.contains("ertaga") || lower.contains("ertangi") -> {
+                    val c2 = java.util.Calendar.getInstance().apply { add(java.util.Calendar.DAY_OF_YEAR, 1) }
+                    when (c2.get(java.util.Calendar.DAY_OF_WEEK)) {
+                        java.util.Calendar.MONDAY -> "Dushanba"
+                        java.util.Calendar.TUESDAY -> "Seshanba"
+                        java.util.Calendar.WEDNESDAY -> "Chorshanba"
+                        java.util.Calendar.THURSDAY -> "Payshanba"
+                        java.util.Calendar.FRIDAY -> "Juma"
+                        java.util.Calendar.SATURDAY -> "Shanba"
+                        java.util.Calendar.SUNDAY -> "Yakshanba"
+                        else -> "Dushanba"
+                    }
+                }
+                lower.contains("dushanba") -> "Dushanba"
+                lower.contains("seshanba") -> "Seshanba"
+                lower.contains("chorshanba") -> "Chorshanba"
+                lower.contains("payshanba") -> "Payshanba"
+                lower.contains("juma") -> "Juma"
+                lower.contains("shanba") -> "Shanba"
+                lower.contains("yakshanba") -> "Yakshanba"
+                else -> todayDay
+            }
             if (dailyScheduleMap.isEmpty()) {
                 loadDailySchedule()
             }
-            val slots = dailyScheduleMap[todayDay] ?: emptyList()
+            val slots = dailyScheduleMap[targetDay] ?: emptyList()
             val spokenSchedule = if (slots.isNotEmpty()) {
                 val slotsDesc = slots.joinToString(", ") { s ->
                     val timePart = if (s.second.isNotEmpty()) "${s.first} dan ${s.second} gacha" else "${s.first} da"
                     "$timePart — ${s.third}"
                 }
-                "Bugun $todayDay, Axmadulloh sir! Sizning kunlik rejangiz: $slotsDesc."
+                if (targetDay == todayDay) "Bugun $todayDay, Axmadulloh sir! Sizning kunlik rejangiz: $slotsDesc."
+                else "$targetDay kuni uchun sizning rejangiz: $slotsDesc."
             } else {
-                "Bugun $todayDay, Axmadulloh sir! Hozircha bugunga reja belgilanmagan. Jadvalda «+ Reja Qo'shish» orqali yangi reja kiritishingiz mumkin."
+                if (targetDay == todayDay) "Bugun $todayDay, Axmadulloh sir! Hozircha bugunga reja kiritilmagan. Menyudan «+ Reja Qo'shish» orqali kiritishingiz mumkin."
+                else "$targetDay kuni uchun hozircha reja kiritilmagan, Axmadulloh sir."
             }
-            runOnUiThread { showKunlikRejaSheet() }
+            runOnUiThread { showKunlikRejaSheet(targetDay) }
             deliverJarvisResponseToUi(spokenSchedule, "📅")
             return
         }
@@ -3023,10 +3090,13 @@ class MainActivity : AppCompatActivity() {
                 apiKey = apiKey,
                 userPrompt = prompt,
                 activeDomain = "${currentDomain.id} (${currentDomain.titleUz})",
-                userName = prefs.userName
+                userName = prefs.userName,
+                recentHistory = fullChatHistory.map { GeminiApiClient.Turn(it.speaker, it.text, it.timestamp) },
+                scheduleContext = getScheduleSummary()
             )
             result.onSuccess { reply ->
                 deliverJarvisResponseToUi(reply, shapeEmoji)
+                saveChatHistory()
             }.onFailure { err ->
                 val errorMsg = "Xatolik: ${err.message ?: "Aloqa uzildi"}"
                 deliverJarvisResponseToUi("Kechirasiz ser, so'rovni bajarishda xatolik yuz berdi.", "⚠️")

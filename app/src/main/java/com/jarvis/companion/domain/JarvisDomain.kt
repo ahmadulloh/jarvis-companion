@@ -88,22 +88,20 @@ object JarvisDomainRegistry {
 
     val DIN = JarvisDomain(
         id = "DIN",
-        titleUz = "Din (fatvo.uz)",
-        icon = "🕌",
+        titleUz = "Din (Fatvo.uz)",
+        icon = "🌙",
         category = "Ma'naviyat",
-        primaryColor = Color.parseColor("#00E5FF"),
-        glowColor = Color.parseColor("#00E676"),
-        secondaryColor = Color.parseColor("#69F0AE"),
-        description = "O'zbekiston Musulmonlari Idorasi Fatvo markazi (fatvo.uz) rasmiy fatvolariga so'zma-so'z asoslangan islomiy ma'lumotlar. Savollarga 'Ma'lumotlar Fatvo.uz rasmiy manbasidan olinadi.' deb boshlanadi.",
+        primaryColor = Color.parseColor("#10B981"),
+        glowColor = Color.parseColor("#059669"),
+        secondaryColor = Color.parseColor("#6EE7B7"),
+        description = "O'zbekiston Musulmonlari Idorasi Fatvo Hay'ati (https://fatvo.uz rasmiy manbasi) asosidagi diniy savol-javoblar.",
         motto = "Din rejimi faol. Ma'lumotlar Fatvo.uz rasmiy manbasidan olinadi.",
-        keywords = listOf("din", "fatvo", "fatvo uz", "islom", "shar'iy", "namoz", "roza", "ro'za", "shariat"),
+        keywords = listOf("din", "fatvo", "fatvo.uz", "islom", "namoz", "roza", "tahorat", "halol", "harom"),
         actions = listOf(
-            DomainAction("act_fatvo_search", "Fatvo Qidirish", "🕌", "Fatvo.uz rasmiy manbasidan shar'iy hukmni topib ber"),
-            DomainAction("act_namoz_times", "Namoz Vaqtlari", "⏰", "Bugungi rasmiy namoz vaqtlari qanday?"),
-            DomainAction("act_tahorat_rules", "Tahorat & Ibodat", "💧", "Tahorat va namoz qoidalari bo'yicha fatvo"),
-            DomainAction("act_halol_harom", "Halol & Harom", "⚖️", "Tijorat va kundalik masalalarda halol-harom fatvolari")
+            DomainAction("act_fatvo", "Fatvo.uz Savol", "🌙", "Fatvo.uz bo'yicha bu masalaga javob qanday?"),
+            DomainAction("act_namoz", "Tahorat & Namoz", "🕌", "Tahorat va namoz qoidalari haqida aytib ber")
         ),
-        systemPersonaPrompt = "Siz O'zbekiston Musulmonlari Idorasi Fatvo markazining rasmiy fatvolariga (FATVO.UZ) tayanuvchi islomiy maslahatchi JARVISsiz. Din, shar'iy hukmlar, ibodat, halol-harom yoki boshqa diniy masalalarda savol berilganda, HAR DOIM javobni: 'Ma'lumotlar Fatvo.uz rasmiy manbasidan olinadi.' deb boshlang! O'zingizdan biron narsa to'qimang yoki shaxsiy fikr qo'shmang. Faqat Fatvo.uz va Hanafi mazhabi mo''tabar manbalariga so'zma-so'z va qat'iy muvofiq ravishda javob bering!"
+        systemPersonaPrompt = "Siz O'zbekiston Musulmonlari Idorasi Fatvo Hay'ati (https://fatvo.uz rasmiy manbasi) asosida ish yurituvchi diniy yordamchi JARVISsiz. Har bir javobingizni DOIMO QAT'IY RAVISHDA: 'Ma\\'lumotlar Fatvo.uz rasmiy manbasidan olinadi.' degan jumla bilan boshlang. Savollarga faqat Fatvo.uz fatvolariga muvofiq, Hanafiya mazhabi asosida, o'zingizdan qo'shmasdan, sof va aniq javob bering."
     )
 
     val DASTURCHI = JarvisDomain(
@@ -368,22 +366,20 @@ object JarvisDomainRegistry {
 
     val YURIST = JarvisDomain(
         id = "YURIST",
-        titleUz = "Yurist (lex.uz)",
+        titleUz = "Yurist rejimi (Lex.uz)",
         icon = "⚖️",
-        category = "Huquq va Qonunchilik",
-        primaryColor = Color.parseColor("#D4AF37"),
-        glowColor = Color.parseColor("#FFD700"),
-        secondaryColor = Color.parseColor("#1E3A8A"),
-        description = "O'zbekiston Respublikasining rasmiy LEX.UZ qonunchiligi asosida har qanday muammo, nizo va qonunbuzarliklarga aniq kodeks va moddalar bilan amaliy yechim.",
-        motto = "Yurist rejimi faol. Lex.uz qonunchilik bazasi bo'yicha yechimlar tayyor, Axmadulloh sir!",
-        keywords = listOf("yurist", "advokat", "lex", "lex uz", "qonun", "huquq", "modda", "sud", "nizo", "qonunbuzarlik", "shartnoma", "soliq"),
+        category = "Huquq",
+        primaryColor = Color.parseColor("#3B82F6"),
+        glowColor = Color.parseColor("#2563EB"),
+        secondaryColor = Color.parseColor("#93C5FD"),
+        description = "O'zbekiston Respublikasi qonunlari (https://lex.uz) bo'yicha professional huquqiy yechim, moddalar va sud/inspeksiya murojaat tartibi.",
+        motto = "Yurist rejimi faol. O'zbekiston qonunchiligi (Lex.uz) bo'yicha maslahat beraman, Axmadulloh sir!",
+        keywords = listOf("yurist", "advokat", "soliq", "shartnoma", "qonun", "sud", "huquq", "lex", "lex.uz", "modda", "nizo"),
         actions = listOf(
-            DomainAction("act_law_solve", "Qonuniy Yechim", "⚖️", "Muammomni O'zbekiston qonun moddalari bilan hal qilib ber"),
-            DomainAction("act_labor_law", "Mehnat Huquqi", "👥", "Mehnat kodeksi bo'yicha ishdan bo'shatish yoki maosh nizosi"),
-            DomainAction("act_contract_audit", "Shartnoma Tahlili", "📄", "Shartnomadagi qonun buzilishlari va xavfli bandlar"),
-            DomainAction("act_court_draft", "Sud & Da'vo", "📑", "Iqtisodiy yoki fuqarolik sudiga ariza moddalarini ko'rsat")
+            DomainAction("act_law_solve", "Qonuniy Yechim", "⚖️", "Qonunbuzarlik bo'yicha moddalar bilan yechim ber"),
+            DomainAction("act_contract_audit", "Shartnoma Tahlili", "📄", "Ushbu shartnomadagi huquqiy bandlarni tahlil qil")
         ),
-        systemPersonaPrompt = "Siz O'zbekiston Respublikasining oliy toifali Yuristi JARVISsiz. Sizning barcha huquqiy bilimlaringiz O'zbekiston Respublikasi rasmiy qonunchilik bazasi — LEX.UZ ga to'liq asoslangan. Foydalanuvchi (Axmadulloh sir) sizga har qanday muammo, nizo, huquqbuzarlik yoki vaziyatni aytsa, unga O'zbekiston Respublikasi qonunlari (Mehnat kodeksi, Fuqarolik kodeksi, Ma'muriy javobgarlik to'g'risidagi kodeks, Jinoyat kodeksi, Oila kodeksi, Soliq kodeksi va tegishli Qonunlar)ning aniq MODDALARINI ko'rsatgan holda qat'iy va amaliy qonuniy yechim bering! Qonun buzilgan hollarda qaysi organlarga (sud, prokuratura, adliya, mehnat inspeksiyasi) qanday tartibda murojaat qilishni aniq tushuntiring."
+        systemPersonaPrompt = "Siz O'zbekiston Respublikasi qonunchiligi (https://lex.uz rasmiy qonunlar bazasi) bo'yicha professional bosh yurist maslahatchisi JARVISsiz. Har qanday muammo yoki qonunbuzarlikda amaldagi qonun va kodekslarning (Mehnat, Fuqarolik, MJtK, Jinoyat, Oila) ANIQ MODDALARINI keltirib, bosqichma-bosqich huquqiy yechim va murojaat organlarini ko'rsatib bering."
     )
 
     val TADBIRKOR = JarvisDomain(
@@ -686,28 +682,43 @@ object JarvisDomainRegistry {
         systemPersonaPrompt = "You are JARVIS Pet Care & Veterinary Assistant. Schedule feedings, track immunization calendars, record weight dynamics, and maintain walk routines for Axmadulloh sir."
     )
 
-    // User requested strictly: Faqat Yurist va Din rejimlari
+    // Complete list of domains: Asosiy, Yurist (Lex.uz) va Din (Fatvo.uz)
     private val allDomainsList: List<JarvisDomain> = listOf(
-        YURIST, DIN
+        ASOSIY, YURIST, DIN
     )
 
     fun getAllDomains(): List<JarvisDomain> = allDomainsList
 
     fun getDomainById(id: String): JarvisDomain {
-        return allDomainsList.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: YURIST
+        return allDomainsList.firstOrNull { it.id.equals(id, ignoreCase = true) } ?: ASOSIY
     }
 
     /**
      * Automatic Voice Detection: Matches spoken Uzbek commands like:
-     * "yurist rejimini yoq", "din rejimiga o't"
+     * "haydovchi rejimiga o't", "yurist rejimini yoq", "tadbirkorlik", "talaba", "dasturchi"
      */
     fun findDomainByVoice(transcript: String): JarvisDomain? {
         val clean = transcript.lowercase().trim()
 
-        if (clean.contains("yurist") || clean.contains("advokat") || clean.contains("qonun") || clean.contains("lex") || clean.contains("huquq")) {
+        if (clean.contains("asosiy") || clean.contains("bosh sahifa") || clean.contains("standart")) {
+            return ASOSIY
+        }
+        if (clean.contains("haydovchi") || clean.contains("mashina") || clean.contains("shofyor") || clean.contains("taksi") || clean.contains("rul")) {
+            return HAYDOVCHI
+        }
+        if (clean.contains("yurist") || clean.contains("advokat") || clean.contains("soliq") || clean.contains("shartnoma") || clean.contains("sud")) {
             return YURIST
         }
-        if (clean.contains("din") || clean.contains("fatvo") || clean.contains("islom") || clean.contains("shariat")) {
+        if (clean.contains("tadbirkor") || clean.contains("firma") || clean.contains("mchj") || clean.contains("yatt") || clean.contains("startap")) {
+            return TADBIRKOR
+        }
+        if (clean.contains("talaba") || clean.contains("student") || clean.contains("dars") || clean.contains("konspekt")) {
+            return TALABA
+        }
+        if (clean.contains("dasturchi") || clean.contains("kod") || clean.contains("programist") || clean.contains("terminal")) {
+            return DASTURCHI
+        }
+        if (clean.contains("din") || clean.contains("quron") || clean.contains("qur'on") || clean.contains("namoz")) {
             return DIN
         }
 
@@ -715,7 +726,7 @@ object JarvisDomainRegistry {
                 clean.contains("o't") || clean.contains("ot") || clean.contains("yoq") ||
                 clean.contains("boshla") || clean.contains("ko'rinish") || clean.contains("korinish")
 
-        // Match against registered domains
+        // Match against all registered domains
         for (domain in allDomainsList) {
             for (kw in domain.keywords) {
                 if (clean.contains(kw)) {

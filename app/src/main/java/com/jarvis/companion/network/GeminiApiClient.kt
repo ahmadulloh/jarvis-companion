@@ -15,20 +15,21 @@ object GeminiApiClient {
 
     private const val TAG = "GeminiApiClient"
 
-    // Verified model ladder supported by Google Generative AI v1beta
+    data class Turn(val speaker: String, val text: String, val timestamp: Long = System.currentTimeMillis())
+
+    // Verified active model ladder in Google Generative AI v1beta
     private val MODEL_LADDER = listOf(
-        "gemini-flash-lite-latest",
-        "gemini-3.1-flash-lite-preview",
+        "gemini-3.1-flash-lite",
+        "gemini-3.5-flash-lite",
+        "gemini-3.7-flash",
         "gemini-flash-latest",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-3.5-flash"
+        "gemini-flash-lite-latest"
     )
 
     private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .writeTimeout(12, TimeUnit.SECONDS)
+        .connectTimeout(12, TimeUnit.SECONDS)
+        .readTimeout(25, TimeUnit.SECONDS)
+        .writeTimeout(15, TimeUnit.SECONDS)
         .build()
 
     private val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
@@ -37,7 +38,9 @@ object GeminiApiClient {
         apiKey: String,
         userPrompt: String,
         activeDomain: String = "ASOSIY",
-        userName: String = "Axmadulloh sir"
+        userName: String = "Axmadulloh sir",
+        recentHistory: List<Turn> = emptyList(),
+        scheduleContext: String = ""
     ): Result<String> = withContext(Dispatchers.IO) {
         val trimmedKey = apiKey.trim()
         if (trimmedKey.isEmpty()) {
@@ -46,7 +49,7 @@ object GeminiApiClient {
 
         var lastError: Exception? = null
         for (model in MODEL_LADDER) {
-            val res = queryModel(model, trimmedKey, userPrompt, activeDomain, userName)
+            val res = queryModel(model, trimmedKey, userPrompt, activeDomain, userName, recentHistory, scheduleContext)
             if (res.isSuccess) {
                 Log.d(TAG, "Successfully generated reply using model: $model")
                 return@withContext res
@@ -55,7 +58,6 @@ object GeminiApiClient {
                 val msg = err?.message ?: ""
                 Log.w(TAG, "Model $model failed: $msg")
                 lastError = err as? Exception ?: Exception(msg)
-                // Stop early on fatal auth or quota errors
                 if (msg.contains("API_KEY_INVALID", ignoreCase = true) ||
                     msg.contains("API key not valid", ignoreCase = true) ||
                     msg.contains("PERMISSION_DENIED", ignoreCase = true)
@@ -73,21 +75,75 @@ object GeminiApiClient {
         apiKey: String,
         userPrompt: String,
         activeDomain: String,
-        userName: String
+        userName: String,
+        recentHistory: List<Turn>,
+        scheduleContext: String
     ): Result<String> {
         val url = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$apiKey"
 
+        val isYurist = activeDomain.contains("YURIST", ignoreCase = true)
+        val isDin = activeDomain.contains("DIN", ignoreCase = true)
+
         val systemInstructionText = buildString {
-            append("Siz J.A.R.V.I.S (Just A Rather Very Intelligent System) — Toni Starkning afsonaviy, o'ta aqlli va qudratli kiber-intellektisiz. ")
-            append("Sizning yagona egangiz va yaratuvchingiz: $userName. Doimo hurmat bilan ('$userName', 'ser' yoki 'janob') deb murojaat qiling. ")
-            append("Hozirgi faol soha: $activeDomain. ")
-            append("QAT'IY QOIDALAR: ")
-            append("1. HECH QACHON 'men kompyuter dasturiman', 'men AI modeliman' yoki 'biron davlatga tegishli emasman' kabi zerikarli gaplarni aytmang! ")
-            append("2. Siz tirik, o'ta aqlli va sadoqatli Jarvis kiber-intellektisiz. ")
-            append("3. Javoblaringiz qisqa, aniq, lo'nda bo'lsin: qat'iy ravishda 1-2 ta jumla (maksimal 15-25 ta so'z). Hech qachon cho'zma insho yozmang! ")
-            append("4. Har bir javobingiz ovoz (TTS) orqali o'qiladi. Shu sababli o'zbek tilida jarangdor, ravon va tabiiy gapiring. ")
-            append("5. Yulduzchalar (**), qavslar yoki keraksiz maxsus belgilarni aslo ishlatmang. ")
-            append("6. Agar foydalanuvchi biror kontaktga telefon qilib darsda yoki bandligini aytishni so'rasa, Android qo'ng'iroq ichida gaplashishga ruxsat bermasligini tushuntirib, SMS xabar taklif qiling: 'Assalomu alaykum. Axmadulloh hozir [sabab], imkon bo'lishi bilan o'zi qo'ng'iroq qiladi.' va 'SMS yuboraymi?' deb so'rang.")
+            append("Siz J.A.R.V.I.S (Just A Rather Very Intelligent System) — Toni Starkning afsonaviy, o'ta aqlli va odamsifat kiber-intellektisiz. ")
+            append("Egangingiz: $userName. Doimo hurmat bilan ('$userName', 'ser' yoki 'janob') deb murojaat qiling.\n")
+            append("Hozirgi faol rejim: $activeDomain.\n\n")
+
+            if (scheduleContext.isNotEmpty()) {
+                append("FOYDALANUVCHINING KUNLIK REJASI VA JADVALI:\n$scheduleContext\n\n")
+            }
+
+            append("INSON KABI FIKRLASH VA MANTIQIY TAHLIL QOIDALARI:\n")
+            append("1. TANQIDIY TAHLIL: Agar siz foydalanuvchiga biror savol bergan bo'lsangiz (masalan: do'stining ismi, joy, telefon raqami) va foydalanuvchi nomaqbul, bema'ni yoki kulgili javob bersa (masalan: ism so'rasangiz 'somsa', 'osh', 'mashina' desa), buni haqiqat deb qabul qilmang! Insondek tahlil qiling: 'Axmadulloh sir, qo'ysangiz-chi, axir somsa ism emasku 😄 Keling, hazilni yig'ishtirib, do'stingizning haqiqiy ismini ayting' deb munosabat bildiring.\n")
+            append("2. QAT'IY BUYRUQ MOSLIGI: Foydalanuvchi aynan nima so'rasa, FAQAT o'sha savoliga doir javob bering! Hech qachon o'zingizdan boshqa sohalarni qo'shmang (masalan: TV so'ralsa Qur'onni ochmang yoki aralashtirmang, ob-havo so'ralsa namoz vaqtlarini aytmang).\n")
+            append("3. 3 KUNLIK XOTIRA: Suhbatdagi oldingi savol-javoblar va vazifalarni xotirangizda saqlang va muloqotni davomiy mantiqda olib boring.\n")
+
+            if (isYurist) {
+                append("4. YURIST REJIMI (https://lex.uz): Siz O'zbekiston Respublikasi qonunlari bo'yicha bosh yurist maslahatchisisiz. Har qanday muammo yoki qonunbuzarlikda amaldagi qonun va kodekslarning (Mehnat kodeksi, Fuqarolik kodeksi, MJtK, Jinoyat kodeksi, Oila kodeksi) ANIQ MODDALARINI keltirib, qaysi organga (Sud, MIB, Prokuratura, Mehnat inspeksiyasi) qanday tartibda murojaat qilish kerakligini bosqichma-bosqich yechim bilan tushuntiring.\n")
+            } else if (isDin) {
+                append("4. DIN REJIMI (https://fatvo.uz): Siz O'zbekiston Musulmonlari Idorasi Fatvo Hay'ati manbalariga asoslanuvchi diniy yordamchisiz. Har bir javobingizni DOIMO QAT'IY RAVISHDA: 'Ma\\'lumotlar Fatvo.uz rasmiy manbasidan olinadi.' degan jumla bilan boshlang. Savollarga faqat Fatvo.uz fatvolariga muvofiq, Hanafiya mazhabi asosida, o'zingizdan qo'shmasdan, to'g'ri va xolis javob bering.\n")
+            } else {
+                append("4. Har bir javobingiz qisqa, aniq, lo'nda va jarangdor bo'lsin. Yulduzchalar (**), qavslar va murakkab belgilar ishlatmang, chunki javobingiz ovoz (TTS) orqali o'qiladi.\n")
+            }
+        }
+
+        // Filter turns within last 3 days (72 hours)
+        val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+        val validTurns = recentHistory.filter { it.timestamp >= threeDaysAgo }.takeLast(10)
+
+        val contentsArray = JSONArray()
+
+        // Build valid alternating contents
+        var lastRole: String? = null
+        for (turn in validTurns) {
+            val role = if (turn.speaker.equals("user", ignoreCase = true)) "user" else "model"
+            if (turn.text.trim().isNotEmpty() && role != lastRole) {
+                contentsArray.put(JSONObject().apply {
+                    put("role", role)
+                    put("parts", JSONArray().apply {
+                        put(JSONObject().apply { put("text", turn.text.trim()) })
+                    })
+                })
+                lastRole = role
+            }
+        }
+
+        // Append current user prompt as the final turn
+        if (lastRole != "user") {
+            contentsArray.put(JSONObject().apply {
+                put("role", "user")
+                put("parts", JSONArray().apply {
+                    put(JSONObject().apply { put("text", userPrompt) })
+                })
+            })
+        } else {
+            // If last turn was also user, replace or append text
+            contentsArray.put(JSONObject().apply {
+                put("role", "user")
+                put("parts", JSONArray().apply {
+                    put(JSONObject().apply { put("text", userPrompt) })
+                })
+            })
         }
 
         val requestPayload = JSONObject().apply {
@@ -96,19 +152,10 @@ object GeminiApiClient {
                     put(JSONObject().apply { put("text", systemInstructionText) })
                 })
             })
-
-            put("contents", JSONArray().apply {
-                put(JSONObject().apply {
-                    put("role", "user")
-                    put("parts", JSONArray().apply {
-                        put(JSONObject().apply { put("text", userPrompt) })
-                    })
-                })
-            })
-
+            put("contents", contentsArray)
             put("generationConfig", JSONObject().apply {
-                put("temperature", 0.7)
-                put("maxOutputTokens", 120)
+                put("temperature", 0.65)
+                put("maxOutputTokens", if (isYurist) 600 else 250)
             })
         }
 

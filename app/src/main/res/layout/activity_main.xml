@@ -112,7 +112,7 @@
                 android:layout_marginStart="6dp"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-bold"
-                android:maxWidth="105dp"
+                android:maxWidth="120dp"
                 android:maxLines="1"
                 android:singleLine="true"
                 android:text="Asosiy"
