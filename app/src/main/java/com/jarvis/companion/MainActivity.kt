@@ -458,9 +458,15 @@ class MainActivity : AppCompatActivity() {
                 if (isVideoExpanded) {
                     toggleVideoFullscreen()
                 } else if (containerWebView.visibility == View.VISIBLE) {
+                    val title = tvWebTitle.text?.toString() ?: ""
                     isQuronActive = false
                     containerWebView.visibility = View.GONE
                     webViewDashboard.loadUrl("about:blank")
+                    when {
+                        title.contains("Kamera", ignoreCase = true) -> showCaption("📷 Kamera yopildi")
+                        title.contains("Qur'on", ignoreCase = true) -> showCaption("📖 Qur'on Ustozi yopildi")
+                        else -> showCaption("⏹ Telekanal yopildi")
+                    }
                 } else {
                     isEnabled = false
                     onBackPressedDispatcher.onBackPressed()
@@ -725,9 +731,15 @@ class MainActivity : AppCompatActivity() {
             if (isTvFullscreen) {
                 setTvFullscreen(false)
             }
+            val title = tvWebTitle.text?.toString() ?: ""
             isQuronActive = false
             containerWebView.visibility = View.GONE
             webViewDashboard.loadUrl("about:blank")
+            when {
+                title.contains("Kamera", ignoreCase = true) -> showCaption("📷 Kamera yopildi")
+                title.contains("Qur'on", ignoreCase = true) -> showCaption("📖 Qur'on Ustozi yopildi")
+                else -> showCaption("⏹ Telekanal yopildi")
+            }
         }
         btnOpenExternalBrowser.setOnClickListener {
             if (quronWebUrl.isNotBlank()) {
@@ -1635,6 +1647,7 @@ class MainActivity : AppCompatActivity() {
 
         containerWebView.visibility = View.VISIBLE
         tvWebTitle.text = "JARVIS Kamera AI"
+        try { webViewDashboard.setBackgroundColor(0xFF040812.toInt()) } catch (_: Exception) {}
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
@@ -1651,7 +1664,7 @@ class MainActivity : AppCompatActivity() {
             allowContentAccess = true
         }
         webViewDashboard.loadUrl("http://77.83.206.138:8000/camera")
-        deliverJarvisResponseToUi("Kamera AI yoqildi! Rasmga oling yoki kamerani qarating — ko'rganimni tahlil qilib, test savollariga javob beraman.", "📷")
+        showCaption("📷 Kamera AI faol")
     }
 
     private fun showSetReminderDialog(defaultReminderText: String) {
@@ -3659,10 +3672,15 @@ class MainActivity : AppCompatActivity() {
                 if (isTvFullscreen) {
                     setTvFullscreen(false)
                 }
+                val title = tvWebTitle.text?.toString() ?: ""
                 isQuronActive = false
                 containerWebView.visibility = View.GONE
                 webViewDashboard.loadUrl("about:blank")
-                showCaption("⏹ Telekanal yopildi")
+                when {
+                    title.contains("Kamera", ignoreCase = true) -> showCaption("📷 Kamera yopildi")
+                    title.contains("Qur'on", ignoreCase = true) -> showCaption("📖 Qur'on Ustozi yopildi")
+                    else -> showCaption("⏹ Telekanal yopildi")
+                }
             }
         }
 
