@@ -181,6 +181,55 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var highResPhotoFile: java.io.File? = null
+    private var highResPhotoUri: Uri? = null
+
+    private val cameraAiFullPictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && highResPhotoFile != null && highResPhotoFile!!.exists()) {
+            try {
+                val boundsOpts = android.graphics.BitmapFactory.Options().apply {
+                    inJustDecodeBounds = true
+                }
+                android.graphics.BitmapFactory.decodeFile(highResPhotoFile!!.absolutePath, boundsOpts)
+
+                var inSampleSize = 1
+                val maxDim = 1600
+                while (boundsOpts.outWidth / (inSampleSize * 2) >= maxDim || boundsOpts.outHeight / (inSampleSize * 2) >= maxDim) {
+                    inSampleSize *= 2
+                }
+
+                val decodeOpts = android.graphics.BitmapFactory.Options().apply {
+                    this.inSampleSize = inSampleSize
+                }
+                val bitmap = android.graphics.BitmapFactory.decodeFile(highResPhotoFile!!.absolutePath, decodeOpts)
+                if (bitmap != null) {
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, baos)
+                    val b64 = android.util.Base64.encodeToString(baos.toByteArray(), android.util.Base64.NO_WRAP)
+                    runOnUiThread {
+                        webViewDashboard.evaluateJavascript("if (window.onNativePhotoCaptured) { window.onNativePhotoCaptured('$b64'); }", null)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "cameraAiFullPictureLauncher error: ${e.message}")
+            }
+        }
+    }
+
+    private fun launchCameraCapture() {
+        try {
+            val photoFile = java.io.File(cacheDir, "camera_ai_photo.jpg")
+            if (photoFile.exists()) photoFile.delete()
+            photoFile.createNewFile()
+            highResPhotoFile = photoFile
+            highResPhotoUri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile)
+            cameraAiFullPictureLauncher.launch(highResPhotoUri)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "launchCameraCapture error, fallback to preview: ${e.message}")
+            cameraAiPictureLauncher.launch(null)
+        }
+    }
+
     private val cameraAiPictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
             try {
@@ -198,7 +247,7 @@ class MainActivity : AppCompatActivity() {
 
     private val cameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
-            cameraAiPictureLauncher.launch(null)
+            launchCameraCapture()
         } else {
             Toast.makeText(this, "Kamera ruxsati berilmadi", Toast.LENGTH_SHORT).show()
         }
@@ -3458,7 +3507,7 @@ class MainActivity : AppCompatActivity() {
                 fileChooserParams: FileChooserParams?
             ): Boolean {
                 filePathCallback?.onReceiveValue(null)
-                cameraAiPictureLauncher.launch(null)
+                launchCameraCapture()
                 return true
             }
 
@@ -3602,12 +3651,12 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        cameraAiPictureLauncher.launch(null)
+                        launchCameraCapture()
                     } else {
                         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     }
                 } else {
-                    cameraAiPictureLauncher.launch(null)
+                    launchCameraCapture()
                 }
             }
         }
