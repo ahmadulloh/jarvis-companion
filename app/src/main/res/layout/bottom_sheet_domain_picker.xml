@@ -77,21 +77,11 @@
         android:nestedScrollingEnabled="false"
         android:overScrollMode="never" />
 
-    <!-- "+ yana 26 ta yo'nalish · qidirish" Toggle Button -->
+    <!-- "+ yana 26 ta yo'nalish · qidirish" Toggle Button (Hidden: Only Yurist & Din modes) -->
     <TextView
         android:id="@+id/btnExpandAllDomains"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:fontFamily="sans-serif-medium"
-        android:text="+ yana 26 ta yo'nalish · qidirish"
-        android:textColor="#5D7A69"
-        android:textSize="12.5sp" />
+        android:visibility="gone" />
 
 </LinearLayout>

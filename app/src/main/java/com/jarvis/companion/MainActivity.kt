@@ -487,6 +487,7 @@ class MainActivity : AppCompatActivity() {
         initTextToSpeech()
         loadDailySchedule()
         loadReminders()
+        cleanOldTemporaryFiles()
 
         onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -716,9 +717,8 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // 3 Dots Menu Button under Jarvis Brand Title (Opens Qur'on AI, Barcha TV, Eslatmalar)
+        // — — — Menu Button under Jarvis Brand Title (Opens Qur'on AI, Barcha TV, Eslatmalar)
         val btnJarvisMenuDots = findViewById<View>(R.id.btnJarvisMenuDots)
-        val btnTopMenuDots = findViewById<View>(R.id.btnTopMenuDots)
         val cardJarvisQuickMenu = findViewById<View>(R.id.cardJarvisQuickMenu)
         val btnCloseQuickMenu = findViewById<View>(R.id.btnCloseQuickMenu)
         val itemMenuQuronAi = findViewById<View>(R.id.itemMenuQuronAi)
@@ -736,7 +736,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
         btnJarvisMenuDots?.setOnClickListener { toggleQuickMenu() }
-        btnTopMenuDots?.setOnClickListener { toggleQuickMenu() }
         btnCloseQuickMenu?.setOnClickListener {
             vibrateBrief(15)
             cardJarvisQuickMenu?.visibility = View.GONE
@@ -1534,6 +1533,17 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
+    private fun cleanOldTemporaryFiles() {
+        try {
+            val threeDaysAgo = System.currentTimeMillis() - (3 * 24 * 60 * 60 * 1000L)
+            cacheDir.listFiles()?.forEach { file ->
+                if (file.lastModified() < threeDaysAgo) {
+                    file.delete()
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun loadDailySchedule() {
         val prefs = getSharedPreferences("jarvis_prefs", Context.MODE_PRIVATE)
         val jsonStr = prefs.getString("daily_schedule_json", null)
@@ -2129,31 +2139,21 @@ class MainActivity : AppCompatActivity() {
             openSettingsDialog()
         }
 
-        val allDomains = JarvisDomainRegistry.getAllDomains()
-
-        // 5 ta asosiy soha: Asosiy, Taxi, O'quvchi, O'qituvchi, Usta
-        val top5 = listOfNotNull(
-            JarvisDomainRegistry.ASOSIY,
-            JarvisDomainRegistry.HAYDOVCHI,
-            JarvisDomainRegistry.TALABA,
-            allDomains.find { it.id.equals("OQITUVCHI", true) || it.titleUz.contains("O'qituvchi", true) } ?: allDomains.getOrNull(3),
-            allDomains.find { it.id.equals("USTA", true) || it.titleUz.contains("Usta", true) } ?: allDomains.getOrNull(4)
+        val domainsToShow = listOf(
+            JarvisDomainRegistry.YURIST,
+            JarvisDomainRegistry.DIN
         )
 
-        val adapter = DomainGridAdapter(top5, currentDomain.id) { selected ->
+        val adapter = DomainGridAdapter(domainsToShow, currentDomain.id) { selected ->
             applyDomain(selected, speakAnnouncement = true)
             sheetDialog.dismiss()
         }
 
-        rv?.layoutManager = GridLayoutManager(this, 3)
+        rv?.layoutManager = GridLayoutManager(this, 2)
         rv?.adapter = adapter
 
-        btnExpand?.setOnClickListener {
-            btnExpand.visibility = View.GONE
-            etSearch?.visibility = View.VISIBLE
-            etSearch?.requestFocus()
-            adapter.updateData(allDomains, currentDomain.id)
-        }
+        btnExpand?.visibility = View.GONE
+        etSearch?.visibility = View.GONE
 
         etSearch?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -2772,64 +2772,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 0. Qur'on AI ochish buyruqlari
-        val isQuronCmd = (lower.contains("qur'on") || lower.contains("quron") || lower.contains("sura") || lower.contains("oyat") || lower.contains("tilovat") || lower.contains("qiroat") || lower.contains("tajvid") || lower.contains("alifbo") || lower.contains("muallimi"))
-        if (isQuronCmd) {
-            val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
-                       else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
-                       else "recite"
-            openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
-            deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.", "📖")
-            return
-        }
-
-        // 0. Kamera AI ochish buyruqlari
-        if (lower.contains("kamera") || lower.contains("kamerani och") || lower.contains("kamerani yoq") || lower.contains("ko'rib ayt") || lower.contains("testni yech") || lower.contains("savolni yech")) {
-            openKameraAI()
-            return
-        }
-
-        // 0. Kunlik Reja buyruqlari
-        if (lower.contains("kunlik reja") || lower.contains("rejam") || lower.contains("jadval") || lower.contains("dars jadval")) {
-            runOnUiThread { showKunlikRejaSheet() }
-            deliverJarvisResponseToUi("Kunlik rejalaringiz jadvalini ochdim, Axmadulloh sir!", "📅")
-            return
-        }
-
-        // 0. Eslatmalar ro'yxatini ochish
-        if (lower.contains("eslatmalar ro'yxati") || lower.contains("eslatmalarni och") || lower.contains("eslatmalarni ko'rsat")) {
-            runOnUiThread { showEslatmalarSheet() }
-            deliverJarvisResponseToUi("Barcha eslatmalaringiz ro'yxatini ochdim, Axmadulloh sir!", "⏰")
-            return
-        }
-
-        // 0. YouTube ochish buyrug'i
-        if (lower.contains("youtube") || lower.contains("yutub") || lower == "yt") {
-            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "youtube" || lower.trim() == "yutub") {
-                val res = phoneActionManager.openApp("YouTube", "com.google.android.youtube")
-                deliverJarvisResponseToUi(res, "▶️")
-                return
-            }
-        }
-
-        // 0. Telegram ochish buyrug'i
-        if (lower.contains("telegram") || lower.contains("tg ni och") || lower.trim() == "tg") {
-            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "telegram" || lower.trim() == "tg") {
-                val res = phoneActionManager.openApp("Telegram", "org.telegram.messenger")
-                deliverJarvisResponseToUi(res, "✈️")
-                return
-            }
-        }
-
-        // 0. World TV & 3D Globus & 34 ta telekanal buyruqlari
-        val isTvOrMovie = lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") ||
+        // 0. World TV & 3D Globus (TV och deganda hech qachon Qur'on ochilmaydi!)
+        val isTvOrMovie = (lower.contains("tv") || lower.contains("telekanal") || lower.contains("televizor") ||
                 lower.contains("jonli efir") || lower.contains("famelack") || lower.contains("biz tv") ||
                 lower.contains("sevimli") || lower.contains("zo'r") || lower.contains("zor") || lower.contains("aqlvoy") ||
                 lower.contains("dunyo bo'ylab") || lower.contains("kinolar tv") || lower.contains("sport") ||
                 lower.contains("milliy") || lower.contains("o'zbekiston 24") || lower.contains("bolajon") ||
                 lower.contains("kino ko'r") || lower.contains("film ko'r") || lower.contains("kinolar") ||
                 lower.contains("dasturxon") || lower.contains("cheksiz") || lower.contains("farg'ona") ||
-                lower.contains("my5") || lower.contains("mening yurtim") || lower.contains("uzreport")
+                lower.contains("my5") || lower.contains("mening yurtim") || lower.contains("uzreport")) &&
+                !lower.contains("qur'on") && !lower.contains("quron") && !lower.contains("tajvid")
 
         if (isTvOrMovie) {
             val targetChannel = when {
@@ -2878,6 +2830,81 @@ class MainActivity : AppCompatActivity() {
             deliverJarvisResponseToUi(ackMsg, "📺")
             return
         }
+
+        // 0. Qur'on AI ochish buyruqlari (Faqat aniq Qur'on so'ralganda)
+        val isQuronCmd = (lower.contains("qur'on") || lower.contains("quron") || lower.contains("tilovat") || lower.contains("qiroat") || lower.contains("tajvid") || lower.contains("muallimi") || (lower.contains("sura") && !lower.contains("surat")) || lower.contains("oyat")) && !isTvOrMovie
+        if (isQuronCmd) {
+            val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
+                       else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
+                       else "recite"
+            openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
+            deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.", "📖")
+            return
+        }
+
+        // 0. Kamera AI ochish buyruqlari
+        if (lower.contains("kamera") || lower.contains("kamerani och") || lower.contains("kamerani yoq") || lower.contains("ko'rib ayt") || lower.contains("testni yech") || lower.contains("savolni yech")) {
+            openKameraAI()
+            return
+        }
+
+        // 0. Kunlik Reja buyruqlari (Aniq rejalarni aytadi va ochadi - reja1.mp4 yechimi)
+        if (lower.contains("reja") || lower.contains("jadval") || lower.contains("kun tartib") || lower.contains("rejam")) {
+            val cal = java.util.Calendar.getInstance()
+            val todayDay = when (cal.get(java.util.Calendar.DAY_OF_WEEK)) {
+                java.util.Calendar.MONDAY -> "Dushanba"
+                java.util.Calendar.TUESDAY -> "Seshanba"
+                java.util.Calendar.WEDNESDAY -> "Chorshanba"
+                java.util.Calendar.THURSDAY -> "Payshanba"
+                java.util.Calendar.FRIDAY -> "Juma"
+                java.util.Calendar.SATURDAY -> "Shanba"
+                java.util.Calendar.SUNDAY -> "Yakshanba"
+                else -> "Dushanba"
+            }
+            if (dailyScheduleMap.isEmpty()) {
+                loadDailySchedule()
+            }
+            val slots = dailyScheduleMap[todayDay] ?: emptyList()
+            val spokenSchedule = if (slots.isNotEmpty()) {
+                val slotsDesc = slots.joinToString(", ") { s ->
+                    val timePart = if (s.second.isNotEmpty()) "${s.first} dan ${s.second} gacha" else "${s.first} da"
+                    "$timePart — ${s.third}"
+                }
+                "Bugun $todayDay, Axmadulloh sir! Sizning kunlik rejangiz: $slotsDesc."
+            } else {
+                "Bugun $todayDay, Axmadulloh sir! Hozircha bugunga reja belgilanmagan. Jadvalda «+ Reja Qo'shish» orqali yangi reja kiritishingiz mumkin."
+            }
+            runOnUiThread { showKunlikRejaSheet() }
+            deliverJarvisResponseToUi(spokenSchedule, "📅")
+            return
+        }
+
+        // 0. Eslatmalar ro'yxatini ochish
+        if (lower.contains("eslatmalar ro'yxati") || lower.contains("eslatmalarni och") || lower.contains("eslatmalarni ko'rsat")) {
+            runOnUiThread { showEslatmalarSheet() }
+            deliverJarvisResponseToUi("Barcha eslatmalaringiz ro'yxatini ochdim, Axmadulloh sir!", "⏰")
+            return
+        }
+
+        // 0. YouTube ochish buyrug'i
+        if (lower.contains("youtube") || lower.contains("yutub") || lower == "yt") {
+            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "youtube" || lower.trim() == "yutub") {
+                val res = phoneActionManager.openApp("YouTube", "com.google.android.youtube")
+                deliverJarvisResponseToUi(res, "▶️")
+                return
+            }
+        }
+
+        // 0. Telegram ochish buyrug'i
+        if (lower.contains("telegram") || lower.contains("tg ni och") || lower.trim() == "tg") {
+            if (lower.contains("och") || lower.contains("kir") || lower.contains("ishga tushir") || lower.trim() == "telegram" || lower.trim() == "tg") {
+                val res = phoneActionManager.openApp("Telegram", "org.telegram.messenger")
+                deliverJarvisResponseToUi(res, "✈️")
+                return
+            }
+        }
+
+
 
         // 0. AI Kotib SMS yuborish ovozli tasdig'i (Voice confirmation)
         if (pendingSecretaryTarget != null) {

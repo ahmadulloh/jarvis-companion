@@ -86,8 +86,7 @@
             android:id="@+id/chipDomainSelector"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:layout_toStartOf="@id/btnTopMenuDots"
-            android:layout_marginEnd="6dp"
+            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:background="@drawable/bg_domain_chip"
             android:clickable="true"
@@ -120,38 +119,16 @@
                 android:textColor="#12A550"
                 android:textSize="12sp" />
         </LinearLayout>
-
-        <!-- 3 Dots Button (Top Menu Button shown in Image 1: 'Bu tugmani bosing') -->
-        <LinearLayout
-            android:id="@+id/btnTopMenuDots"
-            android:layout_width="38dp"
-            android:layout_height="32dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/bg_domain_chip"
-            android:clickable="true"
-            android:elevation="2dp"
-            android:focusable="true"
-            android:gravity="center">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-black"
-                android:text="•••"
-                android:textColor="#12A550"
-                android:textSize="13sp" />
-        </LinearLayout>
     </RelativeLayout>
 
-    <!-- Creative Floating Quick Menu Card (Under J · A · R · V · I · S, opens on 3 dots) -->
+    <!-- Creative Floating Quick Menu Card (Under J · A · R · V · I · S, opens on — — —) -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardJarvisQuickMenu"
         android:layout_width="295dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/topBar"
-        android:layout_alignParentEnd="true"
-        android:layout_marginEnd="12dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="14dp"
         android:layout_marginTop="-2dp"
         app:cardCornerRadius="20dp"
         app:cardElevation="16dp"
