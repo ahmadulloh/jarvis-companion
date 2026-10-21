@@ -57,10 +57,10 @@ jobs:
       if: success()
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: v1.8.1
-        name: Jarvis Companion v1.8.1
+        tag_name: v1.8.2
+        name: Jarvis Companion v1.8.2
         body: |
-          JARVIS Companion v1.8.1 — Yangi Imkoniyatlar (HTTPS Domen, Server TTS Ovozlar & Rasm Chizish):
+          JARVIS Companion v1.8.2 — Rasmiy Google Gemini Asl Kiber-Ovozlari (Kore, Fenrir, Puck, Charon, Aoede) & To'liq JARVIS Identifikatsiyasi:
           - 3 Chiziqcha (— — —) Tezkor Menyu:
             • Logo ostidagi nuqtalar chiziqchalarga (— — —) almashtirildi.
             • Menyuga 5 ta asosiy bo'lim kiritildi: Qur'on AI, Barcha TV, Eslatmalar, Kunlik Rejam va Kamera AI.

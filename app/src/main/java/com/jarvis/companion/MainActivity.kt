@@ -305,7 +305,7 @@ class MainActivity : AppCompatActivity() {
     private var activeSpeechJob: Job? = null
 
     // Umid (Erkak) & Umida (Ayol) Dynamic Voice Persona
-    private var activeAssistantPersona = "umid" // "umid" (Erkak) | "umida" (Ayol)
+    private var activeAssistantPersona = "kore" // "umid" (Erkak) | "umida" (Ayol)
 
     // AI Kotib ovozli tasdiq saqlovi
     private var pendingSecretaryTarget: String? = null
@@ -2467,9 +2467,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (femaleVoice != null) tts?.voice = femaleVoice
                 } catch (_: Exception) {}
-                showCaption("👩 Umida ovozi faollashdi (Ayol kishi)")
+                showCaption("👩 Aoede ovozi faollashdi (JARVIS Ayol)")
                 if (announce) {
-                    speakJarvis("Labbay, Axmadulloh sir! Men Umidaman, sizni eshitmoqdaman.")
+                    speakJarvis("Labbay, Axmadulloh sir! Men JARVISman, sizni eshitmoqdaman.")
                 }
             } else {
                 // Erkak kishi ovozi (Umid) - Chuqur, bosiq va salobatli pitch
@@ -2482,9 +2482,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (maleVoice != null) tts?.voice = maleVoice
                 } catch (_: Exception) {}
-                showCaption("👤 Umid ovozi faollashdi (Erkak kishi)")
+                showCaption("⚡ Kore ovozi faollashdi (Asl JARVIS)")
                 if (announce) {
-                    speakJarvis("Labbay, Axmadulloh sir! Men Umidman, xizmatingizdaman.")
+                    speakJarvis("Labbay, Axmadulloh sir! Men sizning sadoqatli kiber-intellektingiz — JARVISman.")
                 }
             }
         }
@@ -2492,7 +2492,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun speakWithServerTts(text: String, onFinished: (Boolean) -> Unit) {
         val spokenText = prepareTextForSpeech(text)
-        val voiceKey = if (activeAssistantPersona == "umida") "umida" else "sardor"
+        val voiceKey = if (activeAssistantPersona == "aoede" || activeAssistantPersona == "umida") "aoede" else "kore"
         val serverBase = getHttpBaseUrl()
         val encoded = try { java.net.URLEncoder.encode(spokenText.take(450), "UTF-8") } catch (_: Exception) { "" }
         if (encoded.isBlank() || serverBase.isBlank()) {
