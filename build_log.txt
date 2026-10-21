@@ -29,12 +29,13 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:compileDebugShaders NO-SOURCE
 > Task :app:generateDebugAssets UP-TO-DATE
 > Task :app:mergeDebugAssets
+> Task :app:processDebugManifestForPackage
 > Task :app:desugarDebugFileDependencies
 > Task :app:compressDebugAssets
-> Task :app:processDebugManifestForPackage
+> Task :app:processDebugResources
 > Task :app:checkDebugDuplicateClasses
 > Task :app:mergeDebugStartupProfile
-> Task :app:processDebugResources
+> Task :app:compileDebugKotlin
 > Task :app:mergeExtDexDebug
 > Task :app:mergeDebugJniLibFolders
 > Task :app:mergeLibDexDebug
@@ -45,8 +46,12 @@ Starting a Gradle Daemon (subsequent builds will be faster)
 > Task :app:writeDebugSigningConfigVersions
 
 > Task :app:compileDebugKotlin FAILED
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1294:53 Unresolved reference: Theme_JarvisCompanion_BottomSheet
-e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:1379:53 Unresolved reference: Theme_JarvisCompanion_BottomSheet
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2163:21 Unresolved reference: allDomains
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2165:21 Unresolved reference: allDomains
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2166:25 Unresolved reference: it
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2167:33 Unresolved reference: it
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2168:33 Unresolved reference: it
+e: file:///home/runner/work/jarvis-companion/jarvis-companion/app/src/main/java/com/jarvis/companion/MainActivity.kt:2168:51 Cannot infer a type for this parameter. Please specify it explicitly.
 
 FAILURE: Build failed with an exception.
 
@@ -255,5 +260,5 @@ Caused by: org.jetbrains.kotlin.gradle.tasks.CompilationErrorException: Compilat
 	... 2 more
 
 
-BUILD FAILED in 1m 58s
+BUILD FAILED in 2m 3s
 28 actionable tasks: 28 executed
