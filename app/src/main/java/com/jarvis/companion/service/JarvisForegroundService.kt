@@ -438,7 +438,7 @@ class JarvisForegroundService : Service() {
                         broadcastQuronUpdate(url, sura, oyat)
                     }
                     "world_tv" -> {
-                        val url = json.optString("url", "http://77.83.206.138:8000/tv")
+                        val url = json.optString("url", "https://jarvis.77.83.206.138.sslip.io/tv")
                         val channel = json.optString("channel", "")
                         val country = json.optString("country", "uz")
                         broadcastWorldTvUpdate(url, channel, country)

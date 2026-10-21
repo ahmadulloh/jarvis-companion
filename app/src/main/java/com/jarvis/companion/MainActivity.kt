@@ -372,7 +372,7 @@ class MainActivity : AppCompatActivity() {
                 JarvisForegroundService.BROADCAST_QURON_UPDATE -> {
                     val url = intent.getStringExtra(JarvisForegroundService.EXTRA_QURON_URL)
                         ?: intent.getStringExtra("url")
-                        ?: "http://77.83.206.138:8000/quron"
+                        ?: "https://jarvis.77.83.206.138.sslip.io/quron"
                     if (url.isNotEmpty()) {
                         quronWebUrl = url
                         runOnUiThread {
@@ -386,7 +386,7 @@ class MainActivity : AppCompatActivity() {
                 JarvisForegroundService.BROADCAST_WORLD_TV_UPDATE -> {
                     val url = intent.getStringExtra(JarvisForegroundService.EXTRA_WORLD_TV_URL)
                         ?: intent.getStringExtra("url")
-                        ?: "http://77.83.206.138:8000/tv"
+                        ?: "https://jarvis.77.83.206.138.sslip.io/tv"
                     if (url.isNotEmpty()) {
                         runOnUiThread {
                             openWorldTv(url)
@@ -751,12 +751,12 @@ class MainActivity : AppCompatActivity() {
         itemMenuQuronAi?.setOnClickListener {
             vibrateBrief(25)
             cardJarvisQuickMenu?.visibility = View.GONE
-            openQuronLesson("http://77.83.206.138:8000/quron")
+            openQuronLesson("https://jarvis.77.83.206.138.sslip.io/quron")
         }
         itemMenuBarchaTv?.setOnClickListener {
             vibrateBrief(25)
             cardJarvisQuickMenu?.visibility = View.GONE
-            openWorldTv("http://77.83.206.138:8000/tv")
+            openWorldTv("https://jarvis.77.83.206.138.sslip.io/tv")
         }
         itemMenuEslatmalar?.setOnClickListener {
             vibrateBrief(25)
@@ -1785,7 +1785,7 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
         }
-        webViewDashboard.loadUrl("http://77.83.206.138:8000/camera")
+        webViewDashboard.loadUrl("https://jarvis.77.83.206.138.sslip.io/camera")
         showCaption("📷 Kamera AI faol")
     }
 
@@ -2862,9 +2862,9 @@ class MainActivity : AppCompatActivity() {
                 else -> "uz"
             }
             val tvUrl = when {
-                targetChannel.isNotEmpty() -> "http://77.83.206.138:8000/tv?country=$targetCountry&channel=${android.net.Uri.encode(targetChannel)}&tab=tv"
-                targetCat.isNotEmpty() -> "http://77.83.206.138:8000/tv?category=$targetCat&tab=tv"
-                else -> "http://77.83.206.138:8000/tv?country=$targetCountry&tab=home"
+                targetChannel.isNotEmpty() -> "https://jarvis.77.83.206.138.sslip.io/tv?country=$targetCountry&channel=${android.net.Uri.encode(targetChannel)}&tab=tv"
+                targetCat.isNotEmpty() -> "https://jarvis.77.83.206.138.sslip.io/tv?category=$targetCat&tab=tv"
+                else -> "https://jarvis.77.83.206.138.sslip.io/tv?country=$targetCountry&tab=home"
             }
             openWorldTv(tvUrl)
             val ackMsg = if (targetChannel.isNotEmpty()) "Labbay Axmadulloh sir, «$targetChannel» telekanalini jonli efirda qo'ydim!"
@@ -2879,7 +2879,7 @@ class MainActivity : AppCompatActivity() {
             val mode = if (lower.contains("harf") || lower.contains("alifbo") || lower.contains("0 dan")) "letters"
                        else if (lower.contains("kamera") || lower.contains("mushaf") || lower.contains("qog'oz")) "camera"
                        else "recite"
-            openQuronLesson("http://77.83.206.138:8000/quron?mode=$mode")
+            openQuronLesson("https://jarvis.77.83.206.138.sslip.io/quron?mode=$mode")
             deliverJarvisResponseToUi("Qur'on Ustozi xizmatini ochdim, Axmadulloh sir! Birgalikda tajvid va tilovatni o'rganamiz.", "📖")
             return
         }
@@ -3737,7 +3737,7 @@ class MainActivity : AppCompatActivity() {
         webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
         webViewDashboard.webChromeClient = createDashboardChromeClient()
 
-        val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/quron"
+        val targetUrl = if (url.isNotBlank()) url else "https://jarvis.77.83.206.138.sslip.io/quron"
         quronWebUrl = targetUrl
         webViewDashboard.loadUrl(targetUrl)
     }
@@ -3788,7 +3788,7 @@ class MainActivity : AppCompatActivity() {
         @android.webkit.JavascriptInterface
         fun openQuronAi() {
             runOnUiThread {
-                openQuronLesson("http://77.83.206.138:8000/quron")
+                openQuronLesson("https://jarvis.77.83.206.138.sslip.io/quron")
             }
         }
 
@@ -3805,7 +3805,7 @@ class MainActivity : AppCompatActivity() {
         @android.webkit.JavascriptInterface
         fun openWorldTvTab(tabName: String) {
             runOnUiThread {
-                openWorldTv("http://77.83.206.138:8000/tv?tab=$tabName")
+                openWorldTv("https://jarvis.77.83.206.138.sslip.io/tv?tab=$tabName")
             }
         }
 
@@ -3874,7 +3874,7 @@ class MainActivity : AppCompatActivity() {
 
         webViewDashboard.addJavascriptInterface(TvBridge(), "Android")
 
-        val targetUrl = if (url.isNotBlank()) url else "http://77.83.206.138:8000/tv"
+        val targetUrl = if (url.isNotBlank()) url else "https://jarvis.77.83.206.138.sslip.io/tv"
         quronWebUrl = targetUrl
 
         val currentLoaded = webViewDashboard.url ?: ""
